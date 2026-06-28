@@ -25,6 +25,7 @@ import com.example.shuttleapp.domain.usecase.manualinputshuttlepass.ValidateShut
 import com.example.shuttleapp.domain.usecase.manualinputshuttlepass.ValidateTripTypeInput
 import com.example.shuttleapp.presentation.events.QRInputEvent
 import com.example.shuttleapp.presentation.events.ShuttlePassInputEvent
+import com.example.shuttleapp.presentation.events.ShuttlePassUiEvent
 import com.example.shuttleapp.presentation.state.CardState
 import com.example.shuttleapp.presentation.state.IdNameState
 import com.example.shuttleapp.presentation.state.PassengerListState
@@ -75,6 +76,9 @@ class ShuttleViewModel @Inject constructor(
 
     private val _userState = MutableStateFlow(UserState())
     val userState : MutableStateFlow<UserState> get() = _userState
+
+    private val _uiEvents = MutableSharedFlow<ShuttlePassUiEvent>()
+    val uiEvents = _uiEvents.asSharedFlow()
 
     private val _routeState = MutableStateFlow(RouteState())
     val routeState : MutableStateFlow<RouteState> get() = _routeState
@@ -418,8 +422,24 @@ class ShuttleViewModel @Inject constructor(
     fun loadEditedShuttlePass(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                getShuttlePassById(id).collectLatest { shuttlePass ->
-                    _editedShuttlePassState.value = shuttlePass
+                val shuttlePass = getShuttlePassById(id).first()
+                _editedShuttlePassState.value = shuttlePass
+
+                val routeName = unflowGetRouteById(shuttlePass.routeId)
+                val plateNumber = shuttleRepository.getPlateNumberById(shuttlePass.plateNumber).first()
+                val providerName = shuttleProviderRepository.getProviderNameById(shuttlePass.provider).first()
+
+                _shuttlePassInputState.update {
+                    it.copy(
+                        driver = shuttlePass.driver,
+                        plateNumber = plateNumber ?: "no data",
+                        route = routeName,
+                        date = shuttlePass.date,
+                        tripType = shuttlePass.tripType,
+                        shuttleProvider = providerName ?: "no data",
+                        departure = shuttlePass.departure,
+                        arrival = shuttlePass.arrival
+                    )
                 }
             }
             catch (ex: Exception) {
@@ -605,6 +625,37 @@ class ShuttleViewModel @Inject constructor(
     fun updateShuttlePass(shuttlePass: List<ShuttlePassEntity>) {
         viewModelScope.launch(Dispatchers.IO) {
             shuttlePassRepository.updateShuttlePass(shuttlePass)
+        }
+    }
+
+    fun onUpdateShuttlePass(originalPass: ShuttlePassEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val routeId = getRouteIdByName(_shuttlePassInputState.value.route)
+                val plateNumber = getShuttleIdByPlateNumber(_shuttlePassInputState.value.plateNumber)
+
+                val updatedShuttlePass = listOf(ShuttlePassEntity(
+                    id = originalPass.id,
+                    routeId = routeId,
+                    provider = _shuttlePassInputState.value.shuttleProvider,
+                    driver = originalPass.driver,
+                    plateNumber = plateNumber,
+                    date = originalPass.date,
+                    tripType = _shuttlePassInputState.value.tripType,
+                    departure = _shuttlePassInputState.value.departure,
+                    arrival = _shuttlePassInputState.value.arrival,
+                    isSynced = originalPass.isSynced,
+                    isLateShuttle = originalPass.isLateShuttle,
+                    isDraft = originalPass.isDraft
+                ))
+
+                shuttlePassRepository.updateShuttlePass(updatedShuttlePass)
+                
+                _uiEvents.emit(ShuttlePassUiEvent.ShowToast("Changes saved successfully"))
+                _uiEvents.emit(ShuttlePassUiEvent.NavigateUp)
+            } catch(e: Exception) {
+                _uiEvents.emit(ShuttlePassUiEvent.ShowToast("Failed to save changes: ${e.message}"))
+            }
         }
     }
 

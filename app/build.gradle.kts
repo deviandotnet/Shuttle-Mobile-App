@@ -2,8 +2,10 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
     id("kotlin-parcelize") // for serialization
-    id("com.google.devtools.ksp") //enable ksp
+
+    id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
 }
 
@@ -109,8 +111,7 @@ dependencies {
 
     //Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.57.2")
-    ksp("com.google.dagger:hilt-android-compiler:2.57.2")
-    ksp("androidx.hilt:hilt-compiler:1.3.0")
+    ksp("com.google.dagger:hilt-compiler:2.57.2")
     implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
 
     //SYSTEM UI CONTROLLER - change system navcolors

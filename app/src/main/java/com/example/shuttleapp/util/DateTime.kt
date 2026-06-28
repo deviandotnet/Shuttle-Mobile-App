@@ -8,8 +8,17 @@ import java.util.Locale
 
 fun displayTime(): String {
     val timeMilli: Long = System.currentTimeMillis()
-    val format = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    val format = SimpleDateFormat("HH:mm", Locale.getDefault())
     return format.format(Date(timeMilli))
+}
+
+fun formatTimeHHmm(timeStr: String): String {
+    if (timeStr.isEmpty()) return timeStr
+    val parts = timeStr.split(":")
+    if (parts.size >= 2) {
+        return "${parts[0]}:${parts[1]}"
+    }
+    return timeStr
 }
 
 fun displayDate() : String {

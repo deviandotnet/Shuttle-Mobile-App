@@ -19,6 +19,7 @@ import com.example.shuttleapp.presentation.ShuttlePassItemScreen
 import com.example.shuttleapp.presentation.ShuttlePassListScreen
 import com.example.shuttleapp.presentation.viewmodel.FilterViewModel
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
+import kotlinx.serialization.Serializable
 
 @Composable
 fun Navigation(navController: NavHostController = rememberNavController()) {

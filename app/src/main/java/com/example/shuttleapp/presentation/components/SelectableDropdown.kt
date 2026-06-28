@@ -13,6 +13,7 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +36,12 @@ fun ExpandedDropDown(label: String, categories: List<String>, initialValue: Stri
     var isExpanded by remember { mutableStateOf(false) }
 
     var value by remember { mutableStateOf(initialValue) }
+
+    LaunchedEffect(initialValue) {
+        if (value != initialValue) {
+            value = initialValue
+        }
+    }
 
     val filtered = if(value.isNotBlank()) {
         categories.filter { item ->

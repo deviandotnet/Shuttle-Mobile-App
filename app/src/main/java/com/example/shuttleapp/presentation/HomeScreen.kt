@@ -58,6 +58,8 @@ import com.example.shuttleapp.presentation.components.BottomBarComponent
 import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.Route
 import com.example.shuttleapp.presentation.components.ConfirmBasicDialog
+import com.example.shuttleapp.util.displayMonthYear
+import com.example.shuttleapp.util.formatTimeHHmm
 import com.example.shuttleapp.presentation.components.DrawerContent
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
 import com.example.shuttleapp.util.displayMonthYear
@@ -376,7 +378,7 @@ fun ShuttlePassListItem(shuttlePassenger: ShuttlePassWithPassengerEntity, navCon
                     )
                     Text(" Late", color = Red, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                     Text(
-                        " ${shuttlePassenger.shuttlePass.date} (${shuttlePassenger.shuttlePass.departure} ${shuttlePassenger.shuttlePass.arrival})",
+                        " ${shuttlePassenger.shuttlePass.date} (${formatTimeHHmm(shuttlePassenger.shuttlePass.departure)} - ${formatTimeHHmm(shuttlePassenger.shuttlePass.arrival)})",
                         color = Red,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -385,7 +387,7 @@ fun ShuttlePassListItem(shuttlePassenger: ShuttlePassWithPassengerEntity, navCon
                 else {
 
                     Text(
-                        "${shuttlePassenger.shuttlePass.date} (${shuttlePassenger.shuttlePass.departure} ${shuttlePassenger.shuttlePass.arrival})",
+                        "${shuttlePassenger.shuttlePass.date} (${formatTimeHHmm(shuttlePassenger.shuttlePass.departure)} - ${formatTimeHHmm(shuttlePassenger.shuttlePass.arrival)})",
                         color = Color.DarkGray,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold

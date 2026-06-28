@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shuttleapp.ui.theme.NavyBlue
 import com.example.shuttleapp.ui.theme.White
+import com.example.shuttleapp.util.formatTimeHHmm
 
 //ShuttleDetailsCard
 @Composable
@@ -98,7 +99,7 @@ fun ShuttleDetailsCard(
                         ) {
                             AutoResizeText("Departure", colors = Color.LightGray, fontSize = 12.sp)
                             AutoResizeText(
-                                departure,
+                                formatTimeHHmm(departure),
                                 colors = White,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
@@ -134,7 +135,7 @@ fun ShuttleDetailsCard(
                         ) {
                             AutoResizeText("Arrival", colors = Color.LightGray, fontSize = 12.sp)
                             AutoResizeText(
-                                arrival,
+                                formatTimeHHmm(arrival),
                                 colors = White,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium

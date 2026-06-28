@@ -54,6 +54,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -67,7 +68,9 @@ import com.example.shuttleapp.ui.theme.NavyBlue
 import com.example.shuttleapp.ui.theme.White
 import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.presentation.events.ShuttlePassInputEvent
+import com.example.shuttleapp.presentation.events.ShuttlePassUiEvent
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
+import com.example.shuttleapp.util.formatTimeHHmm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -85,35 +88,23 @@ fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, na
 
     var showTimePickerDialog by remember { mutableStateOf(false) }
     var showDateDialog by remember { mutableStateOf(false) }
+    var editingTimeType by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
-    // 1. Initial Load: Fetch the entity
+    // 1. Initial Load: Fetch the entity and populate state
     LaunchedEffect(id) {
         if(id.isNotEmpty()) {
             viewModel.loadEditedShuttlePass(id)
         }
     }
 
-    // 2. Fetch human-readable names once entity is loaded
-    LaunchedEffect(editedShuttlePass.id) {
-        if (editedShuttlePass.id == id) {
-            viewModel.getRouteNameById(editedShuttlePass.routeId)
-            viewModel.getPlateNumberByShuttleId(editedShuttlePass.plateNumber)
-            viewModel.getProviderNameById(editedShuttlePass.provider)
-        }
-    }
-
-    // 3. Populate Input State only when data is fully synced
-    LaunchedEffect(editedShuttlePass.id, nameState.plateNumber, nameState.routeName) {
-        if (editedShuttlePass.id == id && nameState.plateNumber != null && nameState.routeName != null) {
-            viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.DriverChanged(editedShuttlePass.driver))
-            viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.PlateNumberChanged(nameState.plateNumber!!))
-            viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.RouteChanged(nameState.routeName!!))
-            viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.DateChanged(editedShuttlePass.date))
-            viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.TripTypeChanged(editedShuttlePass.tripType))
-            viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.ShuttleProviderChanged(editedShuttlePass.provider))
-            viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.DepartureChanged(editedShuttlePass.departure))
-            viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.ArrivalChanged(editedShuttlePass.arrival))
+    // 2. Listen for UI Events
+    LaunchedEffect(Unit) {
+        viewModel.uiEvents.collect { event ->
+            when(event) {
+                is ShuttlePassUiEvent.NavigateUp -> navController.navigateUp()
+                is ShuttlePassUiEvent.ShowToast -> Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -160,21 +151,30 @@ fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, na
                         icon = Icons.Default.DateRange,
                         label = "Date",
                         value = shuttlePassInputState.date,
+                        enabled = false,
                         onClick = { /* showDateDialog = true */ }
                     )
                     HorizontalDivider(color = Gray.copy(alpha = 0.3f))
                     InfoRow(
                         icon = Icons.Default.AccessTime,
                         label = "Departure",
-                        value = if(shuttlePassInputState.departure.isEmpty()) "Not Started" else shuttlePassInputState.departure,
-                        onClick = { showTimePickerDialog = true }
+                        value = if(shuttlePassInputState.departure.isEmpty()) "Not Started" else formatTimeHHmm(shuttlePassInputState.departure),
+                        enabled = shuttlePassInputState.departure.isNotEmpty(),
+                        onClick = { 
+                            editingTimeType = "Departure"
+                            showTimePickerDialog = true 
+                        }
                     )
                     HorizontalDivider(color = Gray.copy(alpha = 0.3f))
                     InfoRow(
                         icon = Icons.Default.AccessTime,
                         label = "Arrival",
-                        value = if(shuttlePassInputState.arrival.isEmpty()) "In Progress" else shuttlePassInputState.arrival,
-                        onClick = { /* showTimePickerDialog = true */ }
+                        value = if(shuttlePassInputState.arrival.isEmpty()) "In Progress" else formatTimeHHmm(shuttlePassInputState.arrival),
+                        enabled = shuttlePassInputState.arrival.isNotEmpty(),
+                        onClick = { 
+                            editingTimeType = "Arrival"
+                            showTimePickerDialog = true 
+                        }
                     )
                 }
             }
@@ -226,26 +226,7 @@ fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, na
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(NavyBlue),
                 onClick = {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        val updatedShuttlePass = listOf(ShuttlePassEntity(
-                            id = editedShuttlePass.id,
-                            routeId = viewModel.getRouteIdByName(shuttlePassInputState.route),
-                            provider = shuttlePassInputState.shuttleProvider,
-                            driver = editedShuttlePass.driver,
-                            plateNumber = viewModel.getShuttleIdByPlateNumber(shuttlePassInputState.plateNumber),
-                            date = editedShuttlePass.date,
-                            tripType = shuttlePassInputState.tripType,
-                            departure = shuttlePassInputState.departure,
-                            arrival = shuttlePassInputState.arrival,
-                            isSynced = editedShuttlePass.isSynced,
-                            isLateShuttle = editedShuttlePass.isLateShuttle,
-                            isDraft = editedShuttlePass.isDraft
-                        ))
-
-                        viewModel.updateShuttlePass(updatedShuttlePass)
-                    }
-                    navController.navigateUp()
-                    Toast.makeText(context, "Changes saved successfully", Toast.LENGTH_LONG).show()
+                    viewModel.onUpdateShuttlePass(editedShuttlePass)
                 }) {
                 Text("Update Shuttle Pass", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
@@ -254,7 +235,18 @@ fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, na
         }
 
         if (showTimePickerDialog) {
-            InputTimeDialog(onConfirm = { /* Handle manual time entry if needed */ }, onDismiss = { showTimePickerDialog = false })
+            InputTimeDialog(
+                title = "Select $editingTimeType Time",
+                onConfirm = { time -> 
+                    if (editingTimeType == "Departure") {
+                        viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.DepartureChanged(time))
+                    } else if (editingTimeType == "Arrival") {
+                        viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.ArrivalChanged(time))
+                    }
+                    showTimePickerDialog = false 
+                }, 
+                onDismiss = { showTimePickerDialog = false }
+            )
         }
 
         if (showDateDialog) {
@@ -290,12 +282,15 @@ fun InfoRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     value: String,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
+    val contentAlpha = if (enabled) 1f else 0.5f
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickable(enabled = enabled) { onClick() }
+            .alpha(contentAlpha),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -315,6 +310,7 @@ fun InfoRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InputTimeDialog(
+    title: String = "Select Departure Time",
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -334,7 +330,7 @@ fun InputTimeDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Select Departure Time", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+                Text(title, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
                 TimeInput(state = timePickerState)
             }
         },
