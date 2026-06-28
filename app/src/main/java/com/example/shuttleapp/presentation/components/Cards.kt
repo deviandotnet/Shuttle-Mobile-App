@@ -1,5 +1,8 @@
 package com.example.shuttleapp.presentation.components
 
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,26 +13,35 @@ import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.SyncProblem
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 import com.example.shuttleapp.ui.theme.AppleGreen
 import com.example.shuttleapp.ui.theme.Lavender
+import com.example.shuttleapp.ui.theme.NavyBlue
 import com.example.shuttleapp.ui.theme.Orange
 import com.example.shuttleapp.ui.theme.PowderBlue
 import com.example.shuttleapp.ui.theme.SurfaceBg
 
-// Example color tokens — replace with your app tokens
-
+// Gradient helpers — derived from the flat color but richer
+private fun cardGradient(base: Color) = Brush.linearGradient(
+    colors = listOf(
+        base.copy(alpha = 1f),
+        base.copy(red = (base.red * 0.78f).coerceIn(0f, 1f),
+                  green = (base.green * 0.78f).coerceIn(0f, 1f),
+                  blue = (base.blue * 0.78f).coerceIn(0f, 1f))
+    )
+)
 
 @Composable
 fun CardsContainer(
@@ -42,60 +54,50 @@ fun CardsContainer(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Top row: two square cards side-by-side
+        // Top row: two square stat cards side-by-side
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Each takes half width and keeps square shape using aspectRatio(1f)
             SmallStatCard(
                 modifier = Modifier.weight(1f),
                 title = "Total Late Pass",
                 value = "$lateShuttleCount",
-                subtitle = "You have $lateShuttleCount late shuttle recorded",
-                color = Orange,
+                subtitle = if (lateShuttleCount == 0) "No late passes" else "$lateShuttleCount late shuttle recorded",
+                gradient = cardGradient(Orange),
                 icon = Icons.Filled.AssignmentLate
             )
-
             SmallStatCard(
                 modifier = Modifier.weight(1f),
-                title = "Total Unsynced Pass",
+                title = "Unsynced Pass",
                 value = "$unsyncedShuttleCount",
-                subtitle = if (unsyncedShuttleCount == 0) "All shuttle pass are synced to server"
-                else "Sync your completed shuttle pass immediately",
-                color = Lavender,
+                subtitle = if (unsyncedShuttleCount == 0) "All synced ✓" else "Sync immediately",
+                gradient = cardGradient(Lavender),
                 icon = Icons.Filled.SyncProblem
             )
         }
 
-        // Bottom: two full-width rectangular cards stacked
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        // Bottom two full-width cards
+        FullWidthCard(
+            title = "Current Route",
+            value = if (currentRoute.isBlank()) "No Active Trip" else "$currentRoute — $tripType",
+            subtitle = if (currentRoute.isBlank()) "No active trip at the moment"
+            else "$tripType trip via $currentRoute route",
+            gradient = cardGradient(PowderBlue),
+            icon = Icons.Filled.Route
+        )
 
-            FullWidthCard(
-                title = "Current Route",
-                value = if (currentRoute.isBlank()) "No Trip" else "$currentRoute - $tripType",
-                subtitle = if (currentRoute.isBlank()) "There is no active trip right now"
-                else "$tripType trip via $currentRoute Route",
-                color = PowderBlue,
-                icon = Icons.Filled.Route
-            )
-
-            FullWidthCard(
-                title = "Current Passenger Count",
-                value = "$passengerCount",
-                subtitle = if (passengerCount == 0) "Create new shuttle pass to record passengers count"
-                else "There are currently $passengerCount passengers onboard! Have a safe trip",
-                color = AppleGreen,
-                icon = Icons.Filled.Group
-            )
-        }
+        FullWidthCard(
+            title = "Passenger Count",
+            value = "$passengerCount",
+            subtitle = if (passengerCount == 0) "Create a new shuttle pass to start recording"
+            else "$passengerCount passenger${if (passengerCount != 1) "s" else ""} onboard — have a safe trip!",
+            gradient = cardGradient(AppleGreen),
+            icon = Icons.Filled.Group
+        )
     }
 }
 
@@ -105,72 +107,98 @@ private fun SmallStatCard(
     title: String,
     value: String,
     subtitle: String,
-    color: Color,
+    gradient: Brush,
     icon: ImageVector
 ) {
+    // Animate card entrance (scale-in)
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val scale by animateFloatAsState(
+        targetValue = if (visible) 1f else 0.88f,
+        animationSpec = tween(durationMillis = 380, easing = EaseOutCubic),
+        label = "card_scale"
+    )
+
     Card(
         modifier = modifier
-            .aspectRatio(1.3f) // determines height, 1f - keeps the card square
-            .clip(RoundedCornerShape(14.dp)),
-        colors = CardDefaults.cardColors(containerColor = color),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        shape = RoundedCornerShape(14.dp)
+            .aspectRatio(1.25f)
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .clip(RoundedCornerShape(18.dp)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(18.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .background(gradient)
+                .padding(14.dp)
         ) {
-            // Header
-            Text(
-                text = title.uppercase(),
-                color = Color.White.copy(alpha = 0.95f),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            // Middle: icon + big number centered
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center
+                // Header row: title + icon bubble
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                    Text(
+                        text = title.uppercase(),
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    Spacer(Modifier.width(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(30.dp))
-
+                // Big value number
                 Text(
                     text = value,
                     color = Color.White,
-                    fontSize = 40.sp,
+                    fontSize = 44.sp,
                     fontWeight = FontWeight.ExtraBold,
+                    lineHeight = 44.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-            }
 
-            // Footer
-            Text(
-                text = subtitle,
-                color = Color.White.copy(alpha = 0.95f),
-                fontSize = 12.sp,
-                lineHeight = 14.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+                // Subtle divider
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color.White.copy(alpha = 0.25f))
+                )
+
+                // Footer subtitle
+                Text(
+                    text = subtitle,
+                    color = Color.White.copy(alpha = 0.88f),
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -180,91 +208,102 @@ private fun FullWidthCard(
     title: String,
     value: String,
     subtitle: String,
-    color: Color,
+    gradient: Brush,
     icon: ImageVector
 ) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 450, easing = EaseOutCubic),
+        label = "card_alpha"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .clip(RoundedCornerShape(14.dp)),
-        colors = CardDefaults.cardColors(containerColor = color),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        shape = RoundedCornerShape(14.dp)
+            .graphicsLayer { this.alpha = alpha }
+            .clip(RoundedCornerShape(18.dp)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(18.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(color, color.copy(alpha = 0.92f))
-                    )
-                )
-                .padding(horizontal = 14.dp, vertical = 8.dp)
+                .background(gradient)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Header row: title and optional action/icon
+                // Header row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = title.uppercase(),
-                        color = Color.White.copy(alpha = 0.95f),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    // small icon at header (decorative)
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.12f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.White.copy(alpha = 0.18f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            text = title.uppercase(),
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
 
-                // Big info row
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = value,
-                        color = Color.White,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
+                // Value
+                Text(
+                    text = value,
+                    color = Color.White,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
-                    Spacer(modifier = Modifier.weight(1f))
-                }
+                Spacer(Modifier.height(6.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
+                // Subtle separator
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color.White.copy(alpha = 0.25f))
+                )
 
-                // Subtitle wraps and drives card height
+                Spacer(Modifier.height(6.dp))
+
+                // Subtitle
                 Text(
                     text = subtitle,
-                    color = Color.White.copy(alpha = 0.95f),
+                    color = Color.White.copy(alpha = 0.88f),
                     fontSize = 12.sp,
-                    lineHeight = 14.sp
+                    lineHeight = 16.sp
                 )
             }
         }
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF0F1720)
+@Preview(showBackground = true, backgroundColor = 0xFF060d39)
 @Composable
 fun CardsContainerPreview() {
     Surface(modifier = Modifier.fillMaxSize(), color = SurfaceBg) {

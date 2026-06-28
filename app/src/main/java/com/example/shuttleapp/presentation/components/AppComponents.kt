@@ -19,6 +19,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddBox
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
@@ -133,50 +134,69 @@ fun BottomBarComponent(accountId: String? = "", navController: NavController) {
     BottomAppBar(
         modifier = Modifier.fillMaxWidth(),
         containerColor = NavyBlue,
-        contentColor = White
+        contentColor = White,
+        tonalElevation = 8.dp
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround
         ) {
             NavigationItem(
                 icon = Icons.Default.Home,
                 label = "Home",
-                onClick = {
-                    /*TODO */
-                }
+                isActive = true,
+                onClick = { /* TODO */ }
             )
             NavigationItem(
                 icon = Icons.Default.AddBox,
-                label = "Add View Edit",
+                label = "New Pass",
+                isActive = false,
                 onClick = {
                     navController.navigate(Route.AVCurrentPassScreen.route + "/$accountId")
                 }
             )
-
             NavigationItem(
-                icon = Icons.Default.Menu,
-                label = "More",
+                icon = Icons.Default.History,
+                label = "Pass List",
+                isActive = false,
                 onClick = {
-                    /*TODO */
+                    navController.navigate(Route.ShuttlePassListScreen.route + "/$accountId")
                 }
             )
-
         }
     }
 }
 
 //TODO use this all throughout
 @Composable
-fun NavigationItem(icon: ImageVector, label: String, onClick: () -> Unit) {
+fun NavigationItem(
+    icon: ImageVector,
+    label: String,
+    isActive: Boolean = false,
+    onClick: () -> Unit
+) {
     Column(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = White)
-        Text(text = label, color = White, fontSize = 12.sp)
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = if (isActive) White else White.copy(alpha = 0.55f),
+            modifier = Modifier.size(if (isActive) 26.dp else 24.dp)
+        )
+        Text(
+            text = label,
+            color = if (isActive) White else White.copy(alpha = 0.55f),
+            fontSize = 11.sp,
+            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
+        )
     }
 }
 

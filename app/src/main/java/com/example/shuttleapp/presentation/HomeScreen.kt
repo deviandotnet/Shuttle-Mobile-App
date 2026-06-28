@@ -16,20 +16,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,11 +50,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -198,95 +208,115 @@ fun HomeScreen(
             Box(modifier = Modifier
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)) {
+
+                // Full-screen gradient background (navy → slightly lighter)
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(NavyBlue),/*.systemBarsPadding(),*/
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    NavyBlue,
+                                    Color(0xFF0D1550)
+                                )
+                            )
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(0.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(Modifier.height(16.dp))
 
-                )
-
-                {
-                    Spacer(Modifier.weight(1f))
                     CardsContainer(
                         lateShuttleCount = cardState.lateShuttleCount,
                         unsyncedShuttleCount = cardState.unsyncedShuttleCount,
                         passengerCount = draftedPassengerListState.list.size,
-                        tripType = if(draftedShuttlePassState.data != null) draftedShuttlePassState.data!!.tripType else "",
+                        tripType = if (draftedShuttlePassState.data != null) draftedShuttlePassState.data!!.tripType else "",
                         currentRoute = draftedShuttlePassState.data?.let { cardState.currentRoute } ?: ""
                     )
 
-                    Spacer(Modifier.weight(1f))
-                    //card white for shuttle pass list
-                    Row(verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()) {
+                    Spacer(Modifier.height(16.dp))
+
+                    // --- Completed Shuttle Pass panel ---
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                        color = Color(0xFFF6F8FC),
+                        shadowElevation = 12.dp
+                    ) {
                         Column(
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally)
-                        {
-
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(250.dp)
-                                    .background(
-                                        White,
-                                        RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-                                    )
-                                    .padding(start = 12.dp, end = 12.dp, top = 12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Top
-
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(start = 16.dp, end = 16.dp, top = 20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Top
+                        ) {
+                            // Panel header
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically)
-                                {
-                                    Text(text = "Completed Shuttle Pass", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-
-                                    Spacer(Modifier.weight(1f))
-
-                                    Icon(
-                                        contentDescription = "Navigate to Shuttle Pass List",
-                                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                                        tint = Blue,
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
                                         modifier = Modifier
-                                            .size(34.dp)
-                                            .clickable {
-                                                //navigate to shuttle lists
-                                                navController.navigate(Route.ShuttlePassListScreen.route + "/${userId}")
-                                            }
-
+                                            .size(36.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(NavyBlue.copy(alpha = 0.10f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.History,
+                                            contentDescription = null,
+                                            tint = NavyBlue,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Spacer(Modifier.width(10.dp))
+                                    Text(
+                                        text = "Completed Passes",
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = NavyBlue
                                     )
-
                                 }
 
-                                Spacer(modifier = Modifier.padding(4.dp))
-
-                                Box(
+                                Icon(
+                                    contentDescription = "Navigate to Shuttle Pass List",
+                                    imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                                    tint = Blue,
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(1.dp)
-                                        .background(LightGray) // Apply border color
+                                        .size(28.dp)
+                                        .clickable {
+                                            navController.navigate(Route.ShuttlePassListScreen.route + "/${userId}")
+                                        }
                                 )
+                            }
 
-                                //ShuttlePassList(viewState.list, navController, viewModel)
+                            Spacer(Modifier.height(14.dp))
+                            HorizontalDivider(color = LightGray)
+                            Spacer(Modifier.height(8.dp))
 
-                                when {
-                                    viewState.loading -> {
-                                        CircularProgressIndicator(modifier.align(Alignment.CenterHorizontally))
-                                    }
-                                    viewState.error != null -> {
-                                        Text("Error occurred. Please try again.")
-                                    }
-                                    viewState.list.isEmpty() -> {
-                                        Text("No items to display.")
-                                    }
-                                    else -> {
-                                        ShuttlePassList(userId,viewState.list, navController) //get
-                                    }
+                            when {
+                                viewState.loading -> {
+                                    Spacer(Modifier.height(32.dp))
+                                    CircularProgressIndicator(color = NavyBlue)
+                                }
+                                viewState.error != null -> {
+                                    Spacer(Modifier.height(32.dp))
+                                    Text("Error occurred. Please try again.", color = Red)
+                                }
+                                viewState.list.isEmpty() -> {
+                                    Spacer(Modifier.height(32.dp))
+                                    Text(
+                                        "No completed passes yet.",
+                                        color = Color.Gray,
+                                        fontStyle = FontStyle.Italic
+                                    )
+                                }
+                                else -> {
+                                    ShuttlePassList(userId, viewState.list, navController)
                                 }
                             }
                         }
@@ -300,146 +330,172 @@ fun HomeScreen(
 
 
 @Composable
-fun ShuttlePassList(id: String, items: List<ShuttlePassWithPassengerEntity>, navController: NavController){
-
+fun ShuttlePassList(id: String, items: List<ShuttlePassWithPassengerEntity>, navController: NavController) {
     LazyColumn {
-
-        items(items.takeLast(2).reversed()) {item ->
+        items(
+            items = items.takeLast(2).reversed(),
+            key = { it.shuttlePass.id }
+        ) { item ->
             ShuttlePassListItem(item, navController)
         }
-
     }
 
-    if(items.size > 2) {
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(LightGray) // Apply border color
-        )
-
+    if (items.size > 2) {
+        Spacer(Modifier.height(8.dp))
+        HorizontalDivider(color = LightGray)
         TextButton(
-            onClick = {
-                navController.navigate(Route.ShuttlePassListScreen.route + "/${id}")
-            },
-            modifier = Modifier
+            onClick = { navController.navigate(Route.ShuttlePassListScreen.route + "/${id}") },
+            modifier = Modifier.fillMaxWidth()
         ) {
-
             Text(
-                text = "See more items", color = Blue, fontSize = 16.sp, fontWeight = FontWeight.Medium,
-                textDecoration = TextDecoration.Underline
+                text = "See all passes →",
+                color = Blue,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold
             )
         }
-
-
-
     }
-
 }
 
-@Composable//1st param, para sa display, 2nd param, for passing instance, para may display dun sa navigation
+@Composable
 fun ShuttlePassListItem(shuttlePassenger: ShuttlePassWithPassengerEntity, navController: NavController) {
 
     var route by remember { mutableStateOf("") }
-
-    val viewModel: ShuttleViewModel = hiltViewModel<ShuttleViewModel>()
+    val viewModel: ShuttleViewModel = hiltViewModel()
 
     LaunchedEffect(shuttlePassenger) {
         route = viewModel.unflowGetRouteById(shuttlePassenger.shuttlePass.routeId)
-
     }
 
+    val isLate = shuttlePassenger.shuttlePass.isLateShuttle
+    val isSynced = shuttlePassenger.shuttlePass.isSynced
 
-
-    Row(modifier = Modifier
-        .padding(start = 8.dp, end = 8.dp)
-        .clickable {
-            val id = shuttlePassenger.shuttlePass.id
-            navController.navigate(Route.ShuttlePassItemScreen.route + "/$id")
-        }
-        .fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.SpaceBetween)
-    {
-        Column(
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Center)
-        {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-
-                if(shuttlePassenger.shuttlePass.isLateShuttle) {
-
-                    Icon(
-                        contentDescription = "status",
-                        imageVector = Icons.Filled.AccessTime,
-                        tint = Red,
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Text(" Late", color = Red, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
-                    Text(
-                        " ${shuttlePassenger.shuttlePass.date} (${formatTimeHHmm(shuttlePassenger.shuttlePass.departure)} - ${formatTimeHHmm(shuttlePassenger.shuttlePass.arrival)})",
-                        color = Red,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                else {
-
-                    Text(
-                        "${shuttlePassenger.shuttlePass.date} (${formatTimeHHmm(shuttlePassenger.shuttlePass.departure)} - ${formatTimeHHmm(shuttlePassenger.shuttlePass.arrival)})",
-                        color = Color.DarkGray,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-
-            }
-
-            Text(text = "SPT-${displayMonthYear()}-${shuttlePassenger.shuttlePass.id.takeLast(12).uppercase()}",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp)
-
-            Text(text = "$route - ${shuttlePassenger.shuttlePass.tripType}",
-                color = Black,
-                fontWeight = FontWeight.Normal,
-                fontSize = 12.sp)
-
-        }
-
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.Top
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = if (shuttlePassenger.shuttlePass.isSynced) "Synced" else "Not Synced",
-
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.sp,
-                    color = if (shuttlePassenger.shuttlePass.isSynced) Color.Unspecified else Gray,
-                    fontStyle = if (shuttlePassenger.shuttlePass.isSynced) FontStyle.Italic else FontStyle.Italic
-                )
-                Icon(
-                    contentDescription = "status",
-                    imageVector = Icons.Filled.CheckCircle,
-                    tint = if (shuttlePassenger.shuttlePass.isSynced) Green else Gray,
-                    modifier = Modifier.size(12.dp)
-                )
-            }
-
-        }
-
-    }
-
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(1.dp)
-            .background(LightGray) // Apply border color
-    )
+            .padding(vertical = 5.dp)
+            .clickable {
+                val id = shuttlePassenger.shuttlePass.id
+                navController.navigate(Route.ShuttlePassItemScreen.route + "/$id")
+            },
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isLate) Color(0xFFFFF3F3) else Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Left: coloured indicator bar + content
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                // Coloured left indicator
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(52.dp)
+                        .clip(CircleShape)
+                        .background(if (isLate) Red else Green)
+                )
+                Spacer(Modifier.width(12.dp))
 
+                Column {
+                    // Date + time line
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isLate) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Red.copy(alpha = 0.12f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Filled.AccessTime,
+                                        tint = Red,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(10.dp)
+                                    )
+                                    Spacer(Modifier.width(3.dp))
+                                    Text(
+                                        "LATE",
+                                        color = Red,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 0.5.sp
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.width(6.dp))
+                        }
+                        Text(
+                            text = "${shuttlePassenger.shuttlePass.date}  ${formatTimeHHmm(shuttlePassenger.shuttlePass.departure)} — ${formatTimeHHmm(shuttlePassenger.shuttlePass.arrival)}",
+                            color = if (isLate) Red else Color(0xFF5A6473),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Spacer(Modifier.height(3.dp))
+
+                    // Pass ID
+                    Text(
+                        text = "SPT-${displayMonthYear()}-${shuttlePassenger.shuttlePass.id.takeLast(12).uppercase()}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = NavyBlue,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(Modifier.height(2.dp))
+
+                    // Route + trip type
+                    Text(
+                        text = "$route · ${shuttlePassenger.shuttlePass.tripType}",
+                        color = Color(0xFF8A94A0),
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            // Right: sync status pill
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        if (isSynced) Green.copy(alpha = 0.12f)
+                        else Color(0xFFF0F0F0)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        tint = if (isSynced) Green else Color.LightGray,
+                        contentDescription = null,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = if (isSynced) "Synced" else "Unsynced",
+                        color = if (isSynced) Green else Color.Gray,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
 }
 
 //@Composable
