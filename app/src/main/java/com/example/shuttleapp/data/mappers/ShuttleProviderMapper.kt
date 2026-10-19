@@ -12,6 +12,15 @@ fun ShuttleProviderDto.toShuttleProviderEntity() : ShuttleProviderEntity {
     )
 }
 
+// Only active providers are cached locally (they come from login / the provider list).
+fun ShuttleProvider.toEntity() : ShuttleProviderEntity {
+    return ShuttleProviderEntity(
+        shuttleProviderId = shuttleProviderId,
+        providerName = providerName,
+        isActive = true
+    )
+}
+
 fun ShuttleProviderEntity.toShuttleProvider() : ShuttleProvider {
     return ShuttleProvider(
         shuttleProviderId = shuttleProviderId,

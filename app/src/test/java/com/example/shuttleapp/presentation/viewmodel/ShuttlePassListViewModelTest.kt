@@ -9,6 +9,7 @@ import com.example.shuttleapp.domain.model.SyncResult
 import com.example.shuttleapp.presentation.events.ShuttlePassListAction
 import com.example.shuttleapp.presentation.events.ShuttlePassListEvent
 import com.example.shuttleapp.domain.model.TokenStatus
+import com.example.shuttleapp.presentation.mapper.ShuttlePassItemUiMapper
 import com.example.shuttleapp.presentation.state.ReauthState
 import com.example.shuttleapp.presentation.state.SyncStatus
 import com.example.shuttleapp.testutil.FakeNetworkMonitor
@@ -54,7 +55,7 @@ class ShuttlePassListViewModelTest {
         viewModel = ShuttlePassListViewModel(
             savedStateHandle = SavedStateHandle(mapOf("id" to "driver-1")),
             shuttlePassRepository = repository,
-            routesRepository = FakeRoutesRepository(mapOf("r1" to "Villa Estrella")),
+            itemUiMapper = ShuttlePassItemUiMapper(FakeRoutesRepository(mapOf("r1" to "Villa Estrella"))),
             sessionRepository = sessionRepository,
             networkMonitor = networkMonitor
         )

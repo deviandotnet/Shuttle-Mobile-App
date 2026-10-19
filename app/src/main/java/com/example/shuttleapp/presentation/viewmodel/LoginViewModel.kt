@@ -3,7 +3,7 @@ package com.example.shuttleapp.presentation.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.shuttleapp.data.network.request.LoginRequestBodyDto
+import com.example.shuttleapp.domain.model.LoginCredentials
 import com.example.shuttleapp.domain.repository.AuthRepository
 import com.example.shuttleapp.domain.usecase.login.ValidateLoginInput
 import com.example.shuttleapp.presentation.events.LoginInputEvent
@@ -30,10 +30,11 @@ class LoginViewModel @Inject constructor(
     private val _loginState = MutableStateFlow(LoginState())
     val loginState: StateFlow<LoginState> get() = _loginState
 
-    fun postLogin(credentialDto: LoginRequestBodyDto) {
+    private fun login() {
+        val credentials = LoginCredentials(username = _loginState.value.username, password = _loginState.value.password)
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val response = authRepository.postLogin(credentialDto)
+                val response = authRepository.postLogin(credentials)
                 response.collectLatest { result ->
                     when(result) {
                         is Resource.Error -> {
@@ -85,7 +86,7 @@ class LoginViewModel @Inject constructor(
                 _loginState.value = _loginState.value.copy(isPasswordShown = event.isShown)
             }
             LoginInputEvent.Submit -> {
-                submitLogin()
+                if (submitLogin()) login()
             }
 
 
@@ -121,7 +122,7 @@ class LoginViewModel @Inject constructor(
         _loginState.value = LoginState()
     }
     fun resetLoginValidationMessage() {
-        _loginState.value.loginErrorMessage = null
+        _loginState.update { it.copy(loginErrorMessage = null) }
 
 
     }

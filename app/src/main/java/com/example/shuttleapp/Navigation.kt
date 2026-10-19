@@ -30,11 +30,11 @@ fun Navigation(
     NavHost(navController = navController, startDestination = startDestination) {
 
         composable(route = Route.RegisterScreen.route) {
-            RegisterScreen(navController = navController)
+            RegisterScreen(registerViewModel = hiltViewModel(), navController = navController)
         }
 
         composable(route = Route.LoginScreen.route) {
-            LoginScreen(navController = navController)
+            LoginScreen(loginViewModel = hiltViewModel(), navController = navController)
         }
 
         composable(
@@ -130,7 +130,7 @@ fun Navigation(
             )
         ) { entry ->
             val id = entry.arguments?.getString("id") ?: ""
-            QRScannerScreen(id, navController)
+            QRScannerScreen(id, navController, qrAnalyzerViewModel = hiltViewModel())
         }
     }
 }

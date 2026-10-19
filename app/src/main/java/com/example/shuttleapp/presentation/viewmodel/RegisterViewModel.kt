@@ -2,7 +2,7 @@ package com.example.shuttleapp.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.shuttleapp.data.network.request.RegisterDto
+import com.example.shuttleapp.domain.model.Registration
 import com.example.shuttleapp.domain.repository.AuthRepository
 import com.example.shuttleapp.domain.repository.ShuttleProviderRepository
 import com.example.shuttleapp.domain.usecase.login.ValidatePasswordInput
@@ -96,7 +96,17 @@ class RegisterViewModel @Inject constructor(
             }
         }
     }
-    fun registerAccount(account: RegisterDto) {
+    private fun registerAccount() {
+        val state = _registerState.value
+        val account = Registration(
+            firstName = state.firstName,
+            lastName = state.lastName,
+            middleName = state.middleName,
+            password = state.password,
+            shuttleProviderId = state.provider,
+            userName = state.userName,
+            employeeNumber = state.employeeNumber
+        )
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val response = authRepository.postRegister(account)
@@ -171,7 +181,7 @@ class RegisterViewModel @Inject constructor(
                 _registerState.update { it.copy(isRepeatPasswordShown = event.isRePasswordShown) }
             }
             RegisterInputEvent.Submit -> {
-                submitRegistration()
+                if (submitRegistration()) registerAccount()
             }
 
 

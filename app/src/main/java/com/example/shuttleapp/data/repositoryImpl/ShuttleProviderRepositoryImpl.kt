@@ -1,7 +1,7 @@
 package com.example.shuttleapp.data.repositoryImpl
 
 import android.util.Log
-import com.example.shuttleapp.data.local.ShuttleProviderEntity
+import com.example.shuttleapp.data.mappers.toEntity
 import com.example.shuttleapp.data.mappers.toShuttleProvider
 import com.example.shuttleapp.data.mappers.toShuttleProviderEntity
 import com.example.shuttleapp.domain.model.ShuttleProvider
@@ -20,10 +20,10 @@ class ShuttleProviderRepositoryImpl @Inject constructor(
     private val api: ShuttleApi
 ) : ShuttleProviderRepository{
 
-    override suspend fun insertShuttleProvider(shuttleProvider: ShuttleProviderEntity) {
+    override suspend fun insertShuttleProvider(shuttleProvider: ShuttleProvider) {
 
         try {
-            database.ShuttleProviderDao().insertShuttleProvider(shuttleProvider)
+            database.ShuttleProviderDao().insertShuttleProvider(shuttleProvider.toEntity())
         } catch (ex: Exception) {
             ex.printStackTrace()
             Log.e("ShuttleProviderRepositoryImpl_insert", "${ex.message}")

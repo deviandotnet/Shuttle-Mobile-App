@@ -2,10 +2,7 @@ package com.example.shuttleapp.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.core.content.edit
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,20 +31,21 @@ interface SessionStore {
 
 /**
  * [SessionStore] backed by EncryptedSharedPreferences (tokens and account ids are sensitive).
- * security-crypto is deprecated upstream; keeping it behind [SessionStore] lets it move to DataStore + Tink later.
+ * If encrypted storage is unusable on the device, it keeps the session in memory only (the driver signs in
+ * again after a restart) rather than crashing or falling back to plain storage.
  */
 @Singleton
 class EncryptedSessionStore @Inject constructor(
     @ApplicationContext private val context: Context
 ) : SessionStore {
 
-    private val prefs: SharedPreferences by lazy { openPrefs() }
+    private val prefs: SharedPreferences? by lazy { EncryptedPrefs.open(context, FILE_NAME) }
     private val _state: MutableStateFlow<StoredSession?> by lazy { MutableStateFlow(readPrefs()) }
 
     override val state: StateFlow<StoredSession?> get() = _state
 
     override fun write(session: StoredSession) {
-        prefs.edit {
+        prefs?.edit {
             putString(KEY_ACCOUNT_ID, session.accountId)
             putString(KEY_USERNAME, session.username)
             putString(KEY_DISPLAY_NAME, session.displayName)
@@ -60,16 +58,17 @@ class EncryptedSessionStore @Inject constructor(
 
     override fun markTokenExpired() {
         if (_state.value?.token == null) return
-        prefs.edit { putBoolean(KEY_TOKEN_EXPIRED, true) }
+        prefs?.edit { putBoolean(KEY_TOKEN_EXPIRED, true) }
         _state.update { it?.copy(tokenExpired = true) }
     }
 
     override fun clear() {
-        prefs.edit { clear() }
+        prefs?.edit { clear() }
         _state.value = null
     }
 
     private fun readPrefs(): StoredSession? {
+        val prefs = prefs ?: return null
         val accountId = prefs.getString(KEY_ACCOUNT_ID, null) ?: return null
         return StoredSession(
             accountId = accountId,
@@ -78,30 +77,6 @@ class EncryptedSessionStore @Inject constructor(
             token = prefs.getString(KEY_TOKEN, null),
             expiresAtMillis = if (prefs.contains(KEY_EXPIRES_AT)) prefs.getLong(KEY_EXPIRES_AT, 0L) else null,
             tokenExpired = prefs.getBoolean(KEY_TOKEN_EXPIRED, false)
-        )
-    }
-
-    private fun openPrefs(): SharedPreferences {
-        return try {
-            createEncryptedPrefs()
-        } catch (ex: Exception) {
-            // A lost or corrupted Keystore key makes the file unreadable; start clean (driver signs in once more).
-            Log.e("SessionStore", "Resetting unreadable session store", ex)
-            context.deleteSharedPreferences(FILE_NAME)
-            createEncryptedPrefs()
-        }
-    }
-
-    private fun createEncryptedPrefs(): SharedPreferences {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        return EncryptedSharedPreferences.create(
-            context,
-            FILE_NAME,
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
     }
 

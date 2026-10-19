@@ -5,8 +5,9 @@ import com.example.shuttleapp.data.mappers.toEntity
 import com.example.shuttleapp.data.mappers.toShuttleProviderEntity
 import com.example.shuttleapp.data.mappers.toUserData
 import com.example.shuttleapp.data.network.AuthApi
-import com.example.shuttleapp.data.network.request.LoginRequestBodyDto
-import com.example.shuttleapp.data.network.request.RegisterDto
+import com.example.shuttleapp.data.mappers.toDto
+import com.example.shuttleapp.domain.model.LoginCredentials
+import com.example.shuttleapp.domain.model.Registration
 import com.example.shuttleapp.domain.model.UserData
 import com.example.shuttleapp.domain.repository.AuthRepository
 import com.example.shuttleapp.config.ShuttleDatabase
@@ -15,6 +16,7 @@ import com.example.shuttleapp.domain.repository.SessionRepository
 import com.example.shuttleapp.util.Resource
 import com.example.shuttleapp.util.parseIsoUtcMillis
 import java.io.IOException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -26,14 +28,14 @@ class AuthRepositoryImpl @Inject constructor(
     //private val shuttleApi: ShuttleApi
 ) : AuthRepository {
 
-    override suspend fun postLogin(credentialDto: LoginRequestBodyDto): Flow<Resource<UserData>> {
+    override suspend fun postLogin(credentials: LoginCredentials): Flow<Resource<UserData>> {
 
         return flow {
             emit(Resource.Loading(true))
 
             try {
 
-                val response = authApi.postLogin(credentialDto)
+                val response = authApi.postLogin(credentials.toDto())
 
                 if (response.isSuccessful) {
 
@@ -92,14 +94,27 @@ class AuthRepositoryImpl @Inject constructor(
                             emit(Resource.Error("Login failed. The server returned no account."))
                         } else {
                             // The session keeps the driver signed in offline until an explicit logout.
-                            sessionRepository.start(
-                                accountId = userDataEntity.accountId,
-                                username = credentialDto.username,
-                                displayName = "${userDataEntity.firstName} ${userDataEntity.lastName}".trim(),
-                                token = body.token,
-                                expiresAtMillis = parseIsoUtcMillis(body.expiresAt)
-                            )
-                            emit(Resource.Success(userDataEntity.toUserData()))
+                            // Saved separately so a device storage failure isn't reported as a network error.
+                            val sessionSaved = try {
+                                sessionRepository.start(
+                                    accountId = userDataEntity.accountId,
+                                    username = credentials.username,
+                                    displayName = "${userDataEntity.firstName} ${userDataEntity.lastName}".trim(),
+                                    token = body.token,
+                                    expiresAtMillis = parseIsoUtcMillis(body.expiresAt)
+                                )
+                                true
+                            } catch (ex: CancellationException) {
+                                throw ex
+                            } catch (ex: Exception) {
+                                Log.e("startSession", "Could not save the session", ex)
+                                false
+                            }
+                            if (sessionSaved) {
+                                emit(Resource.Success(userDataEntity.toUserData()))
+                            } else {
+                                emit(Resource.Error("Signed in, but this device couldn't save the sign-in. Please try again."))
+                            }
                         }
 
                     } else {
@@ -123,13 +138,13 @@ class AuthRepositoryImpl @Inject constructor(
 
     }
 
-    override suspend fun postRegister(registerDto: RegisterDto) : Flow<Resource<String>> {
+    override suspend fun postRegister(registration: Registration) : Flow<Resource<String>> {
 
         return flow {
             emit(Resource.Loading(true))
 
             try {
-                val response = authApi.postRegister(registerDto)
+                val response = authApi.postRegister(registration.toDto())
 
                 if(response.isSuccessful) {
 
@@ -141,8 +156,13 @@ class AuthRepositoryImpl @Inject constructor(
                     else {
                         emit(Resource.Success(body?.title))
                     }
+                } else {
+                    // ASP.NET validation errors come back as non-2xx; without this the screen stays on loading.
+                    emit(Resource.Error("Registration failed. ${response.message().ifBlank { "Error ${response.code()}" }}"))
                 }
 
+            } catch (ex: IOException) {
+                emit(Resource.Error(AuthMessages.SIGN_IN_NEEDS_INTERNET))
             } catch (ex: Exception) {
                 emit(Resource.Error("Connection failed. Cannot connect to server."))
                 ex.printStackTrace()

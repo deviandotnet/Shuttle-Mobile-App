@@ -14,6 +14,7 @@ import com.example.shuttleapp.domain.model.TokenStatus
 import com.example.shuttleapp.domain.repository.SessionRepository
 import com.example.shuttleapp.util.Resource
 import com.example.shuttleapp.util.parseIsoUtcMillis
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,8 +42,16 @@ class SessionRepositoryImpl @Inject constructor(
 
     init {
         scope.launch(io) {
-            migrateRememberedUser()
-            store.state.collect { _session.value = it.toSessionLoad() }
+            try {
+                migrateRememberedUser()
+                store.state.collect { _session.value = it.toSessionLoad() }
+            } catch (ex: CancellationException) {
+                throw ex
+            } catch (ex: Exception) {
+                // Never leave the app stuck on the loading screen (or crash it) because the store is unreadable:
+                // the driver can still sign in, and their passes in the database are untouched.
+                _session.value = SessionLoad.SignedOut
+            }
         }
     }
 
@@ -80,6 +89,8 @@ class SessionRepositoryImpl @Inject constructor(
                     Resource.Success(Unit)
                 }
             }
+        } catch (ex: CancellationException) {
+            throw ex
         } catch (ex: IOException) {
             Resource.Error(AuthMessages.SIGN_IN_NEEDS_INTERNET)
         } catch (ex: Exception) {
@@ -113,6 +124,8 @@ class SessionRepositoryImpl @Inject constructor(
                 tokenExpired = false
             )
         )
+        // The legacy table holds driver PII; once the session lives in the encrypted store it is no longer needed.
+        rememberedUserDao.deleteLoggedUser()
     }
 
     private fun StoredSession?.toSessionLoad(): SessionLoad {

@@ -5,21 +5,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.shuttleapp.domain.model.PassFilter
 import com.example.shuttleapp.domain.model.SessionLoad
-import com.example.shuttleapp.domain.model.ShuttlePassWithPassenger
 import com.example.shuttleapp.domain.model.TokenStatus
 import com.example.shuttleapp.domain.repository.NetworkMonitor
-import com.example.shuttleapp.domain.repository.RoutesRepository
 import com.example.shuttleapp.domain.repository.SessionRepository
 import com.example.shuttleapp.domain.repository.ShuttlePassRepository
 import com.example.shuttleapp.presentation.events.ShuttlePassListAction
 import com.example.shuttleapp.presentation.events.ShuttlePassListEvent
+import com.example.shuttleapp.presentation.mapper.ShuttlePassItemUiMapper
 import com.example.shuttleapp.presentation.state.ReauthState
-import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
 import com.example.shuttleapp.presentation.state.ShuttlePassListState
 import com.example.shuttleapp.presentation.state.SyncStatus
 import com.example.shuttleapp.util.Resource
-import com.example.shuttleapp.util.formatMonthYear
-import com.example.shuttleapp.util.formatTimeHHmm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -40,7 +36,7 @@ import javax.inject.Inject
 class ShuttlePassListViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val shuttlePassRepository: ShuttlePassRepository,
-    private val routesRepository: RoutesRepository,
+    private val itemUiMapper: ShuttlePassItemUiMapper,
     private val sessionRepository: SessionRepository,
     networkMonitor: NetworkMonitor
 ) : ViewModel() {
@@ -50,7 +46,6 @@ class ShuttlePassListViewModel @Inject constructor(
     private val filter = MutableStateFlow(PassFilter.All)
     private val syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     private val reauth = MutableStateFlow<ReauthState?>(null)
-    private val routeNames = mutableMapOf<String, String>()
 
     private val _events = Channel<ShuttlePassListEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
@@ -58,7 +53,7 @@ class ShuttlePassListViewModel @Inject constructor(
     // flatMapLatest cancels the previous filter's query, so a stale filter can't overwrite the list.
     private val items = filter
         .flatMapLatest { shuttlePassRepository.observePasses(driverId, it) }
-        .map { passes -> passes.sortedByDescending { it.shuttlePass.dateCreated }.map { it.toUi() } }
+        .map { passes -> itemUiMapper.toUi(passes) }
 
     private val connection = combine(networkMonitor.isOnline, sessionRepository.session, reauth) { online, session, reauth ->
         val needsSignIn = (session as? SessionLoad.SignedIn)?.session?.tokenStatus == TokenStatus.Expired
@@ -133,28 +128,6 @@ class ShuttlePassListViewModel @Inject constructor(
 
     private fun send(event: ShuttlePassListEvent) {
         viewModelScope.launch { _events.send(event) }
-    }
-
-    private suspend fun ShuttlePassWithPassenger.toUi(): ShuttlePassItemUi {
-        val pass = shuttlePass
-        return ShuttlePassItemUi(
-            id = pass.id,
-            code = "SPT-${formatMonthYear(pass.dateCreated)}-${pass.id.takeLast(12).uppercase()}",
-            schedule = "${pass.date}  ${formatTimeHHmm(pass.departure)} — ${formatTimeHHmm(pass.arrival)}",
-            routeAndTrip = "${routeName(pass.routeId)} · ${pass.tripType}",
-            isLate = pass.isLateShuttle,
-            isSynced = pass.isSynced
-        )
-    }
-
-    private suspend fun routeName(routeId: String): String {
-        routeNames[routeId]?.let { return it }
-        // A missing route shows a blank name rather than failing the whole list; it is retried next emission.
-        return try {
-            routesRepository.getRouteNameById(routeId).also { routeNames[routeId] = it }
-        } catch (ex: Exception) {
-            ""
-        }
     }
 
     private data class Connection(val isOnline: Boolean, val needsSignIn: Boolean, val reauth: ReauthState?)

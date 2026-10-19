@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.example.shuttleapp.domain.model.PassengerQR
@@ -57,8 +56,7 @@ import com.example.shuttleapp.ui.theme.White
 import com.example.shuttleapp.util.displayTime
 
 @Composable
-fun QRScannerScreen(shuttlePassId: String, navController: NavController) {
-    val qrAnalyzerViewModel: QrAnalyzerViewModel = hiltViewModel()
+fun QRScannerScreen(shuttlePassId: String, navController: NavController, qrAnalyzerViewModel: QrAnalyzerViewModel) {
     val context = LocalContext.current
 
     val passenger by qrAnalyzerViewModel.passengerQR.collectAsState()

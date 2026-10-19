@@ -9,6 +9,16 @@ plugins {
     id("com.google.dagger.hilt.android")
 }
 
+val releaseApiUrl: String? = providers.gradleProperty("shuttleApiUrl").orNull
+
+// A release APK without a real https API URL could never sign in or upload, so refuse to build one.
+gradle.taskGraph.whenReady {
+    val buildsRelease = allTasks.any { it.project == project && it.name.contains("Release") }
+    if (buildsRelease && (releaseApiUrl.isNullOrBlank() || !releaseApiUrl.startsWith("https://"))) {
+        throw GradleException("Release builds need -PshuttleApiUrl=https://<host>/api/ (got: ${releaseApiUrl ?: "nothing"})")
+    }
+}
+
 android {
     namespace = "com.example.shuttleapp"
     compileSdk {
@@ -31,11 +41,9 @@ android {
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:5105/api/\"")
         }
         release {
-            // Pass the production API with -PshuttleApiUrl=https://... (or set it in local/gradle.properties).
-            val releaseApiUrl = providers.gradleProperty("shuttleApiUrl")
-                .getOrElse("https://shuttle-api.invalid/api/")
-            require(releaseApiUrl.startsWith("https://")) { "shuttleApiUrl must use https:// for release builds" }
-            buildConfigField("String", "BASE_URL", "\"$releaseApiUrl\"")
+            // Pass the production API with -PshuttleApiUrl=https://... (or set it in gradle.properties).
+            // Missing/non-https values fail any release task (see the taskGraph guard below), never debug builds.
+            buildConfigField("String", "BASE_URL", "\"${releaseApiUrl.orEmpty()}\"")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -90,6 +98,9 @@ dependencies {
 
     //encrypted session/token storage
     implementation(libs.androidx.security.crypto)
+
+    //encrypted Room database (SQLCipher)
+    implementation(libs.sqlcipher.android)
 
     //COIL
     implementation("io.coil-kt:coil-compose:2.4.0")

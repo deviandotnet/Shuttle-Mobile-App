@@ -10,7 +10,7 @@ data class LoginState(
     val isPasswordShown: Boolean = false,
     val isLoading: Boolean = false,
     val isSuccessfullyLoggedIn: Boolean = false,
-    var loginErrorMessage: String? = null,
+    val loginErrorMessage: String? = null,
     val userData: UserData? = null
 )
 

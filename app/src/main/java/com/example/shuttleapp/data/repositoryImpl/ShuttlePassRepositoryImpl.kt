@@ -15,6 +15,7 @@ import com.example.shuttleapp.domain.model.ShuttlePassWithPassenger
 import com.example.shuttleapp.domain.model.SyncResult
 import com.example.shuttleapp.domain.repository.ShuttlePassRepository
 import com.example.shuttleapp.util.Resource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -90,6 +91,8 @@ class ShuttlePassRepositoryImpl @Inject constructor(
                 dao.updatePassengers(passengers.map { it.toEntity().copy(shuttlePassId = draftId, isDraft = false) })
             }
             Resource.Success(Unit)
+        } catch (ex: CancellationException) {
+            throw ex
         } catch (ex: Exception) {
             Resource.Error("Error completing the shuttle pass: ${ex.localizedMessage}")
         }
@@ -98,6 +101,8 @@ class ShuttlePassRepositoryImpl @Inject constructor(
     override suspend fun syncUnsynced(driverId: String): Resource<SyncResult> {
         val unsynced = try {
             dao.getAllUnsyncedShuttlePasses(driverId)
+        } catch (ex: CancellationException) {
+            throw ex
         } catch (ex: Exception) {
             return Resource.Error("Error loading unsynced shuttle passes: ${ex.localizedMessage}")
         }
@@ -108,6 +113,8 @@ class ShuttlePassRepositoryImpl @Inject constructor(
     override suspend fun syncPass(id: String): Resource<SyncResult> {
         val pass = try {
             dao.getShuttlePassWithPassengerById(id).first()
+        } catch (ex: CancellationException) {
+            throw ex
         } catch (ex: Exception) {
             return Resource.Error("Error loading the shuttle pass: ${ex.localizedMessage}")
         }
@@ -118,6 +125,8 @@ class ShuttlePassRepositoryImpl @Inject constructor(
     override suspend fun purgeExpired(driverId: String): Resource<Int> {
         return try {
             Resource.Success(dao.deleteShuttlePassOnDue(driverId) + dao.deleteAllDraftedShuttlePass(driverId))
+        } catch (ex: CancellationException) {
+            throw ex
         } catch (ex: Exception) {
             Resource.Error("Error deleting expired shuttle passes: ${ex.localizedMessage}")
         }
@@ -125,26 +134,40 @@ class ShuttlePassRepositoryImpl @Inject constructor(
 
     // Posts the given passes and marks only those ids as synced, so a pass finalized mid-request stays unsynced.
     private suspend fun upload(passes: List<ShuttlePassWithPassengerEntity>): Resource<SyncResult> {
-        return try {
-            val response = withContext(Dispatchers.IO) {
+        val response = try {
+            withContext(Dispatchers.IO) {
                 api.postShuttlePassWithPassenger(passes.map { it.toDto() })
             }
-            if (response.isSuccessful) {
-                val ids = passes.map { it.shuttlePass.id }
-                dao.markSynced(ids)
-                Resource.Success(SyncResult(syncedCount = ids.size, message = response.body()?.message))
-            } else if (response.code() == 401) {
-                // AuthInterceptor has already flagged the token as expired; the passes stay unsynced.
-                Resource.Error(AuthMessages.SESSION_EXPIRED)
-            } else {
-                Resource.Error("Failed. Status code: ${response.message()}")
-            }
+        } catch (ex: CancellationException) {
+            throw ex
         } catch (ex: SocketTimeoutException) {
-            Resource.Error("There is something a problem. The server may be offline or experiencing downtime. Please try again later.")
+            return Resource.Error("There is something a problem. The server may be offline or experiencing downtime. Please try again later.")
         } catch (ex: ConnectException) {
-            Resource.Error("Cannot connect to network. Please check your internet connection and try again later.")
+            return Resource.Error("Cannot connect to network. Please check your internet connection and try again later.")
         } catch (ex: Exception) {
-            Resource.Error("Exception: ${ex.localizedMessage ?: "Internal server error.Please try again later."}")
+            return Resource.Error("Exception: ${ex.localizedMessage ?: "Internal server error.Please try again later."}")
+        }
+
+        return when {
+            response.isSuccessful -> markUploaded(passes.map { it.shuttlePass.id }, response.body()?.message)
+            // AuthInterceptor has already flagged the token as expired; the passes stay unsynced.
+            response.code() == 401 -> Resource.Error(AuthMessages.SESSION_EXPIRED)
+            else -> Resource.Error("Failed. Status code: ${response.message()}")
+        }
+    }
+
+    // The server already has these passes; a local failure here must not read like a failed upload.
+    private suspend fun markUploaded(ids: List<String>, message: String?): Resource<SyncResult> {
+        return try {
+            dao.markSynced(ids)
+            Resource.Success(SyncResult(syncedCount = ids.size, message = message))
+        } catch (ex: CancellationException) {
+            throw ex
+        } catch (ex: Exception) {
+            Resource.Error(
+                "Uploaded, but this device couldn't mark the passes as synced (${ex.localizedMessage}). " +
+                    "They may be uploaded again next time."
+            )
         }
     }
 
@@ -152,6 +175,8 @@ class ShuttlePassRepositoryImpl @Inject constructor(
         return try {
             block()
             Resource.Success(Unit)
+        } catch (ex: CancellationException) {
+            throw ex
         } catch (ex: Exception) {
             Resource.Error("Error $action: ${ex.localizedMessage}")
         }

@@ -46,11 +46,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.shuttleapp.R
 import com.example.shuttleapp.Route
-import com.example.shuttleapp.data.network.request.LoginRequestBodyDto
 import com.example.shuttleapp.presentation.components.AuthButton
 import com.example.shuttleapp.presentation.components.HeaderBackground
 import com.example.shuttleapp.presentation.components.TextEntryModule
@@ -60,7 +58,7 @@ import com.example.shuttleapp.ui.theme.*
 
 @Composable
 fun LoginScreen(
-    loginViewModel: LoginViewModel = hiltViewModel(),
+    loginViewModel: LoginViewModel,
     navController: NavController
 ) {
 
@@ -116,21 +114,8 @@ fun LoginScreen(
             },
             passwordErrorMessage = { loginState.passwordErrorMessage },
             onLoginButtonClicked = {
-
-                if (loginViewModel.submitLogin()) {
-                    try {
-                        val postLoginCredentials = LoginRequestBodyDto(
-                            username = loginState.username,
-                            password = loginState.password
-                        )
-                        loginViewModel.postLogin(postLoginCredentials)
-
-                    } catch (ex: Exception) {
-                        ex.printStackTrace()
-                        Log.e("postLogin", ex.message.toString())
-                    }
-                }
-
+                // The ViewModel validates the input and builds the credentials from its own state.
+                loginViewModel.onLoginInputEvent(LoginInputEvent.Submit)
 
             },
             loginErrorMessage = { loginState.loginErrorMessage },

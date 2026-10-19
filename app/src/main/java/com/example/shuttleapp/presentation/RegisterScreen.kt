@@ -40,10 +40,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.shuttleapp.Route
-import com.example.shuttleapp.data.network.request.RegisterDto
 import com.example.shuttleapp.domain.model.ShuttleProvider
 import com.example.shuttleapp.presentation.components.AuthButton
 import com.example.shuttleapp.presentation.components.HeaderBackground
@@ -59,7 +57,7 @@ import com.example.shuttleapp.ui.theme.White
 
 @Composable
 fun RegisterScreen(
-    registerViewModel: RegisterViewModel = hiltViewModel(),
+    registerViewModel: RegisterViewModel,
     navController: NavController
 
 ) {
@@ -145,18 +143,8 @@ fun RegisterScreen(
                 rePasswordErrorMessage = {registerState.repeatPasswordErrorMessage},
 
                 onRegisterButtonClicked = {
-                    if(registerViewModel.submitRegistration()) {
-                        val requestRegister = RegisterDto(
-                            firstName = registerState.firstName,
-                            lastName = registerState.lastName,
-                            middleName = registerState.middleName,
-                            password = registerState.password,
-                            shuttleProviderId = registerState.provider,
-                            userName = registerState.userName,
-                            employeeNumber = registerState.employeeNumber
-                        )
-                        registerViewModel.registerAccount(requestRegister)
-                    }
+                    // The ViewModel validates the form and builds the registration from its own state.
+                    registerViewModel.onRegisterInputEvent(RegisterInputEvent.Submit)
                 },
                 registerErrorMessage = {registerState.registerErrorMessage},
                 isPasswordShown = {registerState.isPasswordShown},

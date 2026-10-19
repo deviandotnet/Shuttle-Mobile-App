@@ -5,4 +5,5 @@
 <full-backup-content>
     <!-- Encrypted session/token store: its Keystore key is never backed up, so a restored copy can't be decrypted. -->
     <exclude domain="sharedpref" path="session_prefs.xml"/>
+    <exclude domain="sharedpref" path="db_key_prefs.xml"/>
 </full-backup-content>

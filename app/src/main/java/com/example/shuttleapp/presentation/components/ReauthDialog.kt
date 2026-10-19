@@ -13,6 +13,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -32,7 +33,8 @@ fun ReauthDialog(
     onDismiss: () -> Unit
 ) {
     var username by rememberSaveable { mutableStateOf(state.username) }
-    var password by rememberSaveable { mutableStateOf("") }
+    // Plain remember: rememberSaveable would write the password into the saved-instance-state Bundle.
+    var password by remember { mutableStateOf("") }
 
     AlertDialog(
         containerColor = White,

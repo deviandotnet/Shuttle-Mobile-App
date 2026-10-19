@@ -27,7 +27,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.shuttleapp.presentation.components.InformationTextDialog
 import com.example.shuttleapp.presentation.components.LoadingDialog
@@ -38,14 +37,16 @@ import com.example.shuttleapp.ui.theme.Green
 import com.example.shuttleapp.ui.theme.Red
 import com.example.shuttleapp.ui.theme.White
 import com.example.shuttleapp.util.Resource
-import com.example.shuttleapp.util.displayMonthYear
+import com.example.shuttleapp.util.formatMonthYear
+import com.example.shuttleapp.presentation.events.QRInputEvent
+import com.example.shuttleapp.Route
 
 import kotlinx.coroutines.launch
 import java.sql.Time
 
 
 @Composable
-fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel = hiltViewModel(), navController: NavController) {
+fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel, navController: NavController) {
 
     val shuttlePassWithPassengers by viewModel.shuttlePassWithPassengers.collectAsState()
     val coroutineScope = rememberCoroutineScope()
@@ -64,7 +65,7 @@ fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel = hiltViewMode
             topBar = {
                 TopBarComponent(
                     navController = navController,
-                    title = "SPT-${displayMonthYear()}-${shuttlePassenger.shuttlePass.id.takeLast(12).uppercase()}",
+                    title = "SPT-${formatMonthYear(shuttlePassenger.shuttlePass.dateCreated)}-${shuttlePassenger.shuttlePass.id.takeLast(12).uppercase()}",
                     action = {
 
 
@@ -134,7 +135,35 @@ fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel = hiltViewMode
                     .consumeWindowInsets(innerPadding)
             ) {
                 Column {
-                    ShuttlePassFormTest(shuttlePassenger.shuttlePass, shuttlePassenger.passengersQR, viewModel, navController)
+                    val pass = shuttlePassenger.shuttlePass
+                    val nameState by viewModel.toNameState.collectAsState()
+                    val qrInputState by viewModel.qrInputState.collectAsState()
+
+                    LaunchedEffect(pass) {
+                        viewModel.getRouteNameById(pass.routeId)
+                        viewModel.getPlateNumberByShuttleId(pass.plateNumber)
+                        viewModel.getProviderNameById(pass.provider)
+                        viewModel.getDriverNameById(pass.driver)
+                    }
+
+                    // A finalized pass is read-only: the form hides its draft-only actions.
+                    ShuttlePassFormTest(
+                        shuttlePass = pass,
+                        draftPassengerList = shuttlePassenger.passengersQR,
+                        nameState = nameState,
+                        qrInputState = qrInputState,
+                        onAddPassenger = { navController.navigate(Route.QrScannerScreen.route + "/${pass.id}") },
+                        onRecordDeparture = { viewModel.recordDeparture(pass) },
+                        onComplete = {
+                            viewModel.completeShuttlePass(pass, shuttlePassenger.passengersQR)
+                            navController.navigateUp()
+                        },
+                        onDeletePassenger = viewModel::deletePassenger,
+                        onStartEditPassenger = viewModel::startEditingPassenger,
+                        onEditQrChanged = { viewModel.onPassengerInputEvent(QRInputEvent.ScannedQRChanged(it)) },
+                        onSaveEditedPassenger = viewModel::saveEditedPassenger,
+                        onCancelEditPassenger = viewModel::resetPassengerInputState
+                    )
                 }
 
             }

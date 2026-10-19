@@ -49,7 +49,8 @@ class ConnectivityNetworkMonitor @Inject constructor(
         return capabilities.hasInternet()
     }
 
+    // Deliberately not NET_CAPABILITY_VALIDATED: that is Android's public-internet probe, and the API may sit
+    // on a depot/company LAN with no internet access. Any connected network is worth trying an upload on.
     private fun NetworkCapabilities.hasInternet(): Boolean =
-        hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-            hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
 }

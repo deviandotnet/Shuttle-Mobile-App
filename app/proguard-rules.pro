@@ -31,6 +31,9 @@
 # security-crypto (Tink) references compile-only errorprone annotations
 -dontwarn com.google.errorprone.annotations.**
 
+# SQLCipher: native code looks these classes up by name
+-keep class net.zetetic.database.** { *; }
+
 # Keep fields annotated with @SerializedName
 -keepclassmembers class * {
     @com.google.gson.annotations.SerializedName <fields>;

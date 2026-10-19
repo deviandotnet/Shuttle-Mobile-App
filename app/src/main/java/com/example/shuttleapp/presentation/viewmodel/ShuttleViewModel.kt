@@ -15,6 +15,7 @@ import com.example.shuttleapp.domain.model.ShuttlePassWithPassenger
 import com.example.shuttleapp.domain.model.PassFilter
 import com.example.shuttleapp.domain.model.SyncResult
 import com.example.shuttleapp.domain.repository.PassengerQRRepository
+import com.example.shuttleapp.presentation.mapper.ShuttlePassItemUiMapper
 import com.example.shuttleapp.domain.repository.RoutesRepository
 import com.example.shuttleapp.domain.repository.ShuttlePassRepository
 import com.example.shuttleapp.domain.usecase.manualaddpassenger.ValidateQRCodeInput
@@ -37,6 +38,7 @@ import com.example.shuttleapp.presentation.state.ShuttleState
 import com.example.shuttleapp.presentation.state.UserState
 import com.example.shuttleapp.util.Resource
 import com.example.shuttleapp.util.displayDate
+import com.example.shuttleapp.util.displayTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -65,6 +67,7 @@ class ShuttleViewModel @Inject constructor(
     private val shuttleProviderRepository: ShuttleProviderRepository,
     private val logoutUseCase: LogoutUseCase,
     private val passengerQRRepository: PassengerQRRepository,
+    private val itemUiMapper: ShuttlePassItemUiMapper,
 
     private val validateQRCodeInput : ValidateQRCodeInput,
     private val validateDriverInput : ValidateDriverInput,
@@ -75,51 +78,51 @@ class ShuttleViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _userState = MutableStateFlow(UserState())
-    val userState : MutableStateFlow<UserState> get() = _userState
+    val userState : StateFlow<UserState> = _userState.asStateFlow()
 
     private val _uiEvents = MutableSharedFlow<ShuttlePassUiEvent>()
     val uiEvents = _uiEvents.asSharedFlow()
 
     private val _routeState = MutableStateFlow(RouteState())
-    val routeState : MutableStateFlow<RouteState> get() = _routeState
+    val routeState : StateFlow<RouteState> = _routeState.asStateFlow()
 
     val shuttleProviders: List<String> = listOf(
         "BCTSS", "3R&N", "CHERICH")
 
     //todo check the
     private val _shuttlePassWithPassengers = MutableStateFlow(ShuttlePassWithPassengerState())
-    val shuttlePassWithPassengers: MutableStateFlow<ShuttlePassWithPassengerState> = _shuttlePassWithPassengers
+    val shuttlePassWithPassengers: StateFlow<ShuttlePassWithPassengerState> = _shuttlePassWithPassengers.asStateFlow()
 
     private val _shuttleState = MutableStateFlow(ShuttleState())
-    val shuttleState : MutableStateFlow<ShuttleState> get() = _shuttleState
+    val shuttleState : StateFlow<ShuttleState> = _shuttleState.asStateFlow()
     //TODO collect the emitted list of shuttle available
 
     private val _id = MutableStateFlow("")
     val id: StateFlow<String> = _id
 
     private val _routeId = MutableStateFlow("")
-    val routeId: MutableStateFlow<String> get() = _routeId
+    val routeId: StateFlow<String> = _routeId.asStateFlow()
 
     private val _shuttlePassListState = MutableStateFlow(ShuttlePassListLegacyState())
-    val shuttlePassListState: MutableStateFlow<ShuttlePassListLegacyState> get() = _shuttlePassListState
+    val shuttlePassListState: StateFlow<ShuttlePassListLegacyState> = _shuttlePassListState.asStateFlow()
 
     private val _draftedShuttlePassState = MutableStateFlow(ShuttlePassState())
     val draftedShuttlePassState: StateFlow<ShuttlePassState> get() = _draftedShuttlePassState.asStateFlow()
 
     private val _passenger = MutableStateFlow(PassengerQR())
-    val passenger: MutableStateFlow<PassengerQR> get() = _passenger
+    val passenger: StateFlow<PassengerQR> = _passenger.asStateFlow()
 
     private val _shuttlePassInputState = MutableStateFlow(ShuttlePassInputState())
-    val shuttlePassInputState: MutableStateFlow<ShuttlePassInputState> get() = _shuttlePassInputState
+    val shuttlePassInputState: StateFlow<ShuttlePassInputState> = _shuttlePassInputState.asStateFlow()
 
     private val _qrInputState = MutableStateFlow(QRInputState())
     val qrInputState: StateFlow<QRInputState> get() = _qrInputState
 
     private val _forUpdateShuttlePass = MutableStateFlow(ShuttlePass())
-    val forUpdateShuttlePass: MutableStateFlow<ShuttlePass> get() = _forUpdateShuttlePass
+    val forUpdateShuttlePass: StateFlow<ShuttlePass> = _forUpdateShuttlePass.asStateFlow()
 
     private val _draftedPassengerListState = MutableStateFlow(PassengerListState())
-    val draftedPassengerListState: MutableStateFlow<PassengerListState> get() = _draftedPassengerListState
+    val draftedPassengerListState: StateFlow<PassengerListState> = _draftedPassengerListState.asStateFlow()
 
     private val _shuttlePass = MutableStateFlow(
         ShuttlePass(
@@ -138,10 +141,10 @@ class ShuttleViewModel @Inject constructor(
             isDraft = true
         )
     )
-    val shuttlePass: MutableStateFlow<ShuttlePass> get() = _shuttlePass
+    val shuttlePass: StateFlow<ShuttlePass> = _shuttlePass.asStateFlow()
 
     private val _editedShuttlePassState = MutableStateFlow(ShuttlePass())
-    val editedShuttlePassState: MutableStateFlow<ShuttlePass> get() = _editedShuttlePassState
+    val editedShuttlePassState: StateFlow<ShuttlePass> = _editedShuttlePassState.asStateFlow()
 
     fun isLateShuttle(tripType: String): Boolean {
         val currentTime: Calendar = Calendar.getInstance()
@@ -196,7 +199,7 @@ class ShuttleViewModel @Inject constructor(
                         }
                         is Resource.Success -> {
                             result.data?.let { userData ->
-                                userState.update { it.copy(
+                                _userState.update { it.copy(
                                     isLoading = false,
                                     userData = userData
                                 ) }
@@ -295,11 +298,13 @@ class ShuttleViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 getAllShuttlePassWithPassenger(driverId).collect { shuttlePassWithPassengers ->
+                    val items = itemUiMapper.toUi(shuttlePassWithPassengers)
                     _shuttlePassListState.update {
                         it.copy(
                             loading = false,
                             error = null,
-                            list = shuttlePassWithPassengers
+                            list = shuttlePassWithPassengers,
+                            items = items
                         )
                     }
                 }
@@ -542,7 +547,7 @@ class ShuttleViewModel @Inject constructor(
 
     }
 
-    suspend fun unflowGetRouteById(id: String) : String {
+    private suspend fun unflowGetRouteById(id: String) : String {
         return routesRepository.getNameByRouteId(id).first()
     }
 
@@ -555,7 +560,7 @@ class ShuttleViewModel @Inject constructor(
     }
 
     private val _toNameState = MutableStateFlow(IdNameState())
-    val toNameState : MutableStateFlow<IdNameState> get() = _toNameState
+    val toNameState : StateFlow<IdNameState> = _toNameState.asStateFlow()
 
     fun getRouteNameById(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -623,6 +628,30 @@ class ShuttleViewModel @Inject constructor(
         }
     }
 
+    // --- Active pass actions (logic that used to live in the AVCurrentPassScreenTest composables) ---
+
+    fun recordDeparture(pass: ShuttlePass) {
+        updateShuttlePass(listOf(pass.copy(departure = displayTime())))
+    }
+
+    fun completeShuttlePass(pass: ShuttlePass, passengers: List<PassengerQR>) {
+        val finalPass = pass.copy(arrival = displayTime(), isLateShuttle = isLateShuttle(pass.tripType))
+        finalizeShuttleDraft(driverId = finalPass.driver, shuttlePass = finalPass, passengers = passengers)
+        resetShuttlePassInputState()
+    }
+
+    fun startEditingPassenger(passenger: PassengerQR) {
+        onPassengerInputEvent(QRInputEvent.ScannedQRChanged(passenger.scannedQR))
+    }
+
+    /** Validates the edited QR code; returns true when it was saved. */
+    fun saveEditedPassenger(passenger: PassengerQR): Boolean {
+        if (!submitManualAddPassenger()) return false
+        updatePassenger(passenger.copy(scannedQR = _qrInputState.value.qrCode))
+        resetPassengerInputState()
+        return true
+    }
+
     fun updateShuttlePass(shuttlePass: List<ShuttlePass>) {
         viewModelScope.launch(Dispatchers.IO) {
             shuttlePassRepository.update(shuttlePass)
@@ -667,7 +696,7 @@ class ShuttleViewModel @Inject constructor(
 
 
     private val _cardState = MutableStateFlow(CardState())
-    val cardState : MutableStateFlow<CardState> = _cardState
+    val cardState : StateFlow<CardState> = _cardState.asStateFlow()
 
     fun getCurrentRouteNameById(id: String) {
         viewModelScope.launch {

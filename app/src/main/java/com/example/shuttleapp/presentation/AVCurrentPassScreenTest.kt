@@ -52,7 +52,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.shuttleapp.domain.model.PassengerQR
 import com.example.shuttleapp.domain.model.ShuttlePass
@@ -61,6 +60,8 @@ import com.example.shuttleapp.presentation.components.ModifiedTextField
 import com.example.shuttleapp.ui.theme.*
 import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.presentation.events.QRInputEvent
+import com.example.shuttleapp.presentation.state.IdNameState
+import com.example.shuttleapp.presentation.state.QRInputState
 import com.example.shuttleapp.presentation.events.ShuttlePassInputEvent
 import com.example.shuttleapp.Route
 import com.example.shuttleapp.presentation.components.AutoResizeText
@@ -79,7 +80,7 @@ import java.util.UUID
 fun AVCurrentPassScreenTest(
     userId: String,
     navController: NavController, 
-    viewModel: ShuttleViewModel = hiltViewModel()
+    viewModel: ShuttleViewModel
 ) {
 
     val routesState by viewModel.routeState.collectAsState()
@@ -108,6 +109,11 @@ fun AVCurrentPassScreenTest(
                 viewModel.getAllShuttleByProviderId(providerId, false)
             }
             viewModel.loadShuttlePassDraft(userData.accountId)
+            // Keep the pass form's driver/provider in sync with the signed-in driver.
+            viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.DriverChanged(userData.accountId))
+            userData.providerId?.let { providerId ->
+                viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.ShuttleProviderChanged(providerId))
+            }
         }
     }
 
@@ -346,11 +352,33 @@ fun AVCurrentPassScreenTest(
 
                 //load drafted shuttle pass
                 else {
+                    val draftPass = draftedShuttlePassState.data!!
+                    val nameState by viewModel.toNameState.collectAsState()
+                    val qrInputState by viewModel.qrInputState.collectAsState()
+
+                    LaunchedEffect(draftPass) {
+                        viewModel.getRouteNameById(draftPass.routeId)
+                        viewModel.getPlateNumberByShuttleId(draftPass.plateNumber)
+                        viewModel.getProviderNameById(draftPass.provider)
+                        viewModel.getDriverNameById(draftPass.driver)
+                    }
+
                     ShuttlePassFormTest(
-                        shuttlePass = draftedShuttlePassState.data!!,
+                        shuttlePass = draftPass,
                         draftPassengerList = draftPassengerListState.list,
-                        viewModel = viewModel, 
-                        navController = navController
+                        nameState = nameState,
+                        qrInputState = qrInputState,
+                        onAddPassenger = { navController.navigate(Route.QrScannerScreen.route + "/${draftPass.id}") },
+                        onRecordDeparture = { viewModel.recordDeparture(draftPass) },
+                        onComplete = {
+                            viewModel.completeShuttlePass(draftPass, draftPassengerListState.list)
+                            navController.navigateUp()
+                        },
+                        onDeletePassenger = viewModel::deletePassenger,
+                        onStartEditPassenger = viewModel::startEditingPassenger,
+                        onEditQrChanged = { viewModel.onPassengerInputEvent(QRInputEvent.ScannedQRChanged(it)) },
+                        onSaveEditedPassenger = viewModel::saveEditedPassenger,
+                        onCancelEditPassenger = viewModel::resetPassengerInputState
                     )
                 }
             }
@@ -360,33 +388,27 @@ fun AVCurrentPassScreenTest(
 }
 
 @Composable
-fun ShuttlePassFormTest(shuttlePass: ShuttlePass, draftPassengerList: List<PassengerQR>, viewModel: ShuttleViewModel = hiltViewModel(), navController: NavController) {
+fun ShuttlePassFormTest(
+    shuttlePass: ShuttlePass,
+    draftPassengerList: List<PassengerQR>,
+    nameState: IdNameState,
+    qrInputState: QRInputState,
+    onAddPassenger: () -> Unit,
+    onRecordDeparture: () -> Unit,
+    onComplete: () -> Unit,
+    onDeletePassenger: (PassengerQR) -> Unit,
+    onStartEditPassenger: (PassengerQR) -> Unit,
+    onEditQrChanged: (String) -> Unit,
+    onSaveEditedPassenger: (PassengerQR) -> Boolean,
+    onCancelEditPassenger: () -> Unit
+) {
 
-    var showAddPassenger by remember { mutableStateOf(false) }
     var showConfirmation by remember { mutableStateOf(false) }
-
-    val nameState by viewModel.toNameState.collectAsState()
-    val userState by viewModel.userState.collectAsState()
+    var editingPassenger by remember { mutableStateOf<PassengerQR?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(shuttlePass) {
-        viewModel.getRouteNameById(shuttlePass.routeId)
-        viewModel.getPlateNumberByShuttleId(shuttlePass.plateNumber)
-        viewModel.getProviderNameById(shuttlePass.provider)
-        viewModel.getDriverNameById(shuttlePass.driver)
-    }
-    
-    // Ensure form is reset if state leak occurs
-    LaunchedEffect(userState.userData) {
-        userState.userData?.let { userData ->
-            viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.DriverChanged(userData.accountId))
-            userData.providerId?.let { providerId ->
-                viewModel.onShuttlePassInputEvent(ShuttlePassInputEvent.ShuttleProviderChanged(providerId))
-            }
-        }
-    }
+    val context = LocalContext.current
 
     Scaffold(snackbarHost = { StyledSnackBarHost(hostState = snackBarHostState) }
     ) { innerPadding ->
@@ -434,143 +456,67 @@ fun ShuttlePassFormTest(shuttlePass: ShuttlePass, draftPassengerList: List<Passe
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(LightGray) 
+                    .background(LightGray)
             )
             Column(
                 modifier = Modifier
-                    .weight(1f) 
+                    .weight(1f)
                     .fillMaxWidth()
                     .background(White)
             ) {
-                when {
-                    draftPassengerList.isEmpty() -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(White),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(text = "No passengers to display.", color = Color.DarkGray)
-                            Text(text = "Click + to add", color = Color.DarkGray)
-                        }
-
-                    }
-                    else -> {
-
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                        ) {
-                            itemsIndexed(draftPassengerList.reversed()) { index, passenger ->
-                                PassengerItemTest(viewModel,index+1, passenger)
-                            }
-                        }
-                    }
-                }
+                PassengerListContent(
+                    passengers = draftPassengerList,
+                    onEdit = { passenger ->
+                        onStartEditPassenger(passenger)
+                        editingPassenger = passenger
+                    },
+                    onDelete = onDeletePassenger
+                )
             }
 
             if(shuttlePass.isDraft) {
-                Column(
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Button(
-                        modifier = Modifier
-                            .padding(start = 12.dp, end = 12.dp)
-                            .fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(NavyBlue),
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        onClick = {
-                            navController.navigate(Route.QrScannerScreen.route + "/${shuttlePass.id}")
-                        })
-                    {
-                        Icon(
-                            contentDescription = "add icon", tint = White,
-                            imageVector = Icons.Rounded.AddCircle
-                        )
-
-                        Text("Add passenger", color = White)
-                    }
-
-                    if (shuttlePass.departure.isEmpty()) {
-                        Button(
-                            modifier = Modifier
-                                .padding(start = 12.dp, end = 12.dp, bottom = 8.dp)
-                                .fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(Green),
-                            elevation = ButtonDefaults.buttonElevation(8.dp),
-                            onClick = {
-
-                                val updateTime = listOf(shuttlePass.copy(
-                                    departure = displayTime()
-                                ))
-                                viewModel.updateShuttlePass(updateTime)
-                                coroutineScope.launch {
-                                    snackBarHostState.showSnackbar(
-                                        message = "Departure Recorded",
-                                        actionLabel = "Dismiss",
-                                        withDismissAction = true,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                }
-                            }
-
-                        ) {
-                            Text("Start Departure", color = White)
+                PassActionButtons(
+                    hasDeparted = shuttlePass.departure.isNotEmpty(),
+                    canComplete = draftPassengerList.isNotEmpty() && shuttlePass.departure != "",
+                    onAddPassenger = onAddPassenger,
+                    onRecordDeparture = {
+                        onRecordDeparture()
+                        coroutineScope.launch {
+                            snackBarHostState.showSnackbar(
+                                message = "Departure Recorded",
+                                actionLabel = "Dismiss",
+                                withDismissAction = true,
+                                duration = SnackbarDuration.Short
+                            )
                         }
-                    } else {
-                        Button(
-                            modifier = Modifier
-                                .padding(start = 12.dp, end = 12.dp, bottom = 8.dp)
-                                .fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(Green),
-                            elevation = ButtonDefaults.buttonElevation(8.dp),
-                            enabled = draftPassengerList.isNotEmpty() && shuttlePass.departure != "",
-                            onClick = {
-
-                                showConfirmation = true
-
-                            }
-
-                        ) {
-
-                            Text("End Shuttle Pass Record", color = White)
-
-                        }
-                    }
-                }
+                    },
+                    onEnd = { showConfirmation = true }
+                )
             }
 
         }
     }
 
-    if (showAddPassenger) {
-
-        EditPassengerDialog("",viewModel,
-            onDismiss = { showAddPassenger = false
-            })
-
+    editingPassenger?.let { passenger ->
+        EditPassengerDialog(
+            qrInputState = qrInputState,
+            onQrChanged = onEditQrChanged,
+            onSave = {
+                if (onSaveEditedPassenger(passenger)) {
+                    editingPassenger = null
+                    Toast.makeText(context, "Saved successfully", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onCancel = {
+                onCancelEditPassenger()
+                editingPassenger = null
+            }
+        )
     }
 
     if (showConfirmation) {
-
         ConfirmDialogTest(
-
-            onConfirm = {
-
-                val finalDraftWithArrival = shuttlePass.copy(
-                    arrival = displayTime(),
-                    isLateShuttle = viewModel.isLateShuttle(shuttlePass.tripType)
-                )
-                finalDraftWithArrival.let {
-                    viewModel.finalizeShuttleDraft(
-                        driverId = it.driver,
-                        shuttlePass = it,
-                        passengers = draftPassengerList 
-                    )
-                }
-                viewModel.resetShuttlePassInputState() }
-            ,navController = navController,
+            onConfirm = onComplete,
             onDismiss = {
                 showConfirmation = false
             }
@@ -579,14 +525,94 @@ fun ShuttlePassFormTest(shuttlePass: ShuttlePass, draftPassengerList: List<Passe
 }
 
 @Composable
-fun PassengerItemTest(viewModel: ShuttleViewModel  = hiltViewModel(), number: Int, item: PassengerQR) {
+private fun PassengerListContent(
+    passengers: List<PassengerQR>,
+    onEdit: (PassengerQR) -> Unit,
+    onDelete: (PassengerQR) -> Unit
+) {
+    if (passengers.isEmpty()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(White),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "No passengers to display.", color = Color.DarkGray)
+            Text(text = "Click + to add", color = Color.DarkGray)
+        }
+    } else {
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            itemsIndexed(passengers.reversed()) { index, passenger ->
+                PassengerItemTest(
+                    number = index + 1,
+                    item = passenger,
+                    onEdit = { onEdit(passenger) },
+                    onDelete = { onDelete(passenger) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PassActionButtons(
+    hasDeparted: Boolean,
+    canComplete: Boolean,
+    onAddPassenger: () -> Unit,
+    onRecordDeparture: () -> Unit,
+    onEnd: () -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        Button(
+            modifier = Modifier
+                .padding(start = 12.dp, end = 12.dp)
+                .fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(NavyBlue),
+            elevation = ButtonDefaults.buttonElevation(4.dp),
+            onClick = onAddPassenger
+        ) {
+            Icon(
+                contentDescription = "add icon", tint = White,
+                imageVector = Icons.Rounded.AddCircle
+            )
+
+            Text("Add passenger", color = White)
+        }
+
+        if (!hasDeparted) {
+            Button(
+                modifier = Modifier
+                    .padding(start = 12.dp, end = 12.dp, bottom = 8.dp)
+                    .fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(Green),
+                elevation = ButtonDefaults.buttonElevation(8.dp),
+                onClick = onRecordDeparture
+            ) {
+                Text("Start Departure", color = White)
+            }
+        } else {
+            Button(
+                modifier = Modifier
+                    .padding(start = 12.dp, end = 12.dp, bottom = 8.dp)
+                    .fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(Green),
+                elevation = ButtonDefaults.buttonElevation(8.dp),
+                enabled = canComplete,
+                onClick = onEnd
+            ) {
+                Text("End Shuttle Pass Record", color = White)
+            }
+        }
+    }
+}
+
+@Composable
+fun PassengerItemTest(number: Int, item: PassengerQR, onEdit: () -> Unit, onDelete: () -> Unit) {
 
     var showEditDeleteDialog by remember { mutableStateOf(false) }
-    var showEditPassengerDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    val coroutineScope = rememberCoroutineScope()
-    var id by remember { mutableStateOf<String?>("") }
 
     Row(
         modifier = Modifier
@@ -651,138 +677,56 @@ fun PassengerItemTest(viewModel: ShuttleViewModel  = hiltViewModel(), number: In
     )
 
     if (showEditDeleteDialog && item.isDraft) {
-
         EditDeleteChoiceDialog(
-            onEdit = {
-                coroutineScope.launch {
-                    viewModel.getPassengerId(item.scannedQR, item.shuttlePassId) { result ->
-                        try {
-                            if(result != null) {
-                                id = result
-                                showEditPassengerDialog = true
-                            }
-                            else {
-                                Toast.makeText(context, "Failed to retrieve id", Toast.LENGTH_LONG).show()
-                            }
-                        }
-                        catch (ex: Exception) {
-                            Log.e("Error", "An error occurred while fetching draft ID: ${ex.message}")
-                            Toast.makeText(context, "An unexpected error occurred. Please try again.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            },
-
-            onDelete = {
-                viewModel.deletePassenger(item)
-            },
+            onEdit = onEdit,
+            onDelete = onDelete,
             onDismiss = {
                 showEditDeleteDialog = false
-            }
-        )
-    }
-
-    if(showEditPassengerDialog) {
-
-        EditPassengerDialog(
-            id = id ?: "",
-            viewModel = viewModel,
-            onDismiss = {
-                showEditPassengerDialog = false
             }
         )
     }
 }
 
 @Composable
-fun EditPassengerDialog(id: String, viewModel: ShuttleViewModel  = hiltViewModel(), onDismiss: ()-> Unit) {
-
-    val passenger by viewModel.passenger.collectAsState()
-    val passengerState by viewModel.qrInputState.collectAsState()
-    val context = LocalContext.current
-
-    LaunchedEffect(id) {
-        viewModel.loadPassenger(id)
-    }
-
-    LaunchedEffect(passenger) {
-
-        try {
-            if(id != "") {
-                viewModel.onPassengerInputEvent(QRInputEvent.ScannedQRChanged(passenger.scannedQR))
-            }
-            else {
-                viewModel.onPassengerInputEvent(QRInputEvent.ScannedQRChanged(""))
-            }
-
-        }catch (ex: Exception) {
-            Log.e("Error", "An error occurred getting values: ${ex.message}")
-            ex.printStackTrace()
-        }
-    }
-
+fun EditPassengerDialog(
+    qrInputState: QRInputState,
+    onQrChanged: (String) -> Unit,
+    onSave: () -> Unit,
+    onCancel: () -> Unit
+) {
     AlertDialog(
         containerColor = White,
-        onDismissRequest = {/*onDismiss*/},
-        title = { if(id == "") Text(text = "Add Passenger")
-        else Text(text = "Edit Passenger")},
+        onDismissRequest = {},
+        title = { Text(text = "Edit Passenger") },
         text = {
-
             Column {
-
                 ModifiedTextField(
-                    value = passengerState.qrCode,
+                    value = qrInputState.qrCode,
                     label = "Passenger QR Code",
-                    errorIndicator = passengerState.qrCodeErrorMessage != null,
-                    onValueChanged = { viewModel.onPassengerInputEvent(QRInputEvent.ScannedQRChanged(it))}
+                    errorIndicator = qrInputState.qrCodeErrorMessage != null,
+                    onValueChanged = onQrChanged
                 )
-                if(passengerState.qrCodeErrorMessage != null) {
-                    Text(
-                        text = passengerState.qrCodeErrorMessage!!,
-                        color = MaterialTheme.colorScheme.error)
+                qrInputState.qrCodeErrorMessage?.let {
+                    Text(text = it, color = MaterialTheme.colorScheme.error)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }
         },
-
         confirmButton = {
-
-            Button(modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(NavyBlue),
-                onClick = {
-
-                    if(viewModel.submitManualAddPassenger()) {
-                        try {
-                            val updatedPassenger = PassengerQR(
-                                id = id,
-                                shuttlePassId = passenger.shuttlePassId,
-                                scannedQR = passengerState.qrCode,
-                                timeIn = passenger.timeIn,
-                                isDraft = passenger.isDraft
-                            )
-                            viewModel.updatePassenger(updatedPassenger)
-
-                            Toast.makeText(context,"Saved successfully",Toast.LENGTH_SHORT).show()
-                            viewModel.resetPassengerInputState()
-
-                        } catch (ex: Exception) {
-
-                            Log.e("Error", "An error occurred while submitting: ${ex.message}")
-                            Toast.makeText(context, "An unexpected error occurred. Please try again.", Toast.LENGTH_SHORT).show()
-                        }
-                        onDismiss()
-                    }
-                }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(NavyBlue),
+                onClick = onSave
             ) {
-                Text("Save and Add")
+                Text("Save")
             }
         },
         dismissButton = {
-            Button(modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(PaleBlue),
-                onClick = {
-                    viewModel.resetPassengerInputState()
-                    onDismiss()
-                }
-            ){
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(PaleBlue),
+                onClick = onCancel
+            ) {
                 Text("Cancel", color = Black)
             }
         }
@@ -790,7 +734,7 @@ fun EditPassengerDialog(id: String, viewModel: ShuttleViewModel  = hiltViewModel
 }
 
 @Composable
-fun ConfirmDialogTest(onConfirm: ()-> Unit, navController: NavController, onDismiss: () -> Unit) {
+fun ConfirmDialogTest(onConfirm: ()-> Unit, onDismiss: () -> Unit) {
 
     val context = LocalContext.current
     AlertDialog(
@@ -815,10 +759,8 @@ fun ConfirmDialogTest(onConfirm: ()-> Unit, navController: NavController, onDism
                 modifier = Modifier
                     .padding(end = 12.dp)
                     .clickable {
-
-                        onConfirm()
                         onDismiss()
-                        navController.navigateUp()
+                        onConfirm()
                         Toast.makeText(context, "Shuttle pass complete!", Toast.LENGTH_SHORT).show()
                     }
             ) {

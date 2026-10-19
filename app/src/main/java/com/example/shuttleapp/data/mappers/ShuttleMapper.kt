@@ -13,6 +13,14 @@ fun ShuttleDto.toShuttleEntity(): ShuttleEntity {
     )
 }
 
+fun Shuttle.toEntity(): ShuttleEntity {
+    return ShuttleEntity(
+        shuttleId = shuttleId,
+        plateNumber = plateNumber,
+        shuttleProviderId = shuttleProviderId
+    )
+}
+
 fun ShuttleEntity.toShuttle() : Shuttle {
     return Shuttle(
         shuttleId = shuttleId,

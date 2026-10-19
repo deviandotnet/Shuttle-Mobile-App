@@ -45,7 +45,7 @@ class QrAnalyzerViewModel @Inject constructor(
     val passengerQR: StateFlow<PassengerQR> get() = _passengerQR
 
     private val _qrInputState = MutableStateFlow(QRInputState())
-    val qrInputState: MutableStateFlow<QRInputState> get() = _qrInputState
+    val qrInputState: StateFlow<QRInputState> = _qrInputState.asStateFlow()
 
     private var _scanComplete = MutableStateFlow(false)
     val scanComplete: StateFlow<Boolean> = _scanComplete.asStateFlow()
