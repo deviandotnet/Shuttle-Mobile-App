@@ -30,7 +30,7 @@ private val activeTrip = HomeDashboardUi(
 private val noTrip = HomeDashboardUi(greeting = "Good evening, Elmo", initials = "ER")
 
 @Composable
-private fun Dashboard(ui: HomeDashboardUi) = ShuttleAppTheme(darkTheme = false) {
+private fun Dashboard(ui: HomeDashboardUi, dark: Boolean = false) = ShuttleAppTheme(darkTheme = dark) {
     HomeDashboard(ui, onOpenProfile = {}, onPrimaryAction = {}, onOpenPass = {}, onViewAll = {}, onNavSelect = {})
 }
 
@@ -41,6 +41,14 @@ private fun PhonePreview() = Dashboard(activeTrip)
 @Preview(name = "Phone large", widthDp = 412, heightDp = 915)
 @Composable
 private fun PhoneLargePreview() = Dashboard(activeTrip)
+
+@Preview(name = "Phone dark", widthDp = 360, heightDp = 780)
+@Composable
+private fun PhoneDarkPreview() = Dashboard(activeTrip, dark = true)
+
+@Preview(name = "No active trip dark", widthDp = 360, heightDp = 780)
+@Composable
+private fun NoTripDarkPreview() = Dashboard(noTrip, dark = true)
 
 @Preview(name = "No active trip", widthDp = 360, heightDp = 780)
 @Composable

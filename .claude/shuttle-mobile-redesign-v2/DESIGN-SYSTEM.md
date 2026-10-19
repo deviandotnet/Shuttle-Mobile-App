@@ -53,6 +53,30 @@ The generated PNG mockups are raster images and do not contain inspectable font 
 | Error soft | `#FDE7E7` | Error backgrounds |
 | Scrim | `#07113F` at 56% | Modal background dimming |
 
+## Dark mode
+
+Implemented in `ui/theme/ShuttleColors.kt` as semantic roles (`ShuttleTheme.colors.<role>`). The user picks System, Light or Dark in the drawer; System follows the device setting.
+
+| Role | Light | Dark | Usage |
+|---|---|---|---|
+| canvas | `#FAF9F6` | `#0A0F24` | Page background |
+| surface | `#FFFFFF` | `#131B36` | Cards, dialogs, inputs, nav bars |
+| surfaceSubtle | `#F4F7FA` | `#1A2442` | Disabled and low-emphasis areas |
+| surfaceQuiet | `#DCEAF2` | `#22305A` | Selected surfaces, avatar, illustration |
+| textPrimary | `#07113F` | `#E8EEF8` | Main text |
+| textSecondary | `#65769A` | `#9AA8C7` | Supporting copy and metadata |
+| textDisabled | `#9CA8BA` | `#5D6A85` | Disabled controls |
+| border / divider | `#B8C5D9` / `#E8EEF5` | `#34436A` / `#222E4F` | Outlines and separators |
+| primary / onPrimary | `#07113F` / `#FFFFFF` | `#A9C2F5` / `#07113F` | Primary CTA, links, icons, progress |
+| brandBand / onBrandBand | `#07113F` / `#FFFFFF` | `#0E1B4D` / `#E8EEF8` | App bars, Home header, drawer header, snackbar, status bar |
+| brandAccent | `#123A78` | `#8FB0EE` | Secondary navy accents |
+| success / successText / successSoft | `#55D6B4` / `#16A37A` / `#DFF8F1` | `#55D6B4` / `#55D6B4` / `#12392F` | Scan, synced, positive CTA (label `onSuccess` = Midnight) |
+| warning / warningText / warningSoft | `#F59E0B` / `#B45309` / `#FFF3D6` | `#FBBF24` / `#FCD34D` / `#3A2A0A` | Pending sync, caution |
+| error / errorSoft | `#DC2626` / `#FDE7E7` | `#F87171` / `#3B1418` | Errors, late, destructive |
+| scrim | Midnight 56% | Black 64% | Modal dimming |
+
+Rules: brand bands stay dark navy in both themes, so their status bar icons are always light. In dark mode the primary CTA flips to a light blue with a Midnight label.
+
 ## Usage rules
 
 - Primary CTA: Midnight background, white label, 12 px radius, minimum 52 px height.

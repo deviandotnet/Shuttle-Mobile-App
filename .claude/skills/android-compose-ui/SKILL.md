@@ -17,7 +17,7 @@ description: >
 
 | Path | Contents |
 |---|---|
-| `ui/theme/Color.kt`, `Type.kt`, `Theme.kt` | `ShuttleAppTheme`, colors and typography |
+| `ui/theme/Color.kt`, `ShuttleColors.kt`, `Type.kt`, `Theme.kt` | Raw palette, semantic light/dark color roles (`ShuttleTheme.colors`), typography, `ShuttleAppTheme(darkTheme)` |
 | `presentation/components/` | Reusable composables (`AuthButton`, `Cards`, `ModifiedTextField`, `SelectableDropdown`, `Snackbar`, `NavigationDrawerContent`, …) |
 | `.claude/shuttle-mobile-redesign-v2/01-welcome.png` … `14-qr-scanner.png` | Target mockups |
 | `.claude/shuttle-mobile-redesign-v2/DESIGN-SYSTEM.md` | **The source of truth** for type scale, color tokens and usage rules |
@@ -25,7 +25,7 @@ description: >
 ## Rules
 
 - **The UI is dumb.** Composables render `state` and call `onAction`. They contain no business logic, data transformation or date parsing (`AGENTS.md`).
-- **Use the design system, not ad-hoc values.** Colors and text styles come from `MaterialTheme`/`ui/theme`, and new tokens are named after `DESIGN-SYSTEM.md` (e.g. `Midnight = Color(0xFF07113F)`, `Mint = Color(0xFF55D6B4)`). Don't hard-code hex values or `fontSize = 18.sp` inside screens.
+- **Use the design system, not ad-hoc values.** Colors come from `ShuttleTheme.colors` (semantic roles such as `primary`, `textPrimary`, `surface`, `brandBand`, `successText`), never from raw palette values, `Color(0x…)` or `Color.White`/`Color.Black` — those break dark mode. Text styles come from `ShuttleType`. Don't hard-code hex values or `fontSize = 18.sp` inside screens.
 - **Key visual rules** (from `DESIGN-SYSTEM.md`):
   - Typeface: Inter, with tabular numerals for times, dates, IDs and passenger counts.
   - Primary CTA: Midnight, 12dp radius, at least 52dp tall. Inputs: white, 1dp border, 12dp radius, 52–56dp tall. Cards: white, 16dp radius, no cards nested in cards.
@@ -39,20 +39,21 @@ description: >
 
 ### Theme tokens
 
-When restyling, extend `ui/theme`:
+Colors are two layers in `ui/theme`:
+
+- `Color.kt` — the raw palette (`Midnight`, `Mint`, … and their `Night*` counterparts). `internal`; UI code never imports them.
+- `ShuttleColors.kt` — `ShuttleColors`, a data class of semantic roles with `LightShuttleColors` and `DarkShuttleColors`, read through `ShuttleTheme.colors`. `ShuttleAppTheme` also maps the roles onto the Material 3 `ColorScheme`, so stock M3 components follow light/dark automatically.
 
 ```kotlin
-// ui/theme/Color.kt
-val Midnight = Color(0xFF07113F)
-val Mint = Color(0xFF55D6B4)
-val MintDark = Color(0xFF16A37A)
-val WarmWhite = Color(0xFFFAF9F6)
-val TextSecondary = Color(0xFF65769A)
-val Warning = Color(0xFFF59E0B)
-val ErrorRed = Color(0xFFDC2626)
+@Composable
+fun PassBadge(text: String, modifier: Modifier = Modifier) {
+    val colors = ShuttleTheme.colors
+    Text(text, style = ShuttleType.Caption, color = colors.successText,
+        modifier = modifier.background(colors.successSoft, RoundedCornerShape(8.dp)))
+}
 ```
 
-Map these into `lightColorScheme(primary = Midnight, secondary = Mint, background = WarmWhite, error = ErrorRed, …)` in `Theme.kt` and the type scale into `Typography` in `Type.kt`, so screens use `MaterialTheme.colorScheme.primary` and `MaterialTheme.typography.titleLarge`.
+To add a color, add the raw light and dark values to `Color.kt`, a role to `ShuttleColors` filled in both sets, and the role to the dark-mode table in `DESIGN-SYSTEM.md`. Canvas drawing code (`DrawScope`) can't read composition locals: read `ShuttleTheme.colors` in the composable and pass it in. Add a `uiMode = Configuration.UI_MODE_NIGHT_YES` preview next to the light one.
 
 ### A reusable component
 
@@ -139,8 +140,7 @@ OutlinedTextField(
 
 Don't copy these patterns into new code, and don't mass-refactor them unless asked:
 
-- `Color.kt` still has template colors (`Purple80`, …) and ad-hoc colors (`NavyBlue`, `Green`, `Orange`) that don't match `DESIGN-SYSTEM.md`. Replace them screen by screen during the redesign.
-- Screens hard-code `sp`/`dp`/colors inline and mix M2 (`androidx.compose.material`) with M3 components.
+- Screens hard-code `sp`/`dp` inline and mix M2 (`androidx.compose.material`) with M3 components.
 - `MainActivity` wraps the whole `Navigation()` in `Box(Modifier.systemBarsPadding())`, which cancels `enableEdgeToEdge()`. `Theme.kt` colors the bars with the deprecated `accompanist-systemuicontroller`. Fix both together with the **android-edge-to-edge** skill. Until then, don't add extra system-bar padding inside screens.
 - `LoginScreen` passes value lambdas (`usernameValue = { loginState.username }`) rather than plain state.
 

@@ -1,5 +1,6 @@
 package com.example.shuttleapp.presentation.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
+import com.example.shuttleapp.ui.theme.ShuttleAppTheme
 import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 /** Stateless shuttle pass row. Same look as HomeScreen's ShuttlePassListItem, which moves to this in Phase 6. */
@@ -157,8 +159,9 @@ private fun SyncPill(isSynced: Boolean) {
 }
 
 @Preview(showBackground = true)
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun ShuttlePassCardPreview() {
+private fun ShuttlePassCardPreview() = ShuttleAppTheme {
     ShuttlePassCard(
         item = ShuttlePassItemUi(
             id = "1",

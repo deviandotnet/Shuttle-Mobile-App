@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.ShuttleApp" parent="android:Theme.Material.NoActionBar">
+        <!-- Shown before Compose draws; matches ShuttleColors.canvas (dark) -->
+        <item name="android:windowBackground">@color/canvas</item>
+    </style>
+</resources>

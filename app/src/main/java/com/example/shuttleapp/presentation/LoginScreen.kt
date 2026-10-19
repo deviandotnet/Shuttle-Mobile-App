@@ -54,7 +54,7 @@ import com.example.shuttleapp.presentation.components.HeaderBackground
 import com.example.shuttleapp.presentation.components.TextEntryModule
 import com.example.shuttleapp.presentation.events.LoginInputEvent
 import com.example.shuttleapp.presentation.viewmodel.LoginViewModel
-import com.example.shuttleapp.ui.theme.*
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 @Composable
 fun LoginScreen(

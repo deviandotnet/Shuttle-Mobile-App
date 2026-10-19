@@ -56,7 +56,7 @@ import com.example.shuttleapp.domain.model.PassengerQR
 import com.example.shuttleapp.domain.model.ShuttlePass
 import com.example.shuttleapp.presentation.components.EditDeleteChoiceDialog
 import com.example.shuttleapp.presentation.components.ModifiedTextField
-import com.example.shuttleapp.ui.theme.*
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.presentation.events.QRInputEvent
 import com.example.shuttleapp.presentation.state.IdNameState
