@@ -10,7 +10,7 @@ These are written for this app's actual stack: a single `:app` module, Hilt, Ret
 
 | Skill | Use it for |
 |---|---|
-| [`shuttle-add-screen`](shuttle-add-screen/SKILL.md) | **Start here** for any new or rebuilt screen. It's the end-to-end workflow linking all the skills below. |
+| [`android-shuttle-add-screen`](android-shuttle-add-screen/SKILL.md) | **Start here** for any new or rebuilt screen. It's the end-to-end workflow linking all the skills below. |
 | [`android-project-structure`](android-project-structure/SKILL.md) | Where a file goes, layer import rules, Gradle and version catalog |
 | [`android-di-hilt`](android-di-hilt/SKILL.md) | `AppModule` / `RepositoryModule` / `UseCaseModule`, `@HiltViewModel`, `hiltViewModel()` scoping |
 | [`android-data-layer`](android-data-layer/SKILL.md) | Retrofit APIs, DTOs, Room entities and DAOs, mappers, `XRepositoryImpl`, the shuttle-pass sync lifecycle |
@@ -23,15 +23,15 @@ These are written for this app's actual stack: a single `:app` module, Hilt, Ret
 
 ## Upstream Google skills
 
-These come from Google. Each starts with a short **"In this project"** section (our notes), followed by the upstream text **verbatim**. To update one from Google, replace only the text below that section's closing line.
+These come from Google. Each starts with a short **"In this project"** section (our notes), followed by the upstream text **verbatim**. To update one from Google, replace only the text below that section's closing line. The folder and the frontmatter `name` carry an `android-` prefix (e.g. upstream `r8-analyzer` → `android-r8-analyzer`), so keep that prefix when re-syncing.
 
 | Skill | Relevance here |
 |---|---|
-| [`r8-analyzer`](r8-analyzer/SKILL.md) | **Relevant: release risk.** Release is minified, but `proguard-rules.pro` keeps the wrong package (`com.example.shuttle…`), so Gson DTOs are unprotected. |
-| [`agp-9-upgrade`](agp-9-upgrade/SKILL.md) | **Relevant: migration incomplete.** AGP 9.1.1 runs in compatibility mode (`builtInKotlin=false`, `newDsl=false`, …). KSP and Hilt are below the versions it requires. |
-| [`edge-to-edge`](edge-to-edge/SKILL.md) | **Relevant.** `enableEdgeToEdge()` is called, but a root `systemBarsPadding()` in `MainActivity` cancels it. `accompanist-systemuicontroller` should be removed. |
-| [`navigation-3`](navigation-3/SKILL.md) | Nav3 isn't used (the app is on Navigation 2.9). Its [`type-safe-destinations.md`](navigation-3/references/android/guide/navigation/type-safe-destinations.md) reference *is* the guide for our Nav2 typed-route migration. |
-| [`migrate-xml-views-to-jetpack-compose`](migrate-xml-views-to-jetpack-compose/SKILL.md) | Not applicable: there are no XML layouts and `AGENTS.md` forbids them. Kept for reference only. |
+| [`android-r8-analyzer`](android-r8-analyzer/SKILL.md) | **Relevant: release risk.** Release is minified, but `proguard-rules.pro` keeps the wrong package (`com.example.shuttle…`), so Gson DTOs are unprotected. |
+| [`android-agp-9-upgrade`](android-agp-9-upgrade/SKILL.md) | **Relevant: migration incomplete.** AGP 9.1.1 runs in compatibility mode (`builtInKotlin=false`, `newDsl=false`, …). KSP and Hilt are below the versions it requires. |
+| [`android-edge-to-edge`](android-edge-to-edge/SKILL.md) | **Relevant.** `enableEdgeToEdge()` is called, but a root `systemBarsPadding()` in `MainActivity` cancels it. `accompanist-systemuicontroller` should be removed. |
+| [`android-navigation-3`](android-navigation-3/SKILL.md) | Nav3 isn't used (the app is on Navigation 2.9). Its [`type-safe-destinations.md`](android-navigation-3/references/android/guide/navigation/type-safe-destinations.md) reference *is* the guide for our Nav2 typed-route migration. |
+| [`android-migrate-xml-views-to-jetpack-compose`](android-migrate-xml-views-to-jetpack-compose/SKILL.md) | Not applicable: there are no XML layouts and `AGENTS.md` forbids them. Kept for reference only. |
 
 The upstream frontmatter says "Complete terms in LICENSE.txt", but the `LICENSE.txt` files weren't included when these were copied in. Restore them from the Google Android skills source they were downloaded from before redistributing this repo.
 
@@ -39,11 +39,13 @@ The upstream frontmatter says "Complete terms in LICENSE.txt", but the `LICENSE.
 
 These are **app fixes that haven't been made yet**. The skills describe them, but no code has changed.
 
-1. `app/proguard-rules.pro` targets `com.example.shuttle.data.network.**`, but the real package is `com.example.shuttleapp`. Release builds can break JSON parsing. See **r8-analyzer** and **android-data-layer**.
-2. The AGP 9 migration isn't finished: there are compatibility flags in `gradle.properties`, KSP is 2.3.2 (needs ≥ 2.3.6), Hilt is 2.57.2 (needs ≥ 2.59.2), and the `kotlin-android` plugin and `kotlinOptions` are still in use. See **agp-9-upgrade**.
-3. `MainActivity` wraps the whole app in `systemBarsPadding()`, which defeats edge-to-edge. See **edge-to-edge**.
+1. `app/proguard-rules.pro` targets `com.example.shuttle.data.network.**`, but the real package is `com.example.shuttleapp`. Release builds can break JSON parsing. See **android-r8-analyzer** and **android-data-layer**.
+2. The AGP 9 migration isn't finished: there are compatibility flags in `gradle.properties`, KSP is 2.3.2 (needs ≥ 2.3.6), Hilt is 2.57.2 (needs ≥ 2.59.2), and the `kotlin-android` plugin and `kotlinOptions` are still in use. See **android-agp-9-upgrade**.
+3. `MainActivity` wraps the whole app in `systemBarsPadding()`, which defeats edge-to-edge. See **android-edge-to-edge**.
 
 ## Writing or editing a project skill
+
+Every skill folder in this repo is named `android-<topic>`. Folder names can't contain `:` on Windows, and `plugin:skill` is reserved for plugin skills, so the prefix uses a hyphen. The frontmatter `name` must equal the folder name.
 
 Use the same layout for every project-adapted `SKILL.md`:
 

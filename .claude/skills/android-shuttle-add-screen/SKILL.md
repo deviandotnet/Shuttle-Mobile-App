@@ -1,5 +1,5 @@
 ---
-name: shuttle-add-screen
+name: android-shuttle-add-screen
 description: >
   End-to-end workflow for adding a new screen (or rebuilding an existing one) in the Shuttle app,
   from domain model and repository through Hilt wiring, MVI ViewModel, Root/Screen composables
@@ -99,4 +99,4 @@ grep -rn "import com.example.shuttleapp.data" app/src/main/java/com/example/shut
 
 ## Related skills
 
-**android-project-structure**, **android-data-layer**, **android-error-handling**, **android-di-hilt**, **android-presentation-mvi**, **android-state-management**, **android-compose-ui**, **android-navigation**, **android-testing**, **edge-to-edge**
+**android-project-structure**, **android-data-layer**, **android-error-handling**, **android-di-hilt**, **android-presentation-mvi**, **android-state-management**, **android-compose-ui**, **android-navigation**, **android-testing**, **android-edge-to-edge**

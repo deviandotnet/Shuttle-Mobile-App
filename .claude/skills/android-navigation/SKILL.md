@@ -86,7 +86,7 @@ onLogout = {
 
 ### Migrating a legacy string route
 
-Google's detailed Navigation 2 guide is [`navigation-3/references/android/guide/navigation/type-safe-destinations.md`](../navigation-3/references/android/guide/navigation/type-safe-destinations.md). Per route:
+Google's detailed Navigation 2 guide is [`android-navigation-3/references/android/guide/navigation/type-safe-destinations.md`](../android-navigation-3/references/android/guide/navigation/type-safe-destinations.md). Per route:
 
 1. Add the `@Serializable` route.
 2. Replace `composable(route = Route.X.route + "/{id}", arguments = …)` with `composable<XRoute>`.
@@ -115,4 +115,4 @@ Don't copy these patterns into new code, and don't mass-refactor them unless ask
 
 - **android-presentation-mvi**: `XRoot` and events that trigger navigation
 - **android-di-hilt**: `hiltViewModel()` scoping
-- **navigation-3**: Google's guide to Jetpack Navigation 3. This app is on Navigation 2.9, so use it only if a Nav3 migration is explicitly requested. Its `type-safe-destinations.md` reference does apply to the Navigation 2 route migration.
+- **android-navigation-3**: Google's guide to Jetpack Navigation 3. This app is on Navigation 2.9, so use it only if a Nav3 migration is explicitly requested. Its `type-safe-destinations.md` reference does apply to the Navigation 2 route migration.

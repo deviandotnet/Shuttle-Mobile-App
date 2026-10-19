@@ -148,7 +148,7 @@ Don't copy these patterns into new code, and don't mass-refactor them unless ask
 - Several `ShuttleApi` GETs return bare `List<T>` instead of `Response<T>`, so HTTP errors surface as exceptions.
 - `ShuttleDatabase` DAO accessors are PascalCase functions (`ShuttlePassDao()`). Keep calling them as they are. Renaming them is a separate refactor.
 - `AuthRepositoryImpl` logs the full user data with `Log.i`. Don't log PII or tokens.
-- `app/proguard-rules.pro` keeps `com.example.shuttle.data.network.**`, which is the wrong package (the real one is `com.example.shuttleapp`), so DTOs are currently unprotected in release builds. See **r8-analyzer**.
+- `app/proguard-rules.pro` keeps `com.example.shuttle.data.network.**`, which is the wrong package (the real one is `com.example.shuttleapp`), so DTOs are currently unprotected in release builds. See **android-r8-analyzer**.
 
 ## Checklist: adding data access
 
@@ -165,4 +165,4 @@ Don't copy these patterns into new code, and don't mass-refactor them unless ask
 - **android-error-handling**: `Resource`, `safeApiCall`, error messages
 - **android-di-hilt**: binding the repository, providing APIs
 - **android-testing**: fake repositories, in-memory Room DAO tests
-- **r8-analyzer**: auditing the release keep rules that protect DTOs
+- **android-r8-analyzer**: auditing the release keep rules that protect DTOs

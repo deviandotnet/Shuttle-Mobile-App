@@ -247,4 +247,4 @@ Don't copy these patterns into new code, and don't mass-refactor them unless ask
 - **android-compose-ui**: composable quality, design tokens, previews
 - **android-navigation**: calling `XRoot` from the `NavHost`
 - **android-testing**: ViewModel tests with Turbine
-- **shuttle-add-screen**: the end-to-end workflow
+- **android-shuttle-add-screen**: the end-to-end workflow

@@ -141,7 +141,7 @@ Don't copy these patterns into new code, and don't mass-refactor them unless ask
 
 - `Color.kt` still has template colors (`Purple80`, …) and ad-hoc colors (`NavyBlue`, `Green`, `Orange`) that don't match `DESIGN-SYSTEM.md`. Replace them screen by screen during the redesign.
 - Screens hard-code `sp`/`dp`/colors inline and mix M2 (`androidx.compose.material`) with M3 components.
-- `MainActivity` wraps the whole `Navigation()` in `Box(Modifier.systemBarsPadding())`, which cancels `enableEdgeToEdge()`. `Theme.kt` colors the bars with the deprecated `accompanist-systemuicontroller`. Fix both together with the **edge-to-edge** skill. Until then, don't add extra system-bar padding inside screens.
+- `MainActivity` wraps the whole `Navigation()` in `Box(Modifier.systemBarsPadding())`, which cancels `enableEdgeToEdge()`. `Theme.kt` colors the bars with the deprecated `accompanist-systemuicontroller`. Fix both together with the **android-edge-to-edge** skill. Until then, don't add extra system-bar padding inside screens.
 - `LoginScreen` passes value lambdas (`usernameValue = { loginState.username }`) rather than plain state.
 
 ## Checklist
@@ -159,5 +159,5 @@ Don't copy these patterns into new code, and don't mass-refactor them unless ask
 
 - **android-presentation-mvi**: the Root/Screen split and events
 - **android-state-management**: loading, error and empty logic
-- **edge-to-edge**: insets and system bars
+- **android-edge-to-edge**: insets and system bars
 - **design:design-critique**, **design:accessibility-review**: reviewing a restyled screen against the mockups

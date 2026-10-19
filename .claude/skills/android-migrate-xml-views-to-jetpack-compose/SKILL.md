@@ -1,5 +1,5 @@
 ---
-name: migrate-xml-views-to-jetpack-compose
+name: android-migrate-xml-views-to-jetpack-compose
 description: Provides a structured workflow for migrating an Android XML View to Jetpack
   Compose. This skill details the step-by-step process, from planning and dependency
   setup, to theming and layout migration, validation and XML cleanup. Use this skill
@@ -22,7 +22,7 @@ metadata:
 ## In this project (Shuttle-Mobile-App)
 
 - **Not applicable.** The app has no XML layouts (`res/layout` is empty), and `AGENTS.md` forbids XML layouts, Fragments and `findViewById`. Don't run this workflow here. The skill is kept for reference only.
-- For building or restyling Compose UI, use **android-compose-ui** and **shuttle-add-screen** instead.
+- For building or restyling Compose UI, use **android-compose-ui** and **android-shuttle-add-screen** instead.
 
 _Everything below this section is Google's upstream skill, kept verbatim. To update from upstream, replace only the text below this line._
 

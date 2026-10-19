@@ -44,7 +44,7 @@ Package `com.example.shuttleapp`, source root `app/src/main/java/com/example/shu
 - `.claude/shuttle-mobile-redesign-v2/DESIGN-SYSTEM.md`: Visual system (Inter typeface, type scale, and tokens). Follow it when building or restyling UI.
 
 ## Skills
-- `.claude/skills/`: Agent skills adapted to this project's stack (Hilt, Retrofit, Room, `Resource`, single `:app` module). See `.claude/skills/README.md` for the index. Start with `shuttle-add-screen` for any new or rebuilt screen.
+- `.claude/skills/`: Agent skills adapted to this project's stack (Hilt, Retrofit, Room, `Resource`, single `:app` module). See `.claude/skills/README.md` for the index. Start with `android-shuttle-add-screen` for any new or rebuilt screen.
 - Skills explain how to apply the rules in this file. If a skill conflicts with `AGENTS.md`, this file wins.
 
 ## Strict Coding Rules & Conventions
