@@ -21,13 +21,11 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.White
 import com.example.shuttleapp.util.formatTimeHHmm
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 //ShuttleDetailsCard
 @Composable
@@ -39,12 +37,13 @@ fun ShuttleDetailsCard(
     plateNumber: String,
     shuttleProvider: String,
     tripType: String) {
+    val colors = ShuttleTheme.colors
 
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .background(color = NavyBlue, RoundedCornerShape(20.dp))
+            .background(color = colors.brandBand, RoundedCornerShape(20.dp))
             .padding(16.dp)
     ) {
         Row(
@@ -62,7 +61,7 @@ fun ShuttleDetailsCard(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Room,
-                        tint = White,
+                        tint = colors.onBrandBand,
                         contentDescription = "navigation icon",
                         modifier = Modifier.size(20.dp))
 
@@ -70,7 +69,7 @@ fun ShuttleDetailsCard(
 
                     Icon(
                         imageVector = Icons.Outlined.Room,
-                        tint = White,
+                        tint = colors.onBrandBand,
                         contentDescription = "navigation icon",
                         modifier = Modifier.size(20.dp)
                     )
@@ -82,10 +81,10 @@ fun ShuttleDetailsCard(
                         Column(
                             horizontalAlignment = Alignment.Start
                         ) {
-                            AutoResizeText("From", colors = Color.LightGray, fontSize = 12.sp)
+                            AutoResizeText("From", colors = colors.onBrandBandMuted, fontSize = 12.sp)
                             AutoResizeText(
                                 if (tripType == "Incoming") route else "Pick-Up Point",
-                                colors = White,
+                                colors = colors.onBrandBand,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -97,10 +96,10 @@ fun ShuttleDetailsCard(
                         Column(
                             horizontalAlignment = Alignment.End
                         ) {
-                            AutoResizeText("Departure", colors = Color.LightGray, fontSize = 12.sp)
+                            AutoResizeText("Departure", colors = colors.onBrandBandMuted, fontSize = 12.sp)
                             AutoResizeText(
                                 formatTimeHHmm(departure),
-                                colors = White,
+                                colors = colors.onBrandBand,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -118,10 +117,10 @@ fun ShuttleDetailsCard(
                         Column(
                             horizontalAlignment = Alignment.Start
                         ) {
-                            AutoResizeText("To", colors = Color.LightGray, fontSize = 12.sp)
+                            AutoResizeText("To", colors = colors.onBrandBandMuted, fontSize = 12.sp)
                             AutoResizeText(
                                 if (tripType == "Outgoing") route else "Drop-off Point",
-                                colors = White,
+                                colors = colors.onBrandBand,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -133,10 +132,10 @@ fun ShuttleDetailsCard(
                         Column(
                             horizontalAlignment = Alignment.End
                         ) {
-                            AutoResizeText("Arrival", colors = Color.LightGray, fontSize = 12.sp)
+                            AutoResizeText("Arrival", colors = colors.onBrandBandMuted, fontSize = 12.sp)
                             AutoResizeText(
                                 formatTimeHHmm(arrival),
-                                colors = White,
+                                colors = colors.onBrandBand,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -157,14 +156,14 @@ fun ShuttleDetailsCard(
         ) {
             Icon(
                 imageVector = Icons.Outlined.Person,
-                tint = White,
+                tint = colors.onBrandBand,
                 contentDescription = "navigation icon",
                 modifier = Modifier.size(20.dp)
             )
 
             Spacer(Modifier.width(12.dp))
 
-            AutoResizeText(driver, colors = White, fontSize = 16.sp)
+            AutoResizeText(driver, colors = colors.onBrandBand, fontSize = 16.sp)
 
         }
 
@@ -176,28 +175,29 @@ fun ShuttleDetailsCard(
         ) {
             Icon(
                 imageVector = Icons.Outlined.AirportShuttle,
-                tint = White,
+                tint = colors.onBrandBand,
                 contentDescription = "navigation icon",
                 modifier = Modifier.size(20.dp)
             )
 
             Spacer(Modifier.width(12.dp))
-            AutoResizeText("Plate Number:", colors = Color.LightGray, fontSize = 12.sp)
+            AutoResizeText("Plate Number:", colors = colors.onBrandBandMuted, fontSize = 12.sp)
             Spacer(Modifier.weight(0.05f))
-            AutoResizeText(plateNumber, colors = White, fontSize = 16.sp)
+            AutoResizeText(plateNumber, colors = colors.onBrandBand, fontSize = 16.sp)
             Spacer(Modifier.weight(0.90f))
-            AutoResizeText("Provider:", colors = Color.LightGray, fontSize = 12.sp)
+            AutoResizeText("Provider:", colors = colors.onBrandBandMuted, fontSize = 12.sp)
             Spacer(Modifier.weight(0.05f))
-            AutoResizeText(shuttleProvider, colors = White, fontSize = 16.sp)
+            AutoResizeText(shuttleProvider, colors = colors.onBrandBand, fontSize = 16.sp)
         }
     }
 }
 
 @Composable
 fun ShuttleCardDivider() {
+    val colors = ShuttleTheme.colors
     HorizontalDivider(
         modifier = Modifier.fillMaxWidth().padding(start = 12.dp),
         thickness = 1.dp,
-        color = White
+        color = colors.onBrandBand
     )
 }

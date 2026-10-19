@@ -22,44 +22,44 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.White
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 @Composable
 fun ActionDropdownMenu(
     onUploadAll: () -> Unit,
     onDeleteAll: () -> Unit
 ) {
+    val colors = ShuttleTheme.colors
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier
         .wrapContentSize(Alignment.TopEnd)
-        .background(NavyBlue)
+        .background(colors.brandBand)
     ) {
         IconButton(onClick = { expanded = true }) {
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 contentDescription = "More actions",
-                tint = White
+                tint = colors.onBrandBand
             )
         }
 
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            containerColor = NavyBlue,
+            containerColor = colors.brandBand,
             offset = DpOffset(4.dp,4.dp),
             shadowElevation = 8.dp,
         ) {
             DropdownMenuItem(
-                text = { Text(text = "Upload All Unsynced", style = TextStyle(color = White)) },
+                text = { Text(text = "Upload All Unsynced", style = TextStyle(color = colors.onBrandBand)) },
                 onClick = {
                     expanded = false
                     onUploadAll()
                 }
             )
             DropdownMenuItem(
-                text = { Text(text = "Delete All Synced", style = TextStyle(color = White)) },
+                text = { Text(text = "Delete All Synced", style = TextStyle(color = colors.onBrandBand)) },
                 onClick = {
                     expanded = false
                     onDeleteAll()

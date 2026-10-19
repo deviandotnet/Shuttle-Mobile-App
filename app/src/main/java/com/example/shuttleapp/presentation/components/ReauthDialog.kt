@@ -22,8 +22,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.shuttleapp.presentation.state.ReauthState
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.White
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 /** Sign in again to refresh an expired token. Nothing on the device is cleared. */
 @Composable
@@ -32,12 +31,13 @@ fun ReauthDialog(
     onSubmit: (username: String, password: String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val colors = ShuttleTheme.colors
     var username by rememberSaveable { mutableStateOf(state.username) }
     // Plain remember: rememberSaveable would write the password into the saved-instance-state Bundle.
     var password by remember { mutableStateOf("") }
 
     AlertDialog(
-        containerColor = White,
+        containerColor = colors.surface,
         onDismissRequest = { if (!state.isSubmitting) onDismiss() },
         title = { Text("Sign in to upload") },
         text = {
@@ -66,13 +66,13 @@ fun ReauthDialog(
         },
         confirmButton = {
             if (state.isSubmitting) {
-                CircularProgressIndicator(color = NavyBlue)
+                CircularProgressIndicator(color = colors.primary)
             } else {
-                TextButton(onClick = { onSubmit(username.trim(), password) }) { Text("Sign in", color = NavyBlue) }
+                TextButton(onClick = { onSubmit(username.trim(), password) }) { Text("Sign in", color = colors.primary) }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !state.isSubmitting) { Text("Later", color = NavyBlue) }
+            TextButton(onClick = onDismiss, enabled = !state.isSubmitting) { Text("Later", color = colors.primary) }
         }
     )
 }

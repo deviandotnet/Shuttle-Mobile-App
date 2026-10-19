@@ -1,44 +1,10 @@
 package com.example.shuttleapp.presentation
 
-import com.example.shuttleapp.presentation.components.CardsContainer
-import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,42 +14,28 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.shuttleapp.presentation.components.ShuttlePassCard
-import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
-import com.example.shuttleapp.ui.theme.*
-import com.example.shuttleapp.presentation.components.BottomBarComponent
-import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.Route
-import com.example.shuttleapp.presentation.components.LogoutConfirmDialog
-import com.example.shuttleapp.util.displayMonthYear
-import com.example.shuttleapp.util.formatTimeHHmm
+import com.example.shuttleapp.domain.model.ThemeMode
 import com.example.shuttleapp.presentation.components.DrawerContent
+import com.example.shuttleapp.presentation.components.LogoutConfirmDialog
+import com.example.shuttleapp.presentation.components.home.HomeDashboard
+import com.example.shuttleapp.presentation.components.home.HomeNavItem
+import com.example.shuttleapp.presentation.state.HomeDashboardUi
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
-import com.example.shuttleapp.util.displayMonthYear
-import kotlinx.coroutines.Dispatchers
+import com.example.shuttleapp.util.formatTimeHHmm
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.util.Calendar
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
     userId: String,
     navController: NavController,
     modifier: Modifier = Modifier,
-    viewModel: ShuttleViewModel
+    viewModel: ShuttleViewModel,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit
 ) {
 
     val viewState by viewModel.shuttlePassListState.collectAsState()
@@ -97,7 +49,6 @@ fun HomeScreen(
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    LocalContext.current
 
     var showConfirmDialog by remember { mutableStateOf(false) }
 
@@ -158,6 +109,30 @@ fun HomeScreen(
         )
     }
 
+    val dashboard = remember(userState, cardState, draftedPassengerListState, draftedShuttlePassState, viewState) {
+        val user = userState.userData
+        val draft = draftedShuttlePassState.data
+        HomeDashboardUi(
+            greeting = greetingFor(Calendar.getInstance().get(Calendar.HOUR_OF_DAY), user?.firstName.orEmpty()),
+            initials = initialsOf(user?.firstName.orEmpty(), user?.lastName.orEmpty()),
+            hasActiveTrip = draft != null,
+            routeTitle = draft?.let { listOf(cardState.currentRoute.orEmpty(), it.tripType).filter(String::isNotBlank).joinToString(" · ") }.orEmpty(),
+            departure = draft?.departure?.let(::formatTimeHHmm).orEmpty(),
+            passengerCount = draftedPassengerListState.list.size,
+            pendingSyncCount = cardState.unsyncedShuttleCount,
+            lateCount = cardState.lateShuttleCount,
+            recentPasses = viewState.items.take(RECENT_PASS_COUNT),
+            totalPassCount = viewState.items.size,
+            isLoadingPasses = viewState.loading,
+            passesError = viewState.error
+        )
+    }
+
+    val toggleDrawer: () -> Unit = {
+        scope.launch { if (drawerState.isOpen) drawerState.close() else drawerState.open() }
+    }
+    val openPassList = { navController.navigate(Route.ShuttlePassListScreen.route + "/${userId}") }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -169,202 +144,44 @@ fun HomeScreen(
                             showConfirmDialog = true
                         },
                         userData = userData,
-                        navController=navController
+                        navController=navController,
+                        themeMode = themeMode,
+                        onThemeModeChange = onThemeModeChange
                     )
                 }
             }
         }
     ) {
-
-        Scaffold(
-            topBar = {
-                userState.userData?.let {
-                    TopBarComponent(
-                        openDrawer = {
-                            scope.launch {
-                                //drawerState.open()
-                                drawerState.apply {
-                                    if(isOpen) drawerState.close() else drawerState.open()
-                                }
-                            }
-                        },
-                        title = "Good day, ${it.firstName.uppercase()}!",
-                        navController = navController
-                    )
-                }
-            },
-
-            bottomBar = {
-                BottomBarComponent(
-                    accountId = userId,
-                    navController = navController
-                )
-            }
-        ) {
-                innerPadding ->
-
-            Box(modifier = Modifier
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)) {
-
-                // Full-screen gradient background (navy → slightly lighter)
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    NavyBlue,
-                                    Color(0xFF0D1550)
-                                )
-                            )
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(0.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(Modifier.height(16.dp))
-
-                    CardsContainer(
-                        lateShuttleCount = cardState.lateShuttleCount,
-                        unsyncedShuttleCount = cardState.unsyncedShuttleCount,
-                        passengerCount = draftedPassengerListState.list.size,
-                        tripType = if (draftedShuttlePassState.data != null) draftedShuttlePassState.data!!.tripType else "",
-                        currentRoute = draftedShuttlePassState.data?.let { cardState.currentRoute } ?: ""
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
-                    // --- Completed Shuttle Pass panel ---
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                        color = Color(0xFFF6F8FC),
-                        shadowElevation = 12.dp
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(start = 16.dp, end = 16.dp, top = 20.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Top
-                        ) {
-                            // Panel header
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(NavyBlue.copy(alpha = 0.10f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.History,
-                                            contentDescription = null,
-                                            tint = NavyBlue,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                    Spacer(Modifier.width(10.dp))
-                                    Text(
-                                        text = "Completed Passes",
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = NavyBlue
-                                    )
-                                }
-
-                                Icon(
-                                    contentDescription = "Navigate to Shuttle Pass List",
-                                    imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                                    tint = Blue,
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clickable {
-                                            navController.navigate(Route.ShuttlePassListScreen.route + "/${userId}")
-                                        }
-                                )
-                            }
-
-                            Spacer(Modifier.height(14.dp))
-                            HorizontalDivider(color = LightGray)
-                            Spacer(Modifier.height(8.dp))
-
-                            when {
-                                viewState.loading -> {
-                                    Spacer(Modifier.height(32.dp))
-                                    CircularProgressIndicator(color = NavyBlue)
-                                }
-                                viewState.error != null -> {
-                                    Spacer(Modifier.height(32.dp))
-                                    Text("Error occurred. Please try again.", color = Red)
-                                }
-                                viewState.list.isEmpty() -> {
-                                    Spacer(Modifier.height(32.dp))
-                                    Text(
-                                        "No completed passes yet.",
-                                        color = Color.Gray,
-                                        fontStyle = FontStyle.Italic
-                                    )
-                                }
-                                else -> {
-                                    ShuttlePassList(
-                                        items = viewState.items,
-                                        onOpenPass = { id -> navController.navigate(Route.ShuttlePassItemScreen.route + "/$id") },
-                                        onSeeAll = { navController.navigate(Route.ShuttlePassListScreen.route + "/${userId}") }
-                                    )
-                                }
-                            }
-                        }
-                    }
+        HomeDashboard(
+            ui = dashboard,
+            onOpenProfile = toggleDrawer,
+            // Resumes the draft when there is one; the pass screen starts a new pass otherwise.
+            onPrimaryAction = { navController.navigate(Route.AVCurrentPassScreen.route + "/$userId") },
+            onOpenPass = { id -> navController.navigate(Route.ShuttlePassItemScreen.route + "/$id") },
+            onViewAll = openPassList,
+            onNavSelect = { item ->
+                when (item) {
+                    HomeNavItem.Home -> Unit
+                    HomeNavItem.Passes -> openPassList()
+                    HomeNavItem.Profile -> toggleDrawer()
                 }
             }
-        }
-    }
-
-}
-
-
-@Composable
-fun ShuttlePassList(items: List<ShuttlePassItemUi>, onOpenPass: (String) -> Unit, onSeeAll: () -> Unit) {
-    LazyColumn {
-        items(
-            items = items.take(2),
-            key = { it.id }
-        ) { item ->
-            ShuttlePassCard(item = item, onClick = { onOpenPass(item.id) })
-        }
-    }
-
-    if (items.size > 2) {
-        Spacer(Modifier.height(8.dp))
-        HorizontalDivider(color = LightGray)
-        TextButton(
-            onClick = onSeeAll,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "See all passes →",
-                color = Blue,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+        )
     }
 }
 
-//@Composable
-//@Preview(showBackground = true, showSystemUi = true)
-//fun HomeScreenPreview() {
-//
-//    CardsContainer(1,2,3,"Mamatid", "Incoming")
-//}
+private const val RECENT_PASS_COUNT = 5
 
+private fun greetingFor(hour: Int, firstName: String): String {
+    val salutation = when (hour) {
+        in 5..11 -> "Good morning"
+        in 12..17 -> "Good afternoon"
+        else -> "Good evening"
+    }
+    val name = firstName.trim().lowercase().split(" ").filter(String::isNotBlank)
+        .joinToString(" ") { part -> part.replaceFirstChar { it.titlecase() } }
+    return if (name.isEmpty()) salutation else "$salutation, $name"
+}
 
-
+private fun initialsOf(firstName: String, lastName: String): String =
+    listOf(firstName, lastName).mapNotNull { it.trim().firstOrNull()?.uppercaseChar() }.joinToString("")

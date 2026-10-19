@@ -25,20 +25,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
-import com.example.shuttleapp.ui.theme.Green
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.Red
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 /** Stateless shuttle pass row. Same look as HomeScreen's ShuttlePassListItem, which moves to this in Phase 6. */
 @Composable
 fun ShuttlePassCard(item: ShuttlePassItemUi, onClick: () -> Unit) {
+    val colors = ShuttleTheme.colors
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -46,7 +44,7 @@ fun ShuttlePassCard(item: ShuttlePassItemUi, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (item.isLate) Color(0xFFFFF3F3) else Color.White
+            containerColor = if (item.isLate) colors.errorSoft else colors.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
@@ -63,7 +61,7 @@ fun ShuttlePassCard(item: ShuttlePassItemUi, onClick: () -> Unit) {
                         .width(4.dp)
                         .height(52.dp)
                         .clip(CircleShape)
-                        .background(if (item.isLate) Red else Green)
+                        .background(if (item.isLate) colors.error else colors.success)
                 )
                 Spacer(Modifier.width(12.dp))
                 PassDetails(item)
@@ -75,6 +73,7 @@ fun ShuttlePassCard(item: ShuttlePassItemUi, onClick: () -> Unit) {
 
 @Composable
 private fun PassDetails(item: ShuttlePassItemUi) {
+    val colors = ShuttleTheme.colors
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (item.isLate) {
@@ -83,7 +82,7 @@ private fun PassDetails(item: ShuttlePassItemUi) {
             }
             Text(
                 text = item.schedule,
-                color = if (item.isLate) Red else Color(0xFF5A6473),
+                color = if (item.isLate) colors.error else colors.textSecondary,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -93,14 +92,14 @@ private fun PassDetails(item: ShuttlePassItemUi) {
             text = item.code,
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
-            color = NavyBlue,
+            color = colors.primary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
         Spacer(Modifier.height(2.dp))
         Text(
             text = item.routeAndTrip,
-            color = Color(0xFF8A94A0),
+            color = colors.textSecondary,
             fontSize = 11.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -110,44 +109,46 @@ private fun PassDetails(item: ShuttlePassItemUi) {
 
 @Composable
 private fun LateBadge() {
+    val colors = ShuttleTheme.colors
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(6.dp))
-            .background(Red.copy(alpha = 0.12f))
+            .background(colors.errorSoft)
             .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Filled.AccessTime,
-                tint = Red,
+                tint = colors.error,
                 contentDescription = null,
                 modifier = Modifier.size(10.dp)
             )
             Spacer(Modifier.width(3.dp))
-            Text("LATE", color = Red, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+            Text("LATE", color = colors.error, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
         }
     }
 }
 
 @Composable
 private fun SyncPill(isSynced: Boolean) {
+    val colors = ShuttleTheme.colors
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
-            .background(if (isSynced) Green.copy(alpha = 0.12f) else Color(0xFFF0F0F0))
+            .background(if (isSynced) colors.successSoft else colors.surfaceSubtle)
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Filled.CheckCircle,
-                tint = if (isSynced) Green else Color.LightGray,
+                tint = if (isSynced) colors.successText else colors.textDisabled,
                 contentDescription = null,
                 modifier = Modifier.size(12.dp)
             )
             Spacer(Modifier.width(4.dp))
             Text(
                 text = if (isSynced) "Synced" else "Unsynced",
-                color = if (isSynced) Green else Color.Gray,
+                color = if (isSynced) colors.successText else colors.textSecondary,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold
             )

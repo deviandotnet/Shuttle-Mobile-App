@@ -33,13 +33,11 @@ import com.example.shuttleapp.presentation.components.LoadingDialog
 import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
 import com.example.shuttleapp.presentation.state.UploadUiState
-import com.example.shuttleapp.ui.theme.Green
-import com.example.shuttleapp.ui.theme.Red
-import com.example.shuttleapp.ui.theme.White
 import com.example.shuttleapp.util.Resource
 import com.example.shuttleapp.util.formatMonthYear
 import com.example.shuttleapp.presentation.events.QRInputEvent
 import com.example.shuttleapp.Route
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 import kotlinx.coroutines.launch
 import java.sql.Time
@@ -47,6 +45,7 @@ import java.sql.Time
 
 @Composable
 fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel, navController: NavController) {
+    val colors = ShuttleTheme.colors
 
     val shuttlePassWithPassengers by viewModel.shuttlePassWithPassengers.collectAsState()
     val coroutineScope = rememberCoroutineScope()
@@ -75,7 +74,7 @@ fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel, navController
                         ) {
                             Icon(
                                 imageVector = if(!shuttlePassenger.shuttlePass.isSynced) Icons.Outlined.Upload else Icons.TwoTone.CheckCircle,
-                                tint = if(!shuttlePassenger.shuttlePass.isSynced) White else Green,
+                                tint = if(!shuttlePassenger.shuttlePass.isSynced) colors.onBrandBand else colors.success,
                                 contentDescription = "Upload button")
                         }
 
@@ -110,7 +109,7 @@ fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel, navController
                                     dialogTitle = "Success!",
                                     dialogText = uploadMessage,
                                     icon = Icons.TwoTone.CheckCircle,
-                                    iconTint = Green
+                                    iconTint = colors.success
                                 )
                             }
                             is UploadUiState.Error -> {
@@ -119,7 +118,7 @@ fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel, navController
                                     dialogTitle = "Error!",
                                     dialogText = uploadMessage,
                                     icon = Icons.TwoTone.Cancel,
-                                    iconTint = Red
+                                    iconTint = colors.error
                                 )
                             }
                             else -> {}
@@ -178,12 +177,13 @@ fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel, navController
 @Composable
 @Preview(showBackground = true)
 fun Prev(){
+    val colors = ShuttleTheme.colors
     InformationTextDialog(
         onDismissRequest = {},
         dialogTitle = "Success",
         dialogText = "The shuttle pass has been uploaded to the server.",
         icon = Icons.Outlined.CheckCircleOutline,
-        iconTint = Green
+        iconTint = colors.success
     )
 }
 

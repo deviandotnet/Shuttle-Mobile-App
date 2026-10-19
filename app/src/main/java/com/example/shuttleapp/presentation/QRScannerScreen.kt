@@ -49,14 +49,12 @@ import com.example.shuttleapp.presentation.components.InformationTextDialog
 import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.presentation.events.QRInputEvent
 import com.example.shuttleapp.presentation.viewmodel.QrAnalyzerViewModel
-import com.example.shuttleapp.ui.theme.Green
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.Red
-import com.example.shuttleapp.ui.theme.White
 import com.example.shuttleapp.util.displayTime
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 @Composable
 fun QRScannerScreen(shuttlePassId: String, navController: NavController, qrAnalyzerViewModel: QrAnalyzerViewModel) {
+    val colors = ShuttleTheme.colors
     val context = LocalContext.current
 
     val passenger by qrAnalyzerViewModel.passengerQR.collectAsState()
@@ -136,7 +134,7 @@ fun QRScannerScreen(shuttlePassId: String, navController: NavController, qrAnaly
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(NavyBlue.copy(0.9f))
+                .background(colors.brandBand.copy(0.9f))
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
         ) {
@@ -159,7 +157,7 @@ fun QRScannerScreen(shuttlePassId: String, navController: NavController, qrAnaly
                         Text(
                             text= "Place the QR code inside the scanning area",
                             style = TextStyle(
-                                color = White,
+                                color = colors.onBrandBand,
                                 fontSize = 18.sp,
                                 textAlign = TextAlign.Center,
                             ) )
@@ -168,7 +166,7 @@ fun QRScannerScreen(shuttlePassId: String, navController: NavController, qrAnaly
                     Box(
                         modifier = Modifier.padding(top = 130.dp)
                             .size(315.dp) // adjust the size as needed
-                            .border(1.25.dp, White, shape = RoundedCornerShape(20.dp)) // adjust the border width and color as needed
+                            .border(1.25.dp, colors.onBrandBand, shape = RoundedCornerShape(20.dp)) // adjust the border width and color as needed
                             .align(Alignment.TopCenter)
                             .clip(RoundedCornerShape(20.dp))
                     ) {
@@ -259,7 +257,7 @@ fun QRScannerScreen(shuttlePassId: String, navController: NavController, qrAnaly
                             dialogTitle = "Error",
                             dialogText = qrInputState.qrCodeErrorMessage!!,
                             icon = Icons.Default.ErrorOutline,
-                            iconTint = Red
+                            iconTint = colors.error
                         )
                     }
 
@@ -273,7 +271,7 @@ fun QRScannerScreen(shuttlePassId: String, navController: NavController, qrAnaly
                             dialogTitle = "Success",
                             dialogText = "Passenger boarded successfully",
                             icon = Icons.Default.CheckCircleOutline,
-                            iconTint = Green
+                            iconTint = colors.success
                         )
                     }
 

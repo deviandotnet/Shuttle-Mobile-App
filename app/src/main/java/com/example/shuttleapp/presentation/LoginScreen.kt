@@ -61,10 +61,11 @@ fun LoginScreen(
     loginViewModel: LoginViewModel,
     navController: NavController
 ) {
+    val colors = ShuttleTheme.colors
 
     val loginState by loginViewModel.loginState.collectAsState()
 
-    HeaderBackground(leftColor = NavyBlue, rightColor = Black, modifier = Modifier.fillMaxSize())
+    HeaderBackground(leftColor = colors.brandBand, rightColor = colors.brandBandDeep, modifier = Modifier.fillMaxSize())
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Top,
@@ -78,12 +79,12 @@ fun LoginScreen(
             modifier = Modifier
                 .size(height = 100.dp, width = 200.dp)
                 .padding(end = 20.dp),
-            colorFilter = ColorFilter.tint(White),
+            colorFilter = ColorFilter.tint(colors.onBrandBand),
             contentScale = ContentScale.FillWidth,
         )
-        Text("SHUTTLE MOBILE APP", style = TextStyle(color = White, fontWeight = FontWeight.Bold, fontSize = 26.sp))
+        Text("SHUTTLE MOBILE APP", style = TextStyle(color = colors.onBrandBand, fontWeight = FontWeight.Bold, fontSize = 26.sp))
         Spacer(Modifier.weight(0.30f))
-        Text("Login your account", color = NavyBlue, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+        Text("Login your account", color = colors.primary, fontSize = 18.sp, fontWeight = FontWeight.Medium)
         Spacer(Modifier.height(8.dp))
 
         LoginContainer(
@@ -92,7 +93,7 @@ fun LoginScreen(
                 .fillMaxWidth(0.9f)
                 .shadow(5.dp, RoundedCornerShape(16.dp))
                 .background(
-                    White, RoundedCornerShape(16.dp)
+                    colors.surface, RoundedCornerShape(16.dp)
                 )
                 .padding(10.dp, 16.dp, 10.dp, 5.dp)
                 .align(Alignment.CenterHorizontally),
@@ -147,7 +148,7 @@ fun LoginScreen(
                             popUpTo(0)
                         }
                     },
-                color = NavyBlue,
+                color = colors.primary,
                 fontWeight = FontWeight.Bold,
                 textDecoration = TextDecoration.Underline,
                 style = MaterialTheme.typography.bodyMedium
@@ -193,6 +194,7 @@ fun LoginContainer(
     onForgotPasswordClicked: ()-> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = ShuttleTheme.colors
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -202,8 +204,8 @@ fun LoginContainer(
             description = "Username",
             hint = "Enter username",
             textValue = usernameValue(),
-            textColor = NavyBlue,
-            cursorColor = NavyBlue,
+            textColor = colors.textPrimary,
+            cursorColor = colors.primary,
             onValueChanged = onUsernameChanged,
             trailingIcon = null,
             onTrailingIconClicked = null,
@@ -218,8 +220,8 @@ fun LoginContainer(
             description = "Password",
             hint = "Enter password",
             textValue = passwordValue(),
-            textColor = NavyBlue,
-            cursorColor = NavyBlue,
+            textColor = colors.textPrimary,
+            cursorColor = colors.primary,
             onValueChanged = onPasswordChanged,
             trailingIcon = if(isPasswordShown()) Icons.Rounded.RemoveRedEye else Icons.Rounded.VisibilityOff,
             onTrailingIconClicked = {
@@ -254,8 +256,8 @@ fun LoginContainer(
 
             AuthButton(
                 text = "Log in",
-                backgroundColor = NavyBlue,
-                contentColor = White,
+                backgroundColor = colors.primary,
+                contentColor = colors.onPrimary,
                 enabled = !isLoading(),
                 onClick = onLoginButtonClicked,
                 isLoading = isLoading(),
@@ -269,7 +271,7 @@ fun LoginContainer(
             Text(
                 text = "Forgot password?",
                 style = TextStyle(
-                    color = NavyBlue,
+                    color = colors.primary,
                     textDecoration = TextDecoration.Underline
                 ),
                 modifier = Modifier
@@ -285,7 +287,8 @@ fun LoginContainer(
 
 @Composable()
 fun Test() {
-    HeaderBackground(leftColor = NavyBlue, rightColor = Black, modifier = Modifier.fillMaxSize())
+    val colors = ShuttleTheme.colors
+    HeaderBackground(leftColor = colors.brandBand, rightColor = colors.brandBandDeep, modifier = Modifier.fillMaxSize())
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.CenterHorizontally) {
 
         Spacer(Modifier.height(32.dp))
@@ -295,10 +298,10 @@ fun Test() {
             modifier = Modifier
                 .size(height = 100.dp, width = 200.dp)
                 .padding(end = 20.dp),
-            colorFilter = ColorFilter.tint(White),
+            colorFilter = ColorFilter.tint(colors.onBrandBand),
             contentScale = ContentScale.FillWidth,
         )
-        Text("SHUTTLE MOBILE APP", style = TextStyle(color = White, fontWeight = FontWeight.Bold, fontSize = 26.sp))
+        Text("SHUTTLE MOBILE APP", style = TextStyle(color = colors.onBrandBand, fontWeight = FontWeight.Bold, fontSize = 26.sp))
         Spacer(Modifier.weight(.20f))
         Text("Login your account")
         LoginContainer(

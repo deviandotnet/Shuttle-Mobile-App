@@ -1,6 +1,8 @@
 package com.example.shuttleapp
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 
 import androidx.navigation.NavHostController
@@ -19,6 +21,7 @@ import com.example.shuttleapp.presentation.ShuttlePassItemScreen
 import com.example.shuttleapp.presentation.ShuttlePassListRoot
 import com.example.shuttleapp.presentation.viewmodel.ShuttlePassListViewModel
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
+import com.example.shuttleapp.presentation.viewmodel.AppearanceViewModel
 import kotlinx.serialization.Serializable
 
 @Composable
@@ -47,10 +50,14 @@ fun Navigation(
             )
         ) { entry ->
             val id = entry.arguments?.getString("id") ?: ""
+            val appearanceViewModel = hiltViewModel<AppearanceViewModel>()
+            val themeMode by appearanceViewModel.themeMode.collectAsStateWithLifecycle()
             HomeScreen(
                 userId = id,
                 navController = navController,
-                viewModel = hiltViewModel<ShuttleViewModel>()
+                viewModel = hiltViewModel<ShuttleViewModel>(),
+                themeMode = themeMode,
+                onThemeModeChange = appearanceViewModel::onThemeModeChange
             )
         }
 

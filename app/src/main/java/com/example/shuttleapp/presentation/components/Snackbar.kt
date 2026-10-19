@@ -26,23 +26,22 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.shuttleapp.R
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.Red
-import com.example.shuttleapp.ui.theme.White
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 //SnackBar
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun StyledSnackBarHost(hostState: SnackbarHostState) {
+    val colors = ShuttleTheme.colors
     SnackbarHost(hostState = hostState) { snackBarData ->
         Snackbar(
             modifier = Modifier
                 .padding(16.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(NavyBlue),
-            contentColor = White,
-            containerColor = NavyBlue,
+                .background(colors.brandBand),
+            contentColor = colors.onBrandBand,
+            containerColor = colors.brandBand,
             action = {
                 snackBarData.visuals.actionLabel?.let { label ->
                     TextButton(onClick = {
@@ -50,7 +49,7 @@ fun StyledSnackBarHost(hostState: SnackbarHostState) {
                         //snackBarData.performAction()
                     }
                     ) {
-                        Text(text = label, style = TextStyle(color = White, textDecoration = TextDecoration.Underline))
+                        Text(text = label, style = TextStyle(color = colors.onBrandBand, textDecoration = TextDecoration.Underline))
                     }
                 }
             }
@@ -62,7 +61,7 @@ fun StyledSnackBarHost(hostState: SnackbarHostState) {
 
                 Icon(painter = painterResource(R.drawable.shuttle_vector),
                     contentDescription = null,
-                    tint = White,
+                    tint = colors.onBrandBand,
                     modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(

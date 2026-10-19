@@ -9,8 +9,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.shuttleapp.ui.theme.Black
-import com.example.shuttleapp.ui.theme.NavyBlue
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 
 @Composable
@@ -20,7 +19,7 @@ fun HeaderBackground(
     modifier: Modifier = Modifier,
     height: Float = 2f
 ) {
-    val colorList = remember {
+    val colorList = remember(leftColor, rightColor) {
         listOf(leftColor,rightColor)
     }
 
@@ -39,9 +38,10 @@ fun HeaderBackground(
 @Preview(showBackground = true)
 @Composable
 fun PreviewBackground() {
+    val colors = ShuttleTheme.colors
     HeaderBackground(
-        leftColor = NavyBlue,
-        rightColor = Black,
+        leftColor = colors.brandBand,
+        rightColor = colors.brandBandDeep,
         modifier = Modifier.fillMaxSize()
     )
 }

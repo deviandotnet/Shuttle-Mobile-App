@@ -50,10 +50,7 @@ import com.example.shuttleapp.presentation.components.TextEntryModule
 import com.example.shuttleapp.presentation.events.RegisterInputEvent
 import com.example.shuttleapp.presentation.viewmodel.RegisterViewModel
 import com.example.shuttleapp.presentation.components.InformationTextDialog
-import com.example.shuttleapp.ui.theme.Black
-import com.example.shuttleapp.ui.theme.Green
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.White
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 @Composable
 fun RegisterScreen(
@@ -61,12 +58,13 @@ fun RegisterScreen(
     navController: NavController
 
 ) {
+    val colors = ShuttleTheme.colors
     var showSuccessRegDialog by remember { mutableStateOf(false) }
     val shuttleProviders by registerViewModel.shuttleProviderState.collectAsState()
     val registerState by registerViewModel.registerState.collectAsState()
 
 
-    HeaderBackground(leftColor = NavyBlue, rightColor = Black, modifier = Modifier.fillMaxSize(), height = 3f)
+    HeaderBackground(leftColor = colors.brandBand, rightColor = colors.brandBandDeep, modifier = Modifier.fillMaxSize(), height = 3f)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -76,7 +74,7 @@ fun RegisterScreen(
             Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth(0.9f)) {
                 Text(
                     "Create account",
-                    color = White,
+                    color = colors.onBrandBand,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
                 )
@@ -167,7 +165,7 @@ fun RegisterScreen(
                     .fillMaxWidth(0.9f)
                     .shadow(5.dp, RoundedCornerShape(16.dp))
                     .background(
-                        White, RoundedCornerShape(16.dp)
+                        colors.surface, RoundedCornerShape(16.dp)
                     )
                     .padding(10.dp, 16.dp, 10.dp, 5.dp)
 
@@ -178,6 +176,7 @@ fun RegisterScreen(
             Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 androidx.compose.material.Text(
                     "Already had an account?",
+                    color = colors.textPrimary,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
@@ -190,7 +189,7 @@ fun RegisterScreen(
                                 popUpTo(0)
                             }
                         },
-                    color = NavyBlue,
+                    color = colors.primary,
                     fontWeight = FontWeight.Bold,
                     textDecoration = TextDecoration.Underline,
                     style = MaterialTheme.typography.bodyMedium
@@ -218,7 +217,7 @@ fun RegisterScreen(
             dialogTitle = "Success!",
             dialogText = "Your account has been registered.",
             icon = Icons.Outlined.CheckCircleOutline,
-            iconTint = Green
+            iconTint = colors.success
         )
     }
 
@@ -270,6 +269,7 @@ fun RegisterContainer(
 
     modifier: Modifier = Modifier
 ) {
+    val colors = ShuttleTheme.colors
 
     Column(
         modifier = modifier,
@@ -281,8 +281,8 @@ fun RegisterContainer(
             description = "First Name",
             hint = "Enter first name",
             textValue = firstNameValue(),
-            textColor = NavyBlue,
-            cursorColor = NavyBlue,
+            textColor = colors.textPrimary,
+            cursorColor = colors.primary,
             onValueChanged = onFirstNameChanged,
             trailingIcon = null,
             onTrailingIconClicked = null,
@@ -295,8 +295,8 @@ fun RegisterContainer(
             description = "Middle Name",
             hint = "Enter middle name",
             textValue = middleNameValue(),
-            textColor = NavyBlue,
-            cursorColor = NavyBlue,
+            textColor = colors.textPrimary,
+            cursorColor = colors.primary,
             onValueChanged = onMiddleNameChanged,
             trailingIcon = null,
             onTrailingIconClicked = null,
@@ -309,8 +309,8 @@ fun RegisterContainer(
             description = "Last Name",
             hint = "Enter last name",
             textValue = lastNameValue(),
-            textColor = NavyBlue,
-            cursorColor = NavyBlue,
+            textColor = colors.textPrimary,
+            cursorColor = colors.primary,
             onValueChanged = onLastNameChanged,
             trailingIcon = null,
             onTrailingIconClicked = null,
@@ -324,8 +324,8 @@ fun RegisterContainer(
             description = "Shuttle Provider",
             hint = "Select shuttle provider",
             textValue = providerValue(),
-            textColor = NavyBlue,
-            cursorColor = NavyBlue,
+            textColor = colors.textPrimary,
+            cursorColor = colors.primary,
             onValueChanged = onProviderChanged,
             onTrailingIconClicked = null,
             leadingIcon = Icons.Default.DirectionsBus,
@@ -339,8 +339,8 @@ fun RegisterContainer(
             description = "Employee Number",
             hint = "Enter employee number",
             textValue = empNumberValue(),
-            textColor = NavyBlue,
-            cursorColor = NavyBlue,
+            textColor = colors.textPrimary,
+            cursorColor = colors.primary,
             onValueChanged = onEmpNumberChanged,
             trailingIcon = null,
             onTrailingIconClicked = null,
@@ -354,8 +354,8 @@ fun RegisterContainer(
             description = "Username",
             hint = "Enter username",
             textValue = usernameValue(),
-            textColor = NavyBlue,
-            cursorColor = NavyBlue,
+            textColor = colors.textPrimary,
+            cursorColor = colors.primary,
             onValueChanged = onUsernameChanged,
             trailingIcon = null,
             onTrailingIconClicked = null,
@@ -370,8 +370,8 @@ fun RegisterContainer(
             description = "Password",
             hint = "Enter password",
             textValue = passwordValue(),
-            textColor = NavyBlue,
-            cursorColor = NavyBlue,
+            textColor = colors.textPrimary,
+            cursorColor = colors.primary,
             onValueChanged = onPasswordChanged,
             trailingIcon = if(isPasswordShown()) Icons.Rounded.RemoveRedEye else Icons.Rounded.VisibilityOff,
             onTrailingIconClicked = {
@@ -391,8 +391,8 @@ fun RegisterContainer(
             description = "Repeat Password",
             hint = "Re-enter password",
             textValue = rePasswordValue(),
-            textColor = NavyBlue,
-            cursorColor = NavyBlue,
+            textColor = colors.textPrimary,
+            cursorColor = colors.primary,
             onValueChanged = onRePasswordChanged,
             trailingIcon = if(isRePasswordShown()) Icons.Rounded.RemoveRedEye else Icons.Rounded.VisibilityOff,
             onTrailingIconClicked = {
@@ -416,8 +416,8 @@ fun RegisterContainer(
 
             AuthButton(
                 text = "Register",
-                backgroundColor = NavyBlue,
-                contentColor = White,
+                backgroundColor = colors.primary,
+                contentColor = colors.onPrimary,
                 enabled = !isLoading(),
                 onClick = onRegisterButtonClicked,
                 isLoading = isLoading(),

@@ -45,7 +45,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -82,6 +81,7 @@ fun AVCurrentPassScreenTest(
     navController: NavController, 
     viewModel: ShuttleViewModel
 ) {
+    val colors = ShuttleTheme.colors
 
     val routesState by viewModel.routeState.collectAsState()
     val shuttleState by viewModel.shuttleState.collectAsState()
@@ -164,7 +164,7 @@ fun AVCurrentPassScreenTest(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                tint = White,
+                                tint = colors.onBrandBand,
                                 contentDescription = "edit icon"
                             )
                         }
@@ -174,7 +174,7 @@ fun AVCurrentPassScreenTest(
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                tint = White,
+                                tint = colors.onBrandBand,
                                 contentDescription = "Delete"
                             )
                         }
@@ -213,7 +213,7 @@ fun AVCurrentPassScreenTest(
         Box(modifier = Modifier
             .padding(innerPadding)
             .consumeWindowInsets(innerPadding)
-            .background(color = White)) {
+            .background(color = colors.canvas)) {
 
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -235,11 +235,11 @@ fun AVCurrentPassScreenTest(
                         Text(
                             text = "No incomplete shuttle pass.",
                             fontStyle = FontStyle.Italic,
-                            color = Color.Gray)
+                            color = colors.textSecondary)
                         Text(
                             text = "Complete the fields to create new shuttle pass",
                             fontStyle = FontStyle.Italic,
-                            color = Color.Gray)
+                            color = colors.textSecondary)
 
                         Spacer(modifier = Modifier.height(4.dp))
 
@@ -342,10 +342,10 @@ fun AVCurrentPassScreenTest(
                                     }
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(NavyBlue),
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.primary, contentColor = colors.onPrimary),
                             elevation = ButtonDefaults.buttonElevation(8.dp))
                         {
-                            Text("Create new shuttle pass", color = White)
+                            Text("Create new shuttle pass", color = colors.onPrimary)
                         }
                     }
                 }
@@ -402,6 +402,7 @@ fun ShuttlePassFormTest(
     onSaveEditedPassenger: (PassengerQR) -> Boolean,
     onCancelEditPassenger: () -> Unit
 ) {
+    val colors = ShuttleTheme.colors
 
     var showConfirmation by remember { mutableStateOf(false) }
     var editingPassenger by remember { mutableStateOf<PassengerQR?>(null) }
@@ -417,7 +418,7 @@ fun ShuttlePassFormTest(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
                 .fillMaxSize()
-                .background(color = White),
+                .background(color = colors.canvas),
 
             ) {
             Row (
@@ -456,13 +457,13 @@ fun ShuttlePassFormTest(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(LightGray)
+                    .background(colors.divider)
             )
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .background(White)
+                    .background(colors.canvas)
             ) {
                 PassengerListContent(
                     passengers = draftPassengerList,
@@ -530,16 +531,17 @@ private fun PassengerListContent(
     onEdit: (PassengerQR) -> Unit,
     onDelete: (PassengerQR) -> Unit
 ) {
+    val colors = ShuttleTheme.colors
     if (passengers.isEmpty()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(White),
+                .background(colors.canvas),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "No passengers to display.", color = Color.DarkGray)
-            Text(text = "Click + to add", color = Color.DarkGray)
+            Text(text = "No passengers to display.", color = colors.textSecondary)
+            Text(text = "Click + to add", color = colors.textSecondary)
         }
     } else {
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
@@ -563,6 +565,7 @@ private fun PassActionButtons(
     onRecordDeparture: () -> Unit,
     onEnd: () -> Unit
 ) {
+    val colors = ShuttleTheme.colors
     Column(
         verticalArrangement = Arrangement.Bottom
     ) {
@@ -570,16 +573,16 @@ private fun PassActionButtons(
             modifier = Modifier
                 .padding(start = 12.dp, end = 12.dp)
                 .fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(NavyBlue),
+            colors = ButtonDefaults.buttonColors(containerColor = colors.primary, contentColor = colors.onPrimary),
             elevation = ButtonDefaults.buttonElevation(4.dp),
             onClick = onAddPassenger
         ) {
             Icon(
-                contentDescription = "add icon", tint = White,
+                contentDescription = "add icon", tint = colors.onPrimary,
                 imageVector = Icons.Rounded.AddCircle
             )
 
-            Text("Add passenger", color = White)
+            Text("Add passenger", color = colors.onPrimary)
         }
 
         if (!hasDeparted) {
@@ -587,23 +590,23 @@ private fun PassActionButtons(
                 modifier = Modifier
                     .padding(start = 12.dp, end = 12.dp, bottom = 8.dp)
                     .fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(Green),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.success, contentColor = colors.onSuccess),
                 elevation = ButtonDefaults.buttonElevation(8.dp),
                 onClick = onRecordDeparture
             ) {
-                Text("Start Departure", color = White)
+                Text("Start Departure", color = colors.onSuccess)
             }
         } else {
             Button(
                 modifier = Modifier
                     .padding(start = 12.dp, end = 12.dp, bottom = 8.dp)
                     .fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(Green),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.success, contentColor = colors.onSuccess),
                 elevation = ButtonDefaults.buttonElevation(8.dp),
                 enabled = canComplete,
                 onClick = onEnd
             ) {
-                Text("End Shuttle Pass Record", color = White)
+                Text("End Shuttle Pass Record", color = colors.onSuccess)
             }
         }
     }
@@ -611,6 +614,7 @@ private fun PassActionButtons(
 
 @Composable
 fun PassengerItemTest(number: Int, item: PassengerQR, onEdit: () -> Unit, onDelete: () -> Unit) {
+    val colors = ShuttleTheme.colors
 
     var showEditDeleteDialog by remember { mutableStateOf(false) }
 
@@ -633,14 +637,14 @@ fun PassengerItemTest(number: Int, item: PassengerQR, onEdit: () -> Unit, onDele
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             fontStyle = FontStyle.Normal,
-            colors = Black,
+            colors = colors.textPrimary,
             modifier = Modifier.padding(start = 12.dp)
         )
 
         Spacer(modifier = Modifier.width(8.dp))
         Icon(imageVector = Icons.Outlined.AccountCircle,
             contentDescription = "Profile Picture",
-            tint = NavyBlue,
+            tint = colors.primary,
             modifier = Modifier.size(30.dp)
         )
 
@@ -655,7 +659,7 @@ fun PassengerItemTest(number: Int, item: PassengerQR, onEdit: () -> Unit, onDele
                 text = item.scannedQR,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Normal,
-                colors = Black
+                colors = colors.textPrimary
             )
         }
         Spacer(modifier = Modifier.width(16.dp))
@@ -664,7 +668,7 @@ fun PassengerItemTest(number: Int, item: PassengerQR, onEdit: () -> Unit, onDele
             fontSize = 12.sp,
             fontWeight = FontWeight.Normal,
             fontStyle = FontStyle.Italic,
-            colors = Black,
+            colors = colors.textPrimary,
             modifier = Modifier.padding(end = 12.dp)
         )
     }
@@ -673,7 +677,7 @@ fun PassengerItemTest(number: Int, item: PassengerQR, onEdit: () -> Unit, onDele
         modifier = Modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(LightGray)
+            .background(colors.divider)
     )
 
     if (showEditDeleteDialog && item.isDraft) {
@@ -694,8 +698,9 @@ fun EditPassengerDialog(
     onSave: () -> Unit,
     onCancel: () -> Unit
 ) {
+    val colors = ShuttleTheme.colors
     AlertDialog(
-        containerColor = White,
+        containerColor = colors.surface,
         onDismissRequest = {},
         title = { Text(text = "Edit Passenger") },
         text = {
@@ -715,7 +720,7 @@ fun EditPassengerDialog(
         confirmButton = {
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(NavyBlue),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.primary, contentColor = colors.onPrimary),
                 onClick = onSave
             ) {
                 Text("Save")
@@ -724,10 +729,10 @@ fun EditPassengerDialog(
         dismissButton = {
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(PaleBlue),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.surfaceQuiet, contentColor = colors.textPrimary),
                 onClick = onCancel
             ) {
-                Text("Cancel", color = Black)
+                Text("Cancel", color = colors.textPrimary)
             }
         }
     )
@@ -735,10 +740,11 @@ fun EditPassengerDialog(
 
 @Composable
 fun ConfirmDialogTest(onConfirm: ()-> Unit, onDismiss: () -> Unit) {
+    val colors = ShuttleTheme.colors
 
     val context = LocalContext.current
     AlertDialog(
-        containerColor = White,
+        containerColor = colors.surface,
         onDismissRequest = onDismiss,
         title = { Text(text = "Confirm Completion") },
         text = {

@@ -26,12 +26,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.shuttleapp.ui.theme.Black
-import com.example.shuttleapp.ui.theme.White
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 //SelectableDropDown
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpandedDropDown(label: String, categories: List<String>, initialValue: String, errorIndicator: Boolean, onValueChanged: (String) -> Unit) {
+    val colors = ShuttleTheme.colors
 
     var isExpanded by remember { mutableStateOf(false) }
 
@@ -66,7 +66,7 @@ fun ExpandedDropDown(label: String, categories: List<String>, initialValue: Stri
             label = {
                 Text( text = label) },
             textStyle = TextStyle(
-                color = Black,
+                color = colors.textPrimary,
                 fontSize = 16.sp
             ),
             trailingIcon = {ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)},
@@ -77,7 +77,7 @@ fun ExpandedDropDown(label: String, categories: List<String>, initialValue: Stri
             singleLine = true
         )
 
-        ExposedDropdownMenu(modifier = Modifier.exposedDropdownSize().fillMaxWidth().heightIn(max = 230.dp).background(color = White),
+        ExposedDropdownMenu(modifier = Modifier.exposedDropdownSize().fillMaxWidth().heightIn(max = 230.dp).background(color = colors.surface),
             scrollState = rememberScrollState(), expanded = isExpanded, onDismissRequest = {isExpanded = false} //<--
         ) {
             if(categories.isNotEmpty()) {

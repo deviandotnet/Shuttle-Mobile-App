@@ -6,8 +6,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.example.shuttleapp.presentation.components.ReauthDialog
-import com.example.shuttleapp.ui.theme.DarkOrange
-import com.example.shuttleapp.ui.theme.Orange
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,11 +53,8 @@ import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
 import com.example.shuttleapp.presentation.state.ShuttlePassListState
 import com.example.shuttleapp.presentation.state.SyncStatus
 import com.example.shuttleapp.presentation.viewmodel.ShuttlePassListViewModel
-import com.example.shuttleapp.ui.theme.Green
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.Red
 import com.example.shuttleapp.ui.theme.ShuttleAppTheme
-import com.example.shuttleapp.ui.theme.White
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 import kotlinx.coroutines.launch
 
 @Composable
@@ -80,6 +75,7 @@ fun ShuttlePassListRoot(
 
 @Composable
 fun ShuttlePassListScreen(state: ShuttlePassListState, onAction: (ShuttlePassListAction) -> Unit) {
+    val colors = ShuttleTheme.colors
     val snackBarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
@@ -112,7 +108,7 @@ fun ShuttlePassListScreen(state: ShuttlePassListState, onAction: (ShuttlePassLis
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
                 .fillMaxSize()
-                .background(White),
+                .background(colors.canvas),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -140,17 +136,18 @@ fun ShuttlePassListScreen(state: ShuttlePassListState, onAction: (ShuttlePassLis
 
 @Composable
 private fun ConnectionBanners(state: ShuttlePassListState, onAction: (ShuttlePassListAction) -> Unit) {
+    val colors = ShuttleTheme.colors
     if (!state.isOnline) {
         StatusBanner(
             text = "Offline — passes are saved on this device",
-            background = Orange.copy(alpha = 0.15f),
-            color = DarkOrange
+            background = colors.warningSoft,
+            color = colors.warningText
         )
     } else if (state.needsSignIn) {
         StatusBanner(
             text = "Sign in again to upload. Tap here.",
-            background = Red.copy(alpha = 0.10f),
-            color = Red,
+            background = colors.errorSoft,
+            color = colors.error,
             onClick = { onAction(ShuttlePassListAction.ShowReauth) }
         )
     }
@@ -173,9 +170,10 @@ private fun StatusBanner(text: String, background: Color, color: Color, onClick:
 
 @Composable
 private fun ColumnScope.PassListContent(state: ShuttlePassListState, onAction: (ShuttlePassListAction) -> Unit) {
+    val colors = ShuttleTheme.colors
     when {
         state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = NavyBlue)
+            CircularProgressIndicator(color = colors.primary)
         }
         state.items.isEmpty() -> {
             Spacer(Modifier.weight(0.10f))
@@ -188,7 +186,7 @@ private fun ColumnScope.PassListContent(state: ShuttlePassListState, onAction: (
         }
         else -> LazyColumn(
             modifier = Modifier
-                .background(color = White)
+                .background(color = colors.canvas)
                 .padding(8.dp)
                 .fillMaxWidth()
         ) {
@@ -201,6 +199,7 @@ private fun ColumnScope.PassListContent(state: ShuttlePassListState, onAction: (
 
 @Composable
 private fun SyncResultDialog(sync: SyncStatus, onDismiss: () -> Unit) {
+    val colors = ShuttleTheme.colors
     when (sync) {
         SyncStatus.Idle -> Unit
         SyncStatus.Running -> LoadingDialog()
@@ -209,14 +208,14 @@ private fun SyncResultDialog(sync: SyncStatus, onDismiss: () -> Unit) {
             dialogTitle = "Success!",
             dialogText = sync.message,
             icon = Icons.TwoTone.CheckCircle,
-            iconTint = Green
+            iconTint = colors.success
         )
         is SyncStatus.Failed -> InformationTextDialog(
             onDismissRequest = onDismiss,
             dialogTitle = "Error!",
             dialogText = sync.message,
             icon = Icons.TwoTone.Cancel,
-            iconTint = Red
+            iconTint = colors.error
         )
     }
 }

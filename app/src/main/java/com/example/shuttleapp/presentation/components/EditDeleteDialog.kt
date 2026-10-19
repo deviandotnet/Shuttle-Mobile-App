@@ -34,13 +34,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.White
 import kotlinx.coroutines.delay
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 
 @Composable
 fun EditDeleteChoiceDialog(onEdit:() -> Unit, onDelete:()-> Unit, onDismiss: () -> Unit) {
+    val colors = ShuttleTheme.colors
 
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 
@@ -51,7 +51,7 @@ fun EditDeleteChoiceDialog(onEdit:() -> Unit, onDelete:()-> Unit, onDismiss: () 
                 .height(150.dp)
                 .padding(top = 16.dp, bottom = 16.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = White)
+            colors = CardDefaults.cardColors(containerColor = colors.surface)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -104,6 +104,7 @@ fun EditDeleteChoiceDialog(onEdit:() -> Unit, onDelete:()-> Unit, onDismiss: () 
 
 @Composable
 fun LoadingDialog() {
+    val colors = ShuttleTheme.colors
     Dialog(onDismissRequest = {}) {
         Card(
             modifier = Modifier
@@ -117,7 +118,7 @@ fun LoadingDialog() {
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    color = NavyBlue,
+                    color = colors.primary,
                     strokeWidth = 4.dp, // Example stroke width
                     modifier = Modifier.size(24.dp) // Set size for the indicator
                 )
@@ -134,6 +135,7 @@ fun InformationTextDialog(
     icon: ImageVector,
     iconTint: Color
 ) {
+    val colors = ShuttleTheme.colors
     LaunchedEffect(true) {
         delay(3000)
         onDismissRequest()
@@ -156,7 +158,7 @@ fun InformationTextDialog(
         },
         dismissButton = {
             TextButton(onClick = {onDismissRequest()}) {
-                Text("Dismiss", color = NavyBlue)
+                Text("Dismiss", color = colors.primary)
             }
         }
     )
@@ -168,9 +170,10 @@ fun ConfirmBasicDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    val colors = ShuttleTheme.colors
 
     AlertDialog(
-        containerColor = White,
+        containerColor = colors.surface,
         onDismissRequest = onDismiss,
         text = {
             Text(text = content,
@@ -213,8 +216,9 @@ fun LogoutConfirmDialog(
     onUploadFirst: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val colors = ShuttleTheme.colors
     AlertDialog(
-        containerColor = White,
+        containerColor = colors.surface,
         onDismissRequest = onDismiss,
         text = {
             Text(
@@ -230,15 +234,15 @@ fun LogoutConfirmDialog(
         },
         dismissButton = {
             Row {
-                TextButton(onClick = onDismiss) { Text("Cancel", color = NavyBlue) }
+                TextButton(onClick = onDismiss) { Text("Cancel", color = colors.primary) }
                 if (unsyncedCount > 0) {
-                    TextButton(onClick = onUploadFirst) { Text("Upload first", color = NavyBlue) }
+                    TextButton(onClick = onUploadFirst) { Text("Upload first", color = colors.primary) }
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onLogout) {
-                Text(if (unsyncedCount > 0) "Log out anyway" else "Log out", color = NavyBlue)
+                Text(if (unsyncedCount > 0) "Log out anyway" else "Log out", color = colors.primary)
             }
         }
     )

@@ -14,8 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.White
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 @Composable
 fun AuthButton(text: String,
@@ -57,10 +56,11 @@ fun AuthButton(text: String,
 @Preview(showBackground = true)
 @Composable
 fun Preview() {
+    val colors = ShuttleTheme.colors
     AuthButton(
         text = "Login",
-        backgroundColor = NavyBlue,
-        contentColor = White,
+        backgroundColor = colors.primary,
+        contentColor = colors.onPrimary,
         enabled = true,
         onClick = {},
         isLoading = false,

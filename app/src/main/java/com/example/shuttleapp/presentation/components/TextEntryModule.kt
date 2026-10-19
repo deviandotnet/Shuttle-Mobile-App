@@ -41,9 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shuttleapp.domain.model.ShuttleProvider
-import com.example.shuttleapp.ui.theme.Black
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.White
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 @Composable
 fun TextEntryModule(
@@ -62,6 +60,7 @@ fun TextEntryModule(
     imeAction: ImeAction = ImeAction.Next,
     readOnly: Boolean = false
 ) {
+    val colors = ShuttleTheme.colors
     Column(
         modifier = modifier,
     ) {
@@ -74,7 +73,9 @@ fun TextEntryModule(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp).border(0.5.dp, textColor, RoundedCornerShape(25.dp)).height(50.dp).shadow(4.dp, RoundedCornerShape(25.dp)),
             value = textValue,
             colors = TextFieldDefaults.textFieldColors(
-                backgroundColor = White,
+                backgroundColor = colors.surface,
+                textColor = textColor,
+                placeholderColor = colors.textSecondary,
                 cursorColor = cursorColor,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedLabelColor = Color.Transparent
@@ -135,6 +136,7 @@ fun TextDropDown(description: String,
                  imeAction: ImeAction = ImeAction.Next,
                  readOnly: Boolean = false
 ) {
+    val colors = ShuttleTheme.colors
 
     var isExpanded by remember { mutableStateOf(false) }
     var selectedItemId by remember { mutableStateOf<String?>(null) }
@@ -163,7 +165,9 @@ fun TextDropDown(description: String,
                     .shadow(4.dp, RoundedCornerShape(25.dp)),
                 value = value,
                 colors = TextFieldDefaults.textFieldColors(
-                    backgroundColor = White,
+                    backgroundColor = colors.surface,
+                    textColor = textColor,
+                    placeholderColor = colors.textSecondary,
                     cursorColor = cursorColor,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedLabelColor = Color.Transparent
@@ -207,7 +211,7 @@ fun TextDropDown(description: String,
                 visualTransformation = visualTransformation,
             )
 
-            ExposedDropdownMenu(modifier = Modifier.exposedDropdownSize().fillMaxWidth().heightIn(max = 230.dp).background(color = White),
+            ExposedDropdownMenu(modifier = Modifier.exposedDropdownSize().fillMaxWidth().heightIn(max = 230.dp).background(color = colors.surface),
                 scrollState = rememberScrollState(), expanded = isExpanded, onDismissRequest = {isExpanded = false} //<--
             ) {
                 listItems?.let {
@@ -244,14 +248,15 @@ fun TextDropDown(description: String,
 @Preview(showBackground = true)
 @Composable
 fun PreviewText() {
+    val colors = ShuttleTheme.colors
 
     TextDropDown(
         description = "Shuttle Provider",
         hint = "Select shuttle provider",
         leadingIcon = Icons.Default.DirectionsBus,
         textValue = "", //"123123"
-        textColor = Black,
-        cursorColor = NavyBlue,
+        textColor = colors.textPrimary,
+        cursorColor = colors.primary,
         onValueChanged = {},
         onTrailingIconClicked = {},
         visualTransformation = PasswordVisualTransformation(),

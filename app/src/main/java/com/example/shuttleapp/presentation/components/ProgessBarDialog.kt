@@ -13,10 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.example.shuttleapp.ui.theme.NavyBlue
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 @Composable
 fun ProgressBarDialog() {
+    val colors = ShuttleTheme.colors
     Dialog(onDismissRequest = {}) {
         Card(
             modifier = Modifier
@@ -30,7 +31,7 @@ fun ProgressBarDialog() {
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    color = NavyBlue,
+                    color = colors.primary,
                     strokeWidth = 4.dp, // Example stroke width
                     modifier = Modifier.size(24.dp) // Set size for the indicator
                 )

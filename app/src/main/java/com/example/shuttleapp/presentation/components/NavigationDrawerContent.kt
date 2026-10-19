@@ -23,7 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import android.content.res.Configuration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,33 +33,41 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.shuttleapp.R
 import com.example.shuttleapp.domain.model.UserData
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.White
+import com.example.shuttleapp.domain.model.ThemeMode
+import com.example.shuttleapp.ui.theme.ShuttleAppTheme
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 //NavigationDrawerContent
 @Composable
-fun DrawerContent(onLogOut: () -> Unit = {}, userData: UserData, navController: NavController) {
+fun DrawerContent(
+    onLogOut: () -> Unit = {},
+    userData: UserData,
+    navController: NavController,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit
+) {
+    val colors = ShuttleTheme.colors
 
     Column(
         modifier = Modifier.fillMaxSize()
-            .background(color = White),
+            .background(color = colors.surface),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         Row(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.background(color = NavyBlue).fillMaxWidth().height(150.dp)
+            modifier = Modifier.background(color = colors.brandBand).fillMaxWidth().height(150.dp)
         ) {
             Icon(
                 painter = painterResource(R.drawable.shuttle_vector),
-                tint = White,
+                tint = colors.onBrandBand,
                 contentDescription = "Shuttle",
                 modifier = Modifier.size(90.dp)
             )
 
             Text(
                 text = "Shuttle Mobile App",
-                color = White,
+                color = colors.onBrandBand,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(16.dp)
@@ -75,14 +83,14 @@ fun DrawerContent(onLogOut: () -> Unit = {}, userData: UserData, navController: 
                 ) {
                     Text(
                         text = "${userData.firstName.uppercase()} ${userData.lastName.uppercase()}",
-                        color = Color.Black,
+                        color = colors.textPrimary,
                         fontSize = 16.sp
                     )
 
                     if (userData.empNo.isNotBlank()) {
                         Text(
                             text = userData.empNo,
-                            color = Color.Black,
+                            color = colors.textPrimary,
                             fontSize = 12.sp
                         )
                     }
@@ -95,7 +103,7 @@ fun DrawerContent(onLogOut: () -> Unit = {}, userData: UserData, navController: 
             icon = {
                 Icon(
                     imageVector = Icons.Filled.AccountCircle,
-                    tint = NavyBlue,
+                    tint = colors.primary,
                     contentDescription = "profile",
                     modifier = Modifier.size(46.dp)
                 )
@@ -111,7 +119,7 @@ fun DrawerContent(onLogOut: () -> Unit = {}, userData: UserData, navController: 
                 ) {
                     Text(
                         text = "Collector Sync",
-                        color = Color.Black,
+                        color = colors.textPrimary,
                         fontSize = 16.sp
                     )
                 }
@@ -123,7 +131,7 @@ fun DrawerContent(onLogOut: () -> Unit = {}, userData: UserData, navController: 
             icon = {
                 Icon(
                     imageVector = Icons.Filled.SyncAlt,
-                    tint = NavyBlue,
+                    tint = colors.primary,
                     contentDescription = "profile",
                     modifier = Modifier.size(46.dp)
                 )
@@ -132,6 +140,12 @@ fun DrawerContent(onLogOut: () -> Unit = {}, userData: UserData, navController: 
         )
 
         Spacer(Modifier.weight(.95f))
+
+        ThemeModeSelector(
+            selected = themeMode,
+            onSelect = onThemeModeChange,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)
+        )
 
         HorizontalDivider()
 
@@ -145,19 +159,19 @@ fun DrawerContent(onLogOut: () -> Unit = {}, userData: UserData, navController: 
                 modifier = Modifier
                     .padding(16.dp)
                     .fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(NavyBlue),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.primary, contentColor = colors.onPrimary),
                 elevation = ButtonDefaults.buttonElevation(4.dp),
                 onClick = { onLogOut() })
             {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.Logout,
-                    tint = White,
+                    tint = colors.onPrimary,
                     contentDescription = "Log out",
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
                     text = "Logout",
-                    color = White,
+                    color = colors.onPrimary,
                     fontSize = 14.sp
                 )
             }
@@ -167,9 +181,9 @@ fun DrawerContent(onLogOut: () -> Unit = {}, userData: UserData, navController: 
 }
 
 @Preview(showBackground = true)
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-fun PrevTest() {
-
+fun PrevTest() = ShuttleAppTheme {
     DrawerContent(
         {}, UserData(
             accountId = "asda2a22225",
@@ -179,7 +193,9 @@ fun PrevTest() {
             middleName = "anwyauya",
             providerId = "awfaw"
         ),
-        navController = rememberNavController()
+        navController = rememberNavController(),
+        themeMode = ThemeMode.System,
+        onThemeModeChange = {}
     )
 }
 

@@ -24,6 +24,8 @@ import com.example.shuttleapp.data.network.ConnectivityNetworkMonitor
 import com.example.shuttleapp.data.repositoryImpl.SessionRepositoryImpl
 import com.example.shuttleapp.domain.repository.NetworkMonitor
 import com.example.shuttleapp.domain.repository.SessionRepository
+import com.example.shuttleapp.data.repositoryImpl.ThemePreferenceRepositoryImpl
+import com.example.shuttleapp.domain.repository.ThemePreferenceRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -108,4 +110,10 @@ abstract class RepositoryModule {
     abstract fun bindNetworkMonitor(
         connectivityNetworkMonitor: ConnectivityNetworkMonitor
     ) : NetworkMonitor
+
+    @Binds
+    @Singleton
+    abstract fun bindThemePreferenceRepository(
+        themePreferenceRepositoryImpl: ThemePreferenceRepositoryImpl
+    ) : ThemePreferenceRepository
 }

@@ -1,69 +1,72 @@
 package com.example.shuttleapp.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
+/** Maps the Shuttle roles onto Material 3 so stock components (fields, dialogs, menus) follow the theme. */
+private fun ShuttleColors.toColorScheme(): ColorScheme {
+    val base = if (isDark) darkColorScheme() else lightColorScheme()
+    return base.copy(
+        primary = primary,
+        onPrimary = onPrimary,
+        primaryContainer = surfaceQuiet,
+        onPrimaryContainer = textPrimary,
+        secondary = success,
+        onSecondary = onSuccess,
+        secondaryContainer = successSoft,
+        onSecondaryContainer = textPrimary,
+        tertiary = warning,
+        onTertiary = onSuccess,
+        tertiaryContainer = warningSoft,
+        onTertiaryContainer = warningText,
+        background = canvas,
+        onBackground = textPrimary,
+        surface = surface,
+        onSurface = textPrimary,
+        surfaceVariant = surfaceSubtle,
+        onSurfaceVariant = textSecondary,
+        surfaceTint = primary,
+        surfaceContainerLowest = surface,
+        surfaceContainerLow = surface,
+        surfaceContainer = surface,
+        surfaceContainerHigh = surface,
+        surfaceContainerHighest = surfaceSubtle,
+        inverseSurface = textPrimary,
+        inverseOnSurface = canvas,
+        outline = border,
+        outlineVariant = divider,
+        error = error,
+        onError = onError,
+        errorContainer = errorSoft,
+        onErrorContainer = error,
+        scrim = scrim
+    )
+}
 
 @Composable
 fun ShuttleAppTheme(
-    //darkTheme: Boolean = isSystemInDarkTheme(), //comment out to diasable dark mode
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+    val colors = if (darkTheme) DarkShuttleColors else LightShuttleColors
     val systemUiController = rememberSystemUiController()
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            //if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context) // comment out to disable dark mode
-            dynamicLightColorScheme(context) // force to use light mode only
-        }
 
-        //darkTheme -> LightColorScheme
-        else -> LightColorScheme
-    }
-
-    //modify the visual of the status bar
+    // The app bar band is dark in both themes, so status bar icons stay light.
     SideEffect {
-        systemUiController.setStatusBarColor(
-            color = NavyBlue,
-            darkIcons = true
+        systemUiController.setStatusBarColor(color = colors.brandBand, darkIcons = false)
+    }
+    CompositionLocalProvider(LocalShuttleColors provides colors) {
+        MaterialTheme(
+            colorScheme = colors.toColorScheme(),
+            typography = Typography,
+            content = content
         )
     }
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
 }

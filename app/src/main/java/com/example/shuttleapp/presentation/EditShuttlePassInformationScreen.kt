@@ -62,15 +62,12 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.shuttleapp.domain.model.ShuttlePass
 import com.example.shuttleapp.presentation.components.ExpandedDropDown
-import com.example.shuttleapp.ui.theme.Black
-import com.example.shuttleapp.ui.theme.Gray
-import com.example.shuttleapp.ui.theme.NavyBlue
-import com.example.shuttleapp.ui.theme.White
 import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.presentation.events.ShuttlePassInputEvent
 import com.example.shuttleapp.presentation.events.ShuttlePassUiEvent
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
 import com.example.shuttleapp.util.formatTimeHHmm
+import com.example.shuttleapp.ui.theme.ShuttleTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -78,6 +75,7 @@ import java.util.Calendar
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, navController: NavController) {
+    val colors = ShuttleTheme.colors
 
     val context = LocalContext.current
     val routesState by viewModel.routeState.collectAsState()
@@ -124,7 +122,7 @@ fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, na
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = White)
+                .background(color = colors.canvas)
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
                 .verticalScroll(rememberScrollState())
@@ -139,8 +137,8 @@ fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, na
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(width = 1.dp, color = Gray.copy(alpha = 0.5f), shape = RoundedCornerShape(12.dp)),
-                colors = CardDefaults.cardColors(containerColor = White),
+                    .border(width = 1.dp, color = colors.border.copy(alpha = 0.5f), shape = RoundedCornerShape(12.dp)),
+                colors = CardDefaults.cardColors(containerColor = colors.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column(
@@ -154,7 +152,7 @@ fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, na
                         enabled = false,
                         onClick = { /* showDateDialog = true */ }
                     )
-                    HorizontalDivider(color = Gray.copy(alpha = 0.3f))
+                    HorizontalDivider(color = colors.border.copy(alpha = 0.3f))
                     InfoRow(
                         icon = Icons.Default.AccessTime,
                         label = "Departure",
@@ -165,7 +163,7 @@ fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, na
                             showTimePickerDialog = true 
                         }
                     )
-                    HorizontalDivider(color = Gray.copy(alpha = 0.3f))
+                    HorizontalDivider(color = colors.border.copy(alpha = 0.3f))
                     InfoRow(
                         icon = Icons.Default.AccessTime,
                         label = "Arrival",
@@ -224,7 +222,7 @@ fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, na
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.buttonColors(NavyBlue),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.primary, contentColor = colors.onPrimary),
                 onClick = {
                     viewModel.onUpdateShuttlePass(editedShuttlePass)
                 }) {
@@ -257,6 +255,7 @@ fun EditShuttlePassInformationScreen(id: String, viewModel: ShuttleViewModel, na
 
 @Composable
 fun SectionHeader(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    val colors = ShuttleTheme.colors
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -264,14 +263,14 @@ fun SectionHeader(title: String, icon: androidx.compose.ui.graphics.vector.Image
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = NavyBlue,
+            tint = colors.primary,
             modifier = Modifier.size(20.dp)
         )
         Spacer(Modifier.width(8.dp))
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            color = NavyBlue,
+            color = colors.primary,
             fontWeight = FontWeight.Bold
         )
     }
@@ -285,6 +284,7 @@ fun InfoRow(
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
+    val colors = ShuttleTheme.colors
     val contentAlpha = if (enabled) 1f else 0.5f
     Row(
         modifier = Modifier
@@ -295,14 +295,14 @@ fun InfoRow(
     ) {
         Icon(
             imageVector = icon,
-            tint = NavyBlue,
+            tint = colors.primary,
             contentDescription = null,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text(text = label, color = NavyBlue, fontSize = 12.sp)
-            Text(text = value, color = Black, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            Text(text = label, color = colors.primary, fontSize = 12.sp)
+            Text(text = value, color = colors.textPrimary, fontSize = 16.sp, fontWeight = FontWeight.Medium)
         }
     }
 }
@@ -314,6 +314,7 @@ fun InputTimeDialog(
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val colors = ShuttleTheme.colors
     val currentTime = Calendar.getInstance()
     val timePickerState = rememberTimePickerState(
         initialHour = currentTime.get(Calendar.HOUR_OF_DAY),
@@ -322,7 +323,7 @@ fun InputTimeDialog(
     )
 
     AlertDialog(
-        containerColor = White,
+        containerColor = colors.surface,
         onDismissRequest = onDismiss,
         text = {
             Column(
@@ -335,7 +336,7 @@ fun InputTimeDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = NavyBlue) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = colors.primary) }
         },
         confirmButton = {
             TextButton(onClick = {
@@ -345,7 +346,7 @@ fun InputTimeDialog(
                 onConfirm(timeToString)
                 onDismiss()
             }) {
-                Text("Confirm", color = NavyBlue)
+                Text("Confirm", color = colors.primary)
             }
         },
     )
@@ -356,6 +357,7 @@ fun InputTimeDialog(
 fun InputDateDialog(
     onDateSelected: (Long?) -> Unit,
     onDismiss: () -> Unit) {
+    val colors = ShuttleTheme.colors
 
     val datePickerState = rememberDatePickerState()
 
@@ -366,12 +368,12 @@ fun InputDateDialog(
                 onDateSelected(datePickerState.selectedDateMillis)
                 onDismiss()
             }) {
-                Text("OK", color = NavyBlue)
+                Text("OK", color = colors.primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = NavyBlue)
+                Text("Cancel", color = colors.primary)
             }
         }
     ) {
