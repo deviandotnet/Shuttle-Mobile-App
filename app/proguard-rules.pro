@@ -25,8 +25,8 @@
 -keepattributes *Annotation*
 
 # Keep all models with Gson serialization
--keep class com.example.shuttle.data.network.response.** { *; }
--keep class com.example.shuttle.data.network.request.** { *; }
+-keep class com.example.shuttleapp.data.network.response.** { *; }
+-keep class com.example.shuttleapp.data.network.request.** { *; }
 
 # Keep fields annotated with @SerializedName
 -keepclassmembers class * {
