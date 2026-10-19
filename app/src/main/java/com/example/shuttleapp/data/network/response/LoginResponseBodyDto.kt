@@ -6,7 +6,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LoginResponseBodyDto(
+    @SerializedName("message")
     val message: String?,
+    @SerializedName("userData")
     val userData: UserDataDto?,
     // Not sent by the backend yet (see docs/backend-auth-contract.md); null until it is.
     @SerializedName("token") val token: String? = null,
