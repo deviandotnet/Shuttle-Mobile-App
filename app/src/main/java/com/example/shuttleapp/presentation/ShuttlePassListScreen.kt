@@ -1,6 +1,13 @@
 package com.example.shuttleapp.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import com.example.shuttleapp.presentation.components.ReauthDialog
+import com.example.shuttleapp.ui.theme.DarkOrange
+import com.example.shuttleapp.ui.theme.Orange
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -109,6 +116,7 @@ fun ShuttlePassListScreen(state: ShuttlePassListState, onAction: (ShuttlePassLis
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            ConnectionBanners(state, onAction)
             FilterChoiceSegmentedButton(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -120,7 +128,47 @@ fun ShuttlePassListScreen(state: ShuttlePassListState, onAction: (ShuttlePassLis
             PassListContent(state, onAction)
         }
         SyncResultDialog(state.sync, onDismiss = { onAction(ShuttlePassListAction.DismissSyncResult) })
+        state.reauth?.let { reauth ->
+            ReauthDialog(
+                state = reauth,
+                onSubmit = { username, password -> onAction(ShuttlePassListAction.SubmitReauth(username, password)) },
+                onDismiss = { onAction(ShuttlePassListAction.DismissReauth) }
+            )
+        }
     }
+}
+
+@Composable
+private fun ConnectionBanners(state: ShuttlePassListState, onAction: (ShuttlePassListAction) -> Unit) {
+    if (!state.isOnline) {
+        StatusBanner(
+            text = "Offline — passes are saved on this device",
+            background = Orange.copy(alpha = 0.15f),
+            color = DarkOrange
+        )
+    } else if (state.needsSignIn) {
+        StatusBanner(
+            text = "Sign in again to upload. Tap here.",
+            background = Red.copy(alpha = 0.10f),
+            color = Red,
+            onClick = { onAction(ShuttlePassListAction.ShowReauth) }
+        )
+    }
+}
+
+@Composable
+private fun StatusBanner(text: String, background: Color, color: Color, onClick: (() -> Unit)? = null) {
+    Text(
+        text = text,
+        color = color,
+        fontWeight = FontWeight.SemiBold,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(background)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+    )
 }
 
 @Composable

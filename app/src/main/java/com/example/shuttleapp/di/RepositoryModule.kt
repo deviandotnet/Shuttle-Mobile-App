@@ -18,6 +18,12 @@ import com.example.shuttleapp.data.repositoryImpl.ShuttlePassRepositoryImpl
 import com.example.shuttleapp.domain.repository.PassengerQRRepository
 import com.example.shuttleapp.domain.repository.RoutesRepository
 import com.example.shuttleapp.domain.repository.ShuttlePassRepository
+import com.example.shuttleapp.data.local.EncryptedSessionStore
+import com.example.shuttleapp.data.local.SessionStore
+import com.example.shuttleapp.data.network.ConnectivityNetworkMonitor
+import com.example.shuttleapp.data.repositoryImpl.SessionRepositoryImpl
+import com.example.shuttleapp.domain.repository.NetworkMonitor
+import com.example.shuttleapp.domain.repository.SessionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -84,4 +90,22 @@ abstract class RepositoryModule {
     abstract fun bindLoggedUserRepository(
         loggedUserRepositoryImpl: LoggedUserRepositoryImpl
     ) : RememberedUserRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSessionRepository(
+        sessionRepositoryImpl: SessionRepositoryImpl
+    ) : SessionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSessionStore(
+        encryptedSessionStore: EncryptedSessionStore
+    ) : SessionStore
+
+    @Binds
+    @Singleton
+    abstract fun bindNetworkMonitor(
+        connectivityNetworkMonitor: ConnectivityNetworkMonitor
+    ) : NetworkMonitor
 }

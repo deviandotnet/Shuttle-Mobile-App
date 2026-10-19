@@ -7,6 +7,7 @@ import com.example.shuttleapp.data.mappers.toDomain
 import com.example.shuttleapp.data.mappers.toDto
 import com.example.shuttleapp.data.mappers.toEntity
 import com.example.shuttleapp.data.network.ShuttleApi
+import com.example.shuttleapp.domain.model.AuthMessages
 import com.example.shuttleapp.domain.model.PassFilter
 import com.example.shuttleapp.domain.model.PassengerQR
 import com.example.shuttleapp.domain.model.ShuttlePass
@@ -132,6 +133,9 @@ class ShuttlePassRepositoryImpl @Inject constructor(
                 val ids = passes.map { it.shuttlePass.id }
                 dao.markSynced(ids)
                 Resource.Success(SyncResult(syncedCount = ids.size, message = response.body()?.message))
+            } else if (response.code() == 401) {
+                // AuthInterceptor has already flagged the token as expired; the passes stay unsynced.
+                Resource.Error(AuthMessages.SESSION_EXPIRED)
             } else {
                 Resource.Error("Failed. Status code: ${response.message()}")
             }

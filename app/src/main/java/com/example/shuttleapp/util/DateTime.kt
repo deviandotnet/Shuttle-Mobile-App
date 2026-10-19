@@ -34,6 +34,22 @@ fun dateTimeCreated() : Long {
     return dateMilli
 }
 
+/**
+ * Parses an ISO-8601 UTC/offset timestamp from the ASP.NET Core API (e.g. "2025-01-02T10:00:00Z",
+ * "2025-01-02T10:00:00.1234567+08:00") to epoch millis. Fractional seconds are ignored. Null if unparseable.
+ */
+fun parseIsoUtcMillis(value: String?): Long? {
+    if (value.isNullOrBlank()) return null
+    val normalized = value.trim()
+        .replace(Regex("\\.\\d+"), "")
+        .replace(Regex("Z$"), "+00:00")
+    return try {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).parse(normalized)?.time
+    } catch (ex: java.text.ParseException) {
+        null
+    }
+}
+
 fun displayMonthYear() : String = formatMonthYear(System.currentTimeMillis())
 
 fun formatMonthYear(dateMilli: Long) : String {

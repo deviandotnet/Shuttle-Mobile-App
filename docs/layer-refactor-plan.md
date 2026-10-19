@@ -92,20 +92,27 @@ What landed:
 
 ---
 
-## Phase 3: Network config (logging, Retrofit, base URL, auth)
+## Phase 3: Network config + offline-first session — ✅ done (app side)
 
-### 3.1 Logging and Retrofit (`di/AppModule.kt`)
-- `buildFeatures { buildConfig = true }` in `app/build.gradle.kts`.
-- `@Provides @Singleton` for `HttpLoggingInterceptor` (`if (BuildConfig.DEBUG) BODY else NONE`), `OkHttpClient`, and **one** `Retrofit`. `AuthApi` and `ShuttleApi` are created from it. Remove the class fields.
-- `API.BASE_URL` → `buildConfigField("String", "BASE_URL", …)` per build type: `http://10.0.2.2:5105/api/` for debug, an `https://` host for release.
+Offline-first rules this phase locks in:
+- After one online login, the driver **stays signed in until an explicit logout**, with or without internet. "Remember me" is gone. Drivers who used it before the update are migrated automatically from the `LoggedUser` table.
+- Only **login** and **upload** need the network. An expired or rejected token **never signs the driver out** and never deletes data. It shows "Sign in again to upload", and a password re-auth dialog refreshes the token in place. Re-auth must be the same account.
+- **Logout** warns when passes aren't uploaded ("Upload first" / "Log out anyway"). It clears the session and cached profile and keeps every pass.
 
-### 3.2 Bearer token: **blocked on the backend**
-`LoginResponseBodyDto` is `{ message, userData }`, with no token. Order of work:
-1. Backend: `users/login` returns a JWT (e.g. `token`, `expiresAt`), and the API validates `[Authorize]` on `shuttlepasses/` etc.
-2. App: `data/local/TokenStore` backed by `EncryptedSharedPreferences` (add `androidx.security:security-crypto`). `AuthRepositoryImpl.postLogin` saves the token, and `LogoutUseCase` clears it.
-3. `AuthInterceptor(tokenStore)` adds `Authorization: Bearer …` to every request except `users/login` and `users/register`. A 401 clears the token and surfaces a "session expired" error through `Resource.Error`.
+What landed:
+- `NetworkModule`: one OkHttp + one Retrofit, with timeouts. Logging is `BODY` only in debug, and the `Authorization` header is always redacted.
+- `BASE_URL` from `BuildConfig`: debug `http://10.0.2.2:5105/api/`, release `-PshuttleApiUrl=https://…` (the build fails if the URL isn't https). Cleartext is allowed only in the debug build, and only for `10.0.2.2`/`localhost`; the global `usesCleartextTraffic` was removed.
+- `SessionRepository` (domain) / `SessionRepositoryImpl` + `EncryptedSessionStore` (EncryptedSharedPreferences, excluded from backup). `AuthInterceptor` adds the Bearer token and marks it expired on 401. `NetworkMonitor` (domain) / `ConnectivityNetworkMonitor`.
+- `MainActivity` picks the start destination from the stored session. The pass list shows offline / sign-in-again banners and the `ReauthDialog`.
+- Tests: `SessionRepositoryImplTest`, `AuthInterceptorTest` (MockWebServer), `LogoutUseCaseTest`, and the extended `ShuttlePassListViewModelTest`.
 
-Steps 2–3 can be built before 1 lands. The interceptor is a no-op while no token is stored.
+**Backend:** still to do. See `docs/backend-auth-contract.md` (token + `expiresAt` on login, `[Authorize]` + 401, long-lived token, upsert by pass id). Until then the app runs unauthenticated, as before.
+
+---
+
+## Phase 3b: Background auto-sync (later)
+
+WorkManager + Hilt-Work: upload unsynced passes automatically on reconnect (network constraint) and periodically. It reuses `ShuttlePassRepository.syncUnsynced`, and skips the run while `TokenStatus.Expired` is set (showing a notification to sign in instead). Needs the backend's idempotent upload (contract §5).
 
 ---
 

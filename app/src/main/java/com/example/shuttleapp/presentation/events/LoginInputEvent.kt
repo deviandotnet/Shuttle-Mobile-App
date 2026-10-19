@@ -5,6 +5,5 @@ sealed class LoginInputEvent {
     data class UsernameChanged(val username: String) : LoginInputEvent()
     data class PasswordChanged(val password: String) : LoginInputEvent()
     data class PasswordShown(val isShown : Boolean) : LoginInputEvent()
-    data class IsRemembered(val isRemembered: Boolean) : LoginInputEvent()
     data object Submit : LoginInputEvent()
 }

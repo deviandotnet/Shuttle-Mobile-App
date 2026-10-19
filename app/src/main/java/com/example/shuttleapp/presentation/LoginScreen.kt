@@ -51,7 +51,6 @@ import androidx.navigation.NavController
 import com.example.shuttleapp.R
 import com.example.shuttleapp.Route
 import com.example.shuttleapp.data.network.request.LoginRequestBodyDto
-import com.example.shuttleapp.domain.model.RememberedUser
 import com.example.shuttleapp.presentation.components.AuthButton
 import com.example.shuttleapp.presentation.components.HeaderBackground
 import com.example.shuttleapp.presentation.components.TextEntryModule
@@ -66,21 +65,6 @@ fun LoginScreen(
 ) {
 
     val loginState by loginViewModel.loginState.collectAsState()
-    val rememberedUserState by loginViewModel.rememberedUserState.collectAsState()
-
-
-
-
-    LaunchedEffect(rememberedUserState) {
-        if(rememberedUserState.userData != null) {
-            rememberedUserState.userData?.let {
-                navController.navigate(Route.HomeScreen.route + "/${it.id}") { //TODO change the param of the homescreen route with id
-                    popUpTo(Route.LoginScreen.route) { inclusive = true } // so that no back button can function once success (no backstack)
-                    launchSingleTop = true
-                }
-            }
-        }
-    }
 
     HeaderBackground(leftColor = NavyBlue, rightColor = Black, modifier = Modifier.fillMaxSize())
     Column(
@@ -163,9 +147,7 @@ fun LoginScreen(
             isLoading = { loginState.isLoading },
             onForgotPasswordClicked = {
                 //TODO forgot password link
-            },
-            rememberedValue = { loginState.isRemembered },
-            onRememberedChange = { loginViewModel.onLoginInputEvent(LoginInputEvent.IsRemembered(!loginState.isRemembered)) }
+            }
         )
         Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             Text("No account yet?",
@@ -192,25 +174,7 @@ fun LoginScreen(
         LaunchedEffect(loginState) {
 
             if (loginState.userData != null && !loginState.isLoading) {
-
-
-                if(loginState.isRemembered) {
-                    loginState.userData?.let{
-                        val rememberedUser = RememberedUser(
-                            id = it.accountId,
-                            employeeNumber = it.empNo,
-                            firstName = it.firstName,
-                            middleName = it.middleName,
-                            lastName = it.lastName,
-                            shuttleProviderId = it.providerId,
-                            isLoggedIn = loginState.isSuccessfullyLoggedIn,
-                            isRemembered = loginState.isRemembered
-                        )
-
-                        loginViewModel.insertRememberedUserInfo(rememberedUser)
-                    }
-                }
-                //change the table isLoggedIn
+                // The session was already saved by the repository; it persists until logout.
                 navController.navigate(Route.HomeScreen.route + "/${loginState.userData!!.accountId}") {
                     popUpTo(Route.LoginScreen.route) { inclusive = true } // so that no back button can function once success (no backstack)
                     launchSingleTop = true
@@ -242,12 +206,8 @@ fun LoginContainer(
     onTrailingPasswordIconClick: ()-> Unit,
     isLoading: ()-> Boolean,
     onForgotPasswordClicked: ()-> Unit,
-    rememberedValue : () -> Boolean,
-    onRememberedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier
 ) {
-    var checked by remember { mutableStateOf(true) }
-
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -304,20 +264,6 @@ fun LoginContainer(
                         color = MaterialTheme.colorScheme.error,
                         fontSize = 11.sp,
                     )
-                )
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,) {
-                Checkbox(
-                    checked = rememberedValue(),
-                    onCheckedChange = onRememberedChange,
-                    colors = CheckboxDefaults.colors(NavyBlue)
-                )
-                Text(
-                    text = "Save login information",
-                    color = NavyBlue
                 )
             }
 
@@ -383,9 +329,7 @@ fun Test() {
             onTrailingPasswordIconClick = { },
             isLoading = { false },
             modifier = Modifier,
-            onForgotPasswordClicked = {},
-            rememberedValue = { false },
-            onRememberedChange = {}
+            onForgotPasswordClicked = {}
         )
         Spacer(Modifier.weight(.80f))
 

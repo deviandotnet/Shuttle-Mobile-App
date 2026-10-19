@@ -1,19 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
+   Backup and device-transfer rules for Android 12+.
    See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
 -->
 <data-extraction-rules>
+    <!-- Encrypted session/token store: its Keystore key is never backed up, so a restored copy can't be decrypted. -->
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="sharedpref" path="session_prefs.xml"/>
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="sharedpref" path="session_prefs.xml"/>
     </device-transfer>
-    -->
 </data-extraction-rules>

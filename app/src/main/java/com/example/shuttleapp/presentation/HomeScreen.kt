@@ -67,7 +67,7 @@ import com.example.shuttleapp.ui.theme.*
 import com.example.shuttleapp.presentation.components.BottomBarComponent
 import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.Route
-import com.example.shuttleapp.presentation.components.ConfirmBasicDialog
+import com.example.shuttleapp.presentation.components.LogoutConfirmDialog
 import com.example.shuttleapp.util.displayMonthYear
 import com.example.shuttleapp.util.formatTimeHHmm
 import com.example.shuttleapp.presentation.components.DrawerContent
@@ -134,23 +134,23 @@ fun HomeScreen(
 
 
     if(showConfirmDialog) {
-        ConfirmBasicDialog(
-            content = "Are you sure you want to logout?",
-            onConfirm = {
-                scope.launch(Dispatchers.IO) {
-                    drawerState.apply {
-                        drawerState.close()
-                    }
+        LogoutConfirmDialog(
+            unsyncedCount = cardState.unsyncedShuttleCount,
+            onLogout = {
+                showConfirmDialog = false
+                scope.launch {
+                    drawerState.close()
                     viewModel.logOut()
-                    showConfirmDialog = false
-
-                    withContext(Dispatchers.Main) {
-                        navController.navigate(Route.LoginScreen.route) {
-                            popUpTo(0) { inclusive = true}
-                            launchSingleTop = true
-                        }
+                    navController.navigate(Route.LoginScreen.route) {
+                        popUpTo(0) { inclusive = true}
+                        launchSingleTop = true
                     }
                 }
+            },
+            onUploadFirst = {
+                showConfirmDialog = false
+                scope.launch { drawerState.close() }
+                navController.navigate(Route.ShuttlePassListScreen.route + "/${userId}")
             },
             onDismiss =  {
                 showConfirmDialog = false

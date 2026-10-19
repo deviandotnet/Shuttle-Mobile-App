@@ -26,7 +26,16 @@ android {
     }
 
     buildTypes {
+        debug {
+            // 10.0.2.2 is the emulator's alias for the host machine (local ASP.NET Core API on :5105).
+            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:5105/api/\"")
+        }
         release {
+            // Pass the production API with -PshuttleApiUrl=https://... (or set it in local/gradle.properties).
+            val releaseApiUrl = providers.gradleProperty("shuttleApiUrl")
+                .getOrElse("https://shuttle-api.invalid/api/")
+            require(releaseApiUrl.startsWith("https://")) { "shuttleApiUrl must use https:// for release builds" }
+            buildConfigField("String", "BASE_URL", "\"$releaseApiUrl\"")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -44,6 +53,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -60,6 +70,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+    testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.room.testing)
@@ -75,7 +86,10 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+    //encrypted session/token storage
+    implementation(libs.androidx.security.crypto)
 
     //COIL
     implementation("io.coil-kt:coil-compose:2.4.0")

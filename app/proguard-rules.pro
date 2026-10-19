@@ -24,9 +24,12 @@
 # Keep Gson annotations
 -keepattributes *Annotation*
 
-# Keep all models with Gson serialization
--keep class com.example.shuttle.data.network.response.** { *; }
--keep class com.example.shuttle.data.network.request.** { *; }
+# Keep all models with Gson serialization (most DTOs have no @SerializedName, so field names must survive)
+-keep class com.example.shuttleapp.data.network.response.** { *; }
+-keep class com.example.shuttleapp.data.network.request.** { *; }
+
+# security-crypto (Tink) references compile-only errorprone annotations
+-dontwarn com.google.errorprone.annotations.**
 
 # Keep fields annotated with @SerializedName
 -keepclassmembers class * {

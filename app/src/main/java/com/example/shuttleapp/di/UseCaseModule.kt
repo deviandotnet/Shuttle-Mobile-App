@@ -5,6 +5,7 @@ import com.example.shuttleapp.domain.usecase.login.ValidateLoginInput
 import com.example.shuttleapp.domain.usecase.login.ValidatePasswordInput
 import com.example.shuttleapp.domain.usecase.login.ValidateUsernameInput
 import com.example.shuttleapp.domain.usecase.logout.LogoutUseCase
+import com.example.shuttleapp.domain.repository.SessionRepository
 import com.example.shuttleapp.domain.usecase.manualaddpassenger.ValidateQRCodeInput
 import com.example.shuttleapp.domain.usecase.manualinputshuttlepass.ValidateDriverInput
 import com.example.shuttleapp.domain.usecase.manualinputshuttlepass.ValidatePlateNumberInput
@@ -43,8 +44,12 @@ class UseCaseModule {
     }
 
     @Provides
-    fun provideLogoutUseCase(userDataRepository: UserDataRepository) : LogoutUseCase {
+    fun provideLogoutUseCase(
+        sessionRepository: SessionRepository,
+        userDataRepository: UserDataRepository
+    ) : LogoutUseCase {
         return LogoutUseCase(
+            sessionRepository = sessionRepository,
             userDataRepository = userDataRepository
         )
     }

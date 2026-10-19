@@ -202,6 +202,54 @@ fun ConfirmBasicDialog(
     )
 }
 
+/**
+ * Logout confirmation. When passes are not uploaded yet it warns that they stay on the device,
+ * and offers to go upload them first.
+ */
+@Composable
+fun LogoutConfirmDialog(
+    unsyncedCount: Int,
+    onLogout: () -> Unit,
+    onUploadFirst: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        containerColor = White,
+        onDismissRequest = onDismiss,
+        text = {
+            Text(
+                text = if (unsyncedCount > 0) {
+                    "$unsyncedCount shuttle pass(es) are not uploaded yet. They stay on this device " +
+                        "and upload after you sign in again."
+                } else {
+                    "Are you sure you want to logout?"
+                },
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onDismiss) { Text("Cancel", color = NavyBlue) }
+                if (unsyncedCount > 0) {
+                    TextButton(onClick = onUploadFirst) { Text("Upload first", color = NavyBlue) }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onLogout) {
+                Text(if (unsyncedCount > 0) "Log out anyway" else "Log out", color = NavyBlue)
+            }
+        }
+    )
+}
+
+@Preview
+@Composable
+private fun LogoutConfirmDialogPreview() {
+    LogoutConfirmDialog(unsyncedCount = 3, onLogout = {}, onUploadFirst = {}, onDismiss = {})
+}
+
 @Preview
 @Composable
 private fun PreviewDialog() {

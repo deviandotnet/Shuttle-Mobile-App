@@ -6,7 +6,12 @@ data class ShuttlePassListState(
     val filter: PassFilter = PassFilter.All,
     val items: List<ShuttlePassItemUi> = emptyList(),
     val isLoading: Boolean = true,
-    val sync: SyncStatus = SyncStatus.Idle
+    val sync: SyncStatus = SyncStatus.Idle,
+    val isOnline: Boolean = true,
+    /** The token expired: uploads need the driver to sign in again (local data is unaffected). */
+    val needsSignIn: Boolean = false,
+    /** Non-null while the sign-in-again dialog is open. */
+    val reauth: ReauthState? = null
 )
 
 /** A shuttle pass row, already formatted for display. */
@@ -25,3 +30,9 @@ sealed interface SyncStatus {
     data class Success(val message: String) : SyncStatus
     data class Failed(val message: String) : SyncStatus
 }
+
+data class ReauthState(
+    val username: String = "",
+    val isSubmitting: Boolean = false,
+    val error: String? = null
+)

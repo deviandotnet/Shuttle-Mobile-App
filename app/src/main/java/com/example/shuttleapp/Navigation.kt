@@ -22,9 +22,12 @@ import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
 import kotlinx.serialization.Serializable
 
 @Composable
-fun Navigation(navController: NavHostController = rememberNavController()) {
+fun Navigation(
+    startDestination: String,
+    navController: NavHostController = rememberNavController()
+) {
 
-    NavHost(navController = navController, startDestination = Route.LoginScreen.route) {
+    NavHost(navController = navController, startDestination = startDestination) {
 
         composable(route = Route.RegisterScreen.route) {
             RegisterScreen(navController = navController)

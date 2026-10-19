@@ -10,7 +10,11 @@ import com.example.shuttleapp.data.network.request.RegisterDto
 import com.example.shuttleapp.domain.model.UserData
 import com.example.shuttleapp.domain.repository.AuthRepository
 import com.example.shuttleapp.config.ShuttleDatabase
+import com.example.shuttleapp.domain.model.AuthMessages
+import com.example.shuttleapp.domain.repository.SessionRepository
 import com.example.shuttleapp.util.Resource
+import com.example.shuttleapp.util.parseIsoUtcMillis
+import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -18,6 +22,7 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
     private val database: ShuttleDatabase,
+    private val sessionRepository: SessionRepository,
     //private val shuttleApi: ShuttleApi
 ) : AuthRepository {
 
@@ -34,7 +39,7 @@ class AuthRepositoryImpl @Inject constructor(
 
                     val body = response.body()
 
-                    if (body?.message == "login successful") {
+                    if (body?.message == AuthApi.LOGIN_SUCCESS_MESSAGE) {
 
                         //SAVE SHUTTLE PROVIDER
                         val shuttleProviderEntity = body.userData?.shuttleProvider?.toShuttleProviderEntity()
@@ -83,7 +88,19 @@ class AuthRepositoryImpl @Inject constructor(
                                 Log.e("insertUserData", "error")
                             }
                         }
-                        emit(Resource.Success(userDataEntity?.toUserData()))
+                        if (userDataEntity == null || userDataEntity.accountId.isEmpty()) {
+                            emit(Resource.Error("Login failed. The server returned no account."))
+                        } else {
+                            // The session keeps the driver signed in offline until an explicit logout.
+                            sessionRepository.start(
+                                accountId = userDataEntity.accountId,
+                                username = credentialDto.username,
+                                displayName = "${userDataEntity.firstName} ${userDataEntity.lastName}".trim(),
+                                token = body.token,
+                                expiresAtMillis = parseIsoUtcMillis(body.expiresAt)
+                            )
+                            emit(Resource.Success(userDataEntity.toUserData()))
+                        }
 
                     } else {
                         emit(Resource.Error("Login failed. ${body?.message}"))
@@ -91,6 +108,9 @@ class AuthRepositoryImpl @Inject constructor(
                 } else {
                     emit(Resource.Error("Login error: ${response.message()}"))
                 }
+            }
+            catch (ex: IOException) {
+                emit(Resource.Error(AuthMessages.SIGN_IN_NEEDS_INTERNET))
             }
             catch (ex: Exception) {
                 //emit(Resource.Error("Exception: ${ex.localizedMessage}"))

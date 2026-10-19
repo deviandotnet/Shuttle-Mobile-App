@@ -1,5 +1,6 @@
 package com.example.shuttleapp.data.network
 
+import com.example.shuttleapp.config.API
 import com.example.shuttleapp.data.network.request.LoginRequestBodyDto
 import com.example.shuttleapp.data.network.request.RegisterDto
 import com.example.shuttleapp.data.network.response.LoginResponseBodyDto
@@ -10,10 +11,13 @@ import retrofit2.http.POST
 
 interface AuthApi {
 
-
+    companion object {
+        /** The backend reports a successful login with this exact message. */
+        const val LOGIN_SUCCESS_MESSAGE = "login successful"
+    }
 
     //@POST("auth/login/")
-    @POST("users/login/")
+    @POST(API.LOGIN_PATH)
     suspend fun postLogin(
         @Body
         credentialDto: LoginRequestBodyDto
@@ -21,7 +25,7 @@ interface AuthApi {
     ) : Response<LoginResponseBodyDto>
 
     //@POST("auth/register/")
-    @POST("users/register/")
+    @POST(API.REGISTER_PATH)
     suspend fun postRegister(
         @Body
         registerDto: RegisterDto

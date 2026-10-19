@@ -4,13 +4,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.shuttleapp.data.network.request.LoginRequestBodyDto
-import com.example.shuttleapp.domain.model.RememberedUser
 import com.example.shuttleapp.domain.repository.AuthRepository
-import com.example.shuttleapp.domain.repository.RememberedUserRepository
 import com.example.shuttleapp.domain.usecase.login.ValidateLoginInput
 import com.example.shuttleapp.presentation.events.LoginInputEvent
 import com.example.shuttleapp.presentation.state.LoginState
-import com.example.shuttleapp.presentation.state.RememberedUserState
 import com.example.shuttleapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -23,53 +20,15 @@ import retrofit2.HttpException
 import javax.inject.Inject
 
 @HiltViewModel
+// A successful login starts the persistent session (SessionRepository); the app then stays signed in
+// offline until an explicit logout, so there is no separate "Remember me" step.
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val loggedUserRepository: RememberedUserRepository,
     private val validateLoginInput: ValidateLoginInput
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow(LoginState())
     val loginState: StateFlow<LoginState> get() = _loginState
-
-    private val _rememberedUserState = MutableStateFlow(RememberedUserState())
-    val rememberedUserState: StateFlow<RememberedUserState> get() = _rememberedUserState
-
-    init {
-        getRememberedUser()
-    }
-
-    private fun getRememberedUser() {
-
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-
-                loggedUserRepository.getRememberedUser().collectLatest { user ->
-                    _rememberedUserState.update {
-                        it.copy(userData = user)
-                    }
-                }
-
-            } catch (ex: Exception) {
-
-                ex.printStackTrace()
-            }
-
-        }
-    }
-
-    fun insertRememberedUserInfo(rememberedUser: RememberedUser) {
-
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                loggedUserRepository.insertRememberedUser(rememberedUser)
-                Log.i("SaveLogin", "success: $rememberedUser", )
-            }
-            catch (ex: Exception) {
-                ex.printStackTrace()
-            }
-        }
-    }
 
     fun postLogin(credentialDto: LoginRequestBodyDto) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -124,9 +83,6 @@ class LoginViewModel @Inject constructor(
             }
             is LoginInputEvent.PasswordShown -> {
                 _loginState.value = _loginState.value.copy(isPasswordShown = event.isShown)
-            }
-            is LoginInputEvent.IsRemembered -> {
-                _loginState.value = _loginState.value.copy(isRemembered = event.isRemembered)
             }
             LoginInputEvent.Submit -> {
                 submitLogin()

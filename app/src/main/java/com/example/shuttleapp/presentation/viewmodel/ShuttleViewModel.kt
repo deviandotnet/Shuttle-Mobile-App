@@ -3,7 +3,7 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.shuttleapp.domain.repository.RememberedUserRepository
+import com.example.shuttleapp.domain.usecase.logout.LogoutUseCase
 import com.example.shuttleapp.domain.repository.ShuttleProviderRepository
 import com.example.shuttleapp.domain.repository.ShuttleRepository
 import com.example.shuttleapp.domain.repository.UserDataRepository
@@ -63,7 +63,7 @@ class ShuttleViewModel @Inject constructor(
     private val shuttleRepository: ShuttleRepository,
     private val userDataRepository: UserDataRepository,
     private val shuttleProviderRepository: ShuttleProviderRepository,
-    private val loggedUserRepository: RememberedUserRepository,
+    private val logoutUseCase: LogoutUseCase,
     private val passengerQRRepository: PassengerQRRepository,
 
     private val validateQRCodeInput : ValidateQRCodeInput,
@@ -797,7 +797,7 @@ class ShuttleViewModel @Inject constructor(
     suspend fun logOut() {
         _userState.value = UserState()
         _shuttlePassInputState.value = ShuttlePassInputState()
-        loggedUserRepository.deleteRememberedUser()
+        logoutUseCase() // ends the session only; passes stay on the device
     }
 
     // Deletes synced passes and stale drafts older than one month; returns how many were removed.

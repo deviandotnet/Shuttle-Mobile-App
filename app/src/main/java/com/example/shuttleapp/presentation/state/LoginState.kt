@@ -11,7 +11,6 @@ data class LoginState(
     val isLoading: Boolean = false,
     val isSuccessfullyLoggedIn: Boolean = false,
     var loginErrorMessage: String? = null,
-    val userData: UserData? = null,
-    val isRemembered: Boolean = true
+    val userData: UserData? = null
 )
 

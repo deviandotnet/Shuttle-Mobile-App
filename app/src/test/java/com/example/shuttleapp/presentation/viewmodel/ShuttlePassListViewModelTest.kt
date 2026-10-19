@@ -8,8 +8,13 @@ import com.example.shuttleapp.domain.model.ShuttlePassWithPassenger
 import com.example.shuttleapp.domain.model.SyncResult
 import com.example.shuttleapp.presentation.events.ShuttlePassListAction
 import com.example.shuttleapp.presentation.events.ShuttlePassListEvent
+import com.example.shuttleapp.domain.model.TokenStatus
+import com.example.shuttleapp.presentation.state.ReauthState
 import com.example.shuttleapp.presentation.state.SyncStatus
+import com.example.shuttleapp.testutil.FakeNetworkMonitor
 import com.example.shuttleapp.testutil.FakeRoutesRepository
+import com.example.shuttleapp.testutil.FakeSessionRepository
+import org.junit.Assert.assertNull
 import com.example.shuttleapp.testutil.FakeShuttlePassRepository
 import com.example.shuttleapp.testutil.MainDispatcherRule
 import com.example.shuttleapp.util.Resource
@@ -28,6 +33,8 @@ class ShuttlePassListViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private lateinit var repository: FakeShuttlePassRepository
+    private lateinit var sessionRepository: FakeSessionRepository
+    private lateinit var networkMonitor: FakeNetworkMonitor
     private lateinit var viewModel: ShuttlePassListViewModel
 
     private fun pass(id: String, created: Long, isLate: Boolean = false) = ShuttlePassWithPassenger(
@@ -42,11 +49,70 @@ class ShuttlePassListViewModelTest {
     @Before
     fun setUp() {
         repository = FakeShuttlePassRepository()
+        sessionRepository = FakeSessionRepository()
+        networkMonitor = FakeNetworkMonitor()
         viewModel = ShuttlePassListViewModel(
             savedStateHandle = SavedStateHandle(mapOf("id" to "driver-1")),
             shuttlePassRepository = repository,
-            routesRepository = FakeRoutesRepository(mapOf("r1" to "Villa Estrella"))
+            routesRepository = FakeRoutesRepository(mapOf("r1" to "Villa Estrella")),
+            sessionRepository = sessionRepository,
+            networkMonitor = networkMonitor
         )
+    }
+
+    @Test
+    fun `upload while offline is refused without calling the api`() = runTest {
+        networkMonitor.isOnline.value = false
+
+        viewModel.state.test {
+            assertFalse(expectMostRecentItem().isOnline)
+            viewModel.onAction(ShuttlePassListAction.UploadAll)
+            assertEquals(SyncStatus.Failed(ShuttlePassListViewModel.OFFLINE_MESSAGE), awaitItem().sync)
+        }
+        assertEquals(0, repository.syncCalls)
+    }
+
+    @Test
+    fun `expired token shows sign-in banner and upload opens the sign-in dialog`() = runTest {
+        sessionRepository.setTokenStatus(TokenStatus.Expired)
+
+        viewModel.state.test {
+            assertTrue(expectMostRecentItem().needsSignIn)
+            viewModel.onAction(ShuttlePassListAction.UploadAll)
+            assertEquals(ReauthState(username = "jdelacruz"), awaitItem().reauth)
+        }
+        assertEquals(0, repository.syncCalls)
+    }
+
+    @Test
+    fun `successful sign-in closes the dialog and clears the banner`() = runTest {
+        sessionRepository.setTokenStatus(TokenStatus.Expired)
+
+        viewModel.state.test {
+            expectMostRecentItem()
+            viewModel.onAction(ShuttlePassListAction.ShowReauth)
+            viewModel.onAction(ShuttlePassListAction.SubmitReauth("jdelacruz", "secret"))
+            val state = expectMostRecentItem()
+            assertNull(state.reauth)
+            assertFalse(state.needsSignIn)
+        }
+        assertEquals(listOf("jdelacruz" to "secret"), sessionRepository.reauthAttempts)
+    }
+
+    @Test
+    fun `failed sign-in keeps the dialog open with the error`() = runTest {
+        sessionRepository.setTokenStatus(TokenStatus.Expired)
+        sessionRepository.reauthResult = Resource.Error("Sign in failed. wrong password")
+
+        viewModel.state.test {
+            expectMostRecentItem()
+            viewModel.onAction(ShuttlePassListAction.ShowReauth)
+            viewModel.onAction(ShuttlePassListAction.SubmitReauth("jdelacruz", "nope"))
+            val state = expectMostRecentItem()
+            assertEquals("Sign in failed. wrong password", state.reauth?.error)
+            assertFalse(state.reauth!!.isSubmitting)
+            assertTrue(state.needsSignIn)
+        }
     }
 
     @Test

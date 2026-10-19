@@ -8,4 +8,7 @@ sealed interface ShuttlePassListAction {
     data object DismissSyncResult : ShuttlePassListAction
     data class OpenPass(val id: String) : ShuttlePassListAction
     data object Back : ShuttlePassListAction
+    data object ShowReauth : ShuttlePassListAction
+    data class SubmitReauth(val username: String, val password: String) : ShuttlePassListAction
+    data object DismissReauth : ShuttlePassListAction
 }
