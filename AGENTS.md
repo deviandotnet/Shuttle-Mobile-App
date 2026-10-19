@@ -12,26 +12,40 @@ An Android application for managing shuttle passes and passenger tracking. It in
 * **UI Toolkit:** Jetpack Compose (Material Design 3)
 * **Asynchronous Programming:** Kotlin Coroutines & Flow (`StateFlow` for UI state)
 * **Networking:** Retrofit2 + OkHttp
-* **Dependency Injection:** Hilt~~~~
+* **Dependency Injection:** Hilt
 * **Local Storage:** Room Database
 * **Backend Ecosystem (For Context):** C# and ASP.NET Core.
 * **Async:** Coroutines & Flow
 * **Media:** CameraX (for QR Scanning)
 
 ## Project Structure
-- **com.app.shuttle.data:** Network APIs, Data Transfer Objects (DTOs), Room DAOs, and Repositories.
-- **com.app.shuttle.domain:** Use Cases / Interactors and business logic models.
-- **com.app.shuttle.presentation:** ViewModels, Compose screens, and UI state classes.
-
+Package `com.example.shuttleapp`, source root `app/src/main/java/com/example/shuttleapp/`:
+- **config:** `API.kt` (server endpoints) and `Database.kt` (Room `ShuttleDatabase`).
+- **data:** Room DAOs (`local/dao`), mappers (`mappers`), Retrofit APIs and DTOs (`network`, `network/request`, `network/response`), and repository implementations (`repositoryImpl`).
+- **di:** Hilt modules — `AppModule`, `RepositoryModule`, `UseCaseModule`.
+- **domain:** Business models (`model`), repository interfaces (`repository`), and use cases (`usecase`).
+- **presentation:** ViewModels (`viewmodel`), Compose screens, reusable components (`components`), UI events (`events`), and UI state classes (`state`).
+- **ui/theme:** Material 3 theme (colors, typography).
+- **util:** Shared helpers, including the `Resource` result wrapper.
 
 ## Key Files
 - `Navigation.kt`: Centralized routing and ViewModel scoping.
-- `AppModule.kt`: Dagger Hilt configuration for API and ~~~~Database.
-- `AuthRepositoryImpl.kt`: Handles login/register logic and local user session.
-- `API.kt`: Server endpoint configurations.
+- `di/AppModule.kt`: Dagger Hilt configuration for API and Database.
+- `data/repositoryImpl/AuthRepositoryImpl.kt`: Handles login/register logic and local user session.
+- `config/API.kt`: Server endpoint configurations.
+- `util/Resource.kt`: Standard result wrapper (`Success` / `Error` / `Loading`). Use it instead of introducing a new one.
 
 ## Additional Information
 - `README.md`: Information about this Project
+- `.claude/screenshots/`: Screenshots of the current app, used by the README.
+
+## Design Reference
+- `.claude/shuttle-mobile-redesign-v2/`: Redesign mockups (`01-welcome.png` … `14-qr-scanner.png`) covering welcome, sign-in, registration, drawer, dashboard, shuttle pass, manifest, sync, and QR scanner screens.
+- `.claude/shuttle-mobile-redesign-v2/DESIGN-SYSTEM.md`: Visual system (Inter typeface, type scale, and tokens). Follow it when building or restyling UI.
+
+## Skills
+- `.claude/skills/`: Agent skills adapted to this project's stack (Hilt, Retrofit, Room, `Resource`, single `:app` module). See `.claude/skills/README.md` for the index. Start with `shuttle-add-screen` for any new or rebuilt screen.
+- Skills explain how to apply the rules in this file. If a skill conflicts with `AGENTS.md`, this file wins.
 
 ## Strict Coding Rules & Conventions
 - All UI state must be modeled using Kotlin data class representing the exact state of the screen.
@@ -64,7 +78,7 @@ An Android application for managing shuttle passes and passenger tracking. It in
 
 ## Agent Workflow & Execution
 When asked to build a feature or modify code, you must follow this sequence:
-1.  **Analyze Context:** Read this `AGENT.md` file and any relevant files mentioned in the prompt.
+1.  **Analyze Context:** Read this `AGENTS.md` file and any relevant files mentioned in the prompt.
 2.  **Think Step-by-Step:** Briefly outline your plan of action before generating code.
 3.  **Targeted Edits:** Do not rewrite entire files if only a small change is needed. Provide the specific block of code to insert or replace.
 4.  **Safety First:** Ensure any new UI components gracefully handle `Loading`, `Success`, and `Error` states.

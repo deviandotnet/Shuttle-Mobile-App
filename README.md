@@ -51,9 +51,9 @@ This project reflects real-world enterprise Android engineering standards.
 
 # UI Screens
 
-![Login Screen](screenshots/login.png)
-![Register Screen](screenshots/register.png)
-![Home Screen](screenshots/home.png)
-![Add/Edit Shuttle Pass Screen](screenshots/form.png)
-![Shuttle Pass List Screen](screenshots/list.png)
-![Shuttle Pass Item Screen](screenshots/item.png)
+![Login Screen](.claude/screenshots/login.png)
+![Register Screen](.claude/screenshots/register.png)
+![Home Screen](.claude/screenshots/home.png)
+![Add/Edit Shuttle Pass Screen](.claude/screenshots/form.png)
+![Shuttle Pass List Screen](.claude/screenshots/list.png)
+![Shuttle Pass Item Screen](.claude/screenshots/item.png)
