@@ -48,11 +48,7 @@ interface ShuttlePassDao {
 
     @Transaction
     @Query("SELECT * FROM SHUTTLE_PASS WHERE id = :id")
-    fun getShuttlePassById(id: String) : Flow<ShuttlePassEntity>
-
-    @Transaction
-    @Query("SELECT * FROM shuttle_pass WHERE isDraft = 1")
-    fun getDraftedShuttlePassWithPassengers() : Flow<ShuttlePassWithPassengerEntity>
+    fun getShuttlePassById(id: String) : Flow<ShuttlePassEntity?>
 
     @Transaction
     @Query("SELECT * FROM shuttle_pass WHERE isDraft = 0 AND driver = :driverId")
@@ -71,12 +67,11 @@ interface ShuttlePassDao {
     suspend fun getAllUnsyncedShuttlePasses(driverId: String) : List<ShuttlePassWithPassengerEntity>
 
     @Transaction
-    @Query("SELECT * FROM shuttle_pass WHERE id = :shuttlePassId")
-    fun getShuttlePassWithPassengersById(shuttlePassId: String) : Flow<ShuttlePassWithPassengerEntity>
-
-    @Transaction
     @Query("SELECT * FROM shuttle_pass WHERE id = :id")
-    fun getShuttlePassWithPassengerById(id: String) : Flow<ShuttlePassWithPassengerEntity>
+    fun getShuttlePassWithPassengerById(id: String) : Flow<ShuttlePassWithPassengerEntity?>
+
+    @Query("UPDATE shuttle_pass SET isSynced = 1 WHERE id IN (:ids)")
+    suspend fun markSynced(ids: List<String>)
 
     @Transaction
     @Query("SELECT * FROM shuttle_pass WHERE isDraft = 1 AND driver = :driverId LIMIT 1")
@@ -87,7 +82,7 @@ interface ShuttlePassDao {
     suspend fun getShuttlePassIdDraftByDriverId(driverId: String) : String?
 
     @Transaction
-    @Query("SELECT COUNT(*) FROM shuttle_pass WHERE isLateShuttle = 1 AND driver = :accountId")
+    @Query("SELECT COUNT(*) FROM shuttle_pass WHERE isLateShuttle = 1 AND isDraft = 0 AND driver = :accountId")
     fun countLateShuttle(accountId: String) : Flow<Int>
 
     @Transaction

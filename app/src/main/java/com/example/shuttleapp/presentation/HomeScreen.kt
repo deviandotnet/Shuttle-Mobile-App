@@ -62,7 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.shuttleapp.data.local.ShuttlePassWithPassengerEntity
+import com.example.shuttleapp.domain.model.ShuttlePassWithPassenger
 import com.example.shuttleapp.ui.theme.*
 import com.example.shuttleapp.presentation.components.BottomBarComponent
 import com.example.shuttleapp.presentation.components.TopBarComponent
@@ -103,10 +103,8 @@ fun HomeScreen(
 
     if(!autoDeleteShuttlePassHasTriggered){
         LaunchedEffect(Unit) {
-            val itemDueDeleted = viewModel.deleteShuttlePassOnDue(userId) // auto delete due shuttle pass
-            val itemDraftDeleted = viewModel.deleteAllDraftedShuttlePass(userId)
-            Log.i("AutoDeleteShuttlePass", "Deleted on due ShuttlePass: $itemDueDeleted")
-            Log.i("AutoDeleteDraftedShuttlePass", "Deleted on due ShuttlePass: $itemDraftDeleted")
+            val itemDeleted = viewModel.purgeExpired(userId) // auto delete due shuttle pass and stale drafts
+            Log.i("AutoDeleteShuttlePass", "Deleted expired ShuttlePass: $itemDeleted")
             autoDeleteShuttlePassHasTriggered = true
         }
     }
@@ -330,7 +328,7 @@ fun HomeScreen(
 
 
 @Composable
-fun ShuttlePassList(id: String, items: List<ShuttlePassWithPassengerEntity>, navController: NavController) {
+fun ShuttlePassList(id: String, items: List<ShuttlePassWithPassenger>, navController: NavController) {
     LazyColumn {
         items(
             items = items.takeLast(2).reversed(),
@@ -358,7 +356,7 @@ fun ShuttlePassList(id: String, items: List<ShuttlePassWithPassengerEntity>, nav
 }
 
 @Composable
-fun ShuttlePassListItem(shuttlePassenger: ShuttlePassWithPassengerEntity, navController: NavController) {
+fun ShuttlePassListItem(shuttlePassenger: ShuttlePassWithPassenger, navController: NavController) {
 
     var route by remember { mutableStateOf("") }
     val viewModel: ShuttleViewModel = hiltViewModel()

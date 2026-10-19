@@ -38,7 +38,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.shuttleapp.data.mappers.toDto
 import com.example.shuttleapp.presentation.components.ActionDropdownMenu
 import com.example.shuttleapp.presentation.components.InformationTextDialog
 import com.example.shuttleapp.presentation.components.LoadingDialog
@@ -84,20 +83,7 @@ fun ShuttlePassListScreen(driverId: String,
                 navController = navController,
                 action = {
                     ActionDropdownMenu(
-                        onUploadAll = {
-
-                            coroutineScope.launch {
-                                val unsyncedItems = withContext(Dispatchers.IO) {
-                                    shuttleViewModel.getAllUnsyncedShuttlePasses(driverId)
-                                }
-                                if (unsyncedItems.isEmpty()) {
-                                    snackBarHostState.showSnackbar("No unsynced shuttle pass", "Dismiss", duration = SnackbarDuration.Short)
-                                    return@launch
-                                }
-                                // transform to DTOs and call viewmodel which will emit events
-                                shuttleViewModel.postShuttlePassWithPassenger(unsyncedItems.map { it.toDto() })
-                            }
-                        },
+                        onUploadAll = { shuttleViewModel.syncUnsynced(driverId) },
                         onDeleteAll = {
                             coroutineScope.launch {
                                 snackBarHostState.showSnackbar(
@@ -197,10 +183,6 @@ fun ShuttlePassListScreen(driverId: String,
                         is Resource.Success -> {
                             uploadUiState = UploadUiState.Success
                             postResult.data?.message?.let { uploadMessage = it }
-
-                            val unsyncedItems = userState.userData?.let { shuttleViewModel.getAllUnsyncedShuttlePasses(it.accountId) }
-                            val updateListItem = unsyncedItems!!.map { item -> item.shuttlePass.copy(isSynced = true)}
-                            shuttleViewModel.updateShuttlePass(updateListItem)
                         }
 
                     }

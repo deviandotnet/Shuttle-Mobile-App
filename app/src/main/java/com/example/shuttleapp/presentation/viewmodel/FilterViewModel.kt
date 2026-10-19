@@ -2,6 +2,7 @@ package com.example.shuttleapp.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.shuttleapp.domain.model.PassFilter
 import com.example.shuttleapp.domain.repository.ShuttlePassRepository
 import com.example.shuttleapp.domain.repository.UserDataRepository
 import com.example.shuttleapp.presentation.state.FilterState
@@ -30,7 +31,7 @@ class FilterViewModel @Inject constructor(
     fun loadShuttleWithPassenger(driverId: String) {
         viewModelScope.launch {
 
-            shuttlePassRepository.getAllShuttlePassWithPassengers(driverId).collect {
+            shuttlePassRepository.observePasses(driverId, PassFilter.All).collect {
                 _filterState.value = filterState.value.copy(
                     list = it,
                     currentFilter = FilterType.All
@@ -43,7 +44,7 @@ class FilterViewModel @Inject constructor(
     fun loadShuttleWithPassengerFilterLate(driverId: String) {
         viewModelScope.launch {
 
-            shuttlePassRepository.getAllShuttlePassFilteredByLate(driverId).collect {
+            shuttlePassRepository.observePasses(driverId, PassFilter.Late).collect {
                 _filterState.value = filterState.value.copy(
                     list = it,
                     currentFilter = FilterType.Late
@@ -55,7 +56,7 @@ class FilterViewModel @Inject constructor(
 
     fun loadShuttleWithPassengerFilterUnsynced(driverId: String) {
         viewModelScope.launch {
-            shuttlePassRepository.getAllShuttlePassFilteredBySync(driverId).collect {
+            shuttlePassRepository.observePasses(driverId, PassFilter.NotSynced).collect {
                 _filterState.value = filterState.value.copy(
                     list = it,
                     currentFilter = FilterType.NotSynced

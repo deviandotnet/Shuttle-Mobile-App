@@ -45,7 +45,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
-import com.example.shuttleapp.data.local.PassengerQREntity
+import com.example.shuttleapp.domain.model.PassengerQR
 import com.example.shuttleapp.presentation.components.InformationTextDialog
 import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.presentation.events.QRInputEvent
@@ -193,7 +193,7 @@ fun QRScannerScreen(shuttlePassId: String, navController: NavController) {
 //                                            navController.navigateUp()
 //                                        }
                                 } else {
-                                    val passengerQR = PassengerQREntity(
+                                    val passengerQR = PassengerQR(
                                         shuttlePassId = shuttlePassId,
                                         scannedQR = qrInputState.qrCode,
                                         timeIn = displayTime(),
@@ -225,7 +225,7 @@ fun QRScannerScreen(shuttlePassId: String, navController: NavController) {
 //                                if (!viewModel.submitScannedPassengerQR()) {
 //                                    showErrorMessage = true
 //                                } else {
-//                                    val passengerQR = PassengerQREntity(
+//                                    val passengerQR = PassengerQR(
 //                                        shuttlePassId = shuttlePassId,
 //                                        scannedQR = qrInputState.qrCode,
 //                                        timeIn = displayTime(),

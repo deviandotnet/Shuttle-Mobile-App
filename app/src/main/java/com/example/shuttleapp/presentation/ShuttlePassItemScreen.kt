@@ -29,12 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.shuttleapp.data.mappers.toDto
 import com.example.shuttleapp.presentation.components.InformationTextDialog
 import com.example.shuttleapp.presentation.components.LoadingDialog
 import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
-import com.example.shuttleapp.data.network.response.ShuttlePassWithPassengerDto
 import com.example.shuttleapp.presentation.state.UploadUiState
 import com.example.shuttleapp.ui.theme.Green
 import com.example.shuttleapp.ui.theme.Red
@@ -71,24 +69,7 @@ fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel = hiltViewMode
 
 
                         IconButton(
-                            onClick = {
-
-                                coroutineScope.launch{
-                                    try {
-
-                                        val postShuttleWithPassenger = shuttlePassenger.toDto()
-                                        val dtoList = listOf(postShuttleWithPassenger)
-                                        viewModel.postShuttlePassWithPassenger(dtoList)
-
-
-                                    } catch (ex: Exception) {
-                                        ex.printStackTrace()
-                                        Log.e("ShuttlePassWithPassenger", "error")
-                                    }
-
-                                }
-
-                            },
+                            onClick = { viewModel.syncPass(shuttlePassenger.shuttlePass.id) },
                             enabled = !shuttlePassenger.shuttlePass.isSynced
                         ) {
                             Icon(
@@ -113,11 +94,6 @@ fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel = hiltViewMode
                                     is Resource.Success -> {
                                         uploadUiState = UploadUiState.Success
                                         postResult.data?.message?.let { uploadMessage = it }
-
-                                        val updateSync = listOf(forUpdateShuttlePass.copy(
-                                            isSynced = true
-                                        ))
-                                        viewModel.updateShuttlePass(updateSync)
                                     }
 
                                 }

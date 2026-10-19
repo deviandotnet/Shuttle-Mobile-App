@@ -7,13 +7,13 @@ import com.example.shuttleapp.domain.repository.RememberedUserRepository
 import com.example.shuttleapp.domain.repository.ShuttleProviderRepository
 import com.example.shuttleapp.domain.repository.ShuttleRepository
 import com.example.shuttleapp.domain.repository.UserDataRepository
-import com.example.shuttleapp.data.local.PassengerQREntity
-import com.example.shuttleapp.data.local.ShuttlePassEntity
+import com.example.shuttleapp.domain.model.PassengerQR
+import com.example.shuttleapp.domain.model.ShuttlePass
 import com.example.shuttleapp.presentation.state.ShuttlePassListState
 import com.example.shuttleapp.presentation.state.ShuttlePassState
-import com.example.shuttleapp.data.local.ShuttlePassWithPassengerEntity
-import com.example.shuttleapp.data.network.response.ShuttlePassWithPassengerDto
-import com.example.shuttleapp.data.network.response.ShuttlePassWithPassengerResponseBodyDto
+import com.example.shuttleapp.domain.model.ShuttlePassWithPassenger
+import com.example.shuttleapp.domain.model.PassFilter
+import com.example.shuttleapp.domain.model.SyncResult
 import com.example.shuttleapp.domain.repository.PassengerQRRepository
 import com.example.shuttleapp.domain.repository.RoutesRepository
 import com.example.shuttleapp.domain.repository.ShuttlePassRepository
@@ -46,11 +46,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import retrofit2.Response
 import java.util.Calendar
 import java.util.UUID
 import javax.inject.Inject
@@ -106,8 +106,8 @@ class ShuttleViewModel @Inject constructor(
     private val _draftedShuttlePassState = MutableStateFlow(ShuttlePassState())
     val draftedShuttlePassState: StateFlow<ShuttlePassState> get() = _draftedShuttlePassState.asStateFlow()
 
-    private val _passenger = MutableStateFlow(PassengerQREntity())
-    val passenger: MutableStateFlow<PassengerQREntity> get() = _passenger
+    private val _passenger = MutableStateFlow(PassengerQR())
+    val passenger: MutableStateFlow<PassengerQR> get() = _passenger
 
     private val _shuttlePassInputState = MutableStateFlow(ShuttlePassInputState())
     val shuttlePassInputState: MutableStateFlow<ShuttlePassInputState> get() = _shuttlePassInputState
@@ -115,14 +115,14 @@ class ShuttleViewModel @Inject constructor(
     private val _qrInputState = MutableStateFlow(QRInputState())
     val qrInputState: StateFlow<QRInputState> get() = _qrInputState
 
-    private val _forUpdateShuttlePass = MutableStateFlow(ShuttlePassEntity())
-    val forUpdateShuttlePass: MutableStateFlow<ShuttlePassEntity> get() = _forUpdateShuttlePass
+    private val _forUpdateShuttlePass = MutableStateFlow(ShuttlePass())
+    val forUpdateShuttlePass: MutableStateFlow<ShuttlePass> get() = _forUpdateShuttlePass
 
     private val _draftedPassengerListState = MutableStateFlow(PassengerListState())
     val draftedPassengerListState: MutableStateFlow<PassengerListState> get() = _draftedPassengerListState
 
     private val _shuttlePass = MutableStateFlow(
-        ShuttlePassEntity(
+        ShuttlePass(
             id = UUID.randomUUID().toString(),
             routeId = "Buena Vista",
             provider = "BCTSS",
@@ -138,10 +138,10 @@ class ShuttleViewModel @Inject constructor(
             isDraft = true
         )
     )
-    val shuttlePass: MutableStateFlow<ShuttlePassEntity> get() = _shuttlePass
+    val shuttlePass: MutableStateFlow<ShuttlePass> get() = _shuttlePass
 
-    private val _editedShuttlePassState = MutableStateFlow(ShuttlePassEntity())
-    val editedShuttlePassState: MutableStateFlow<ShuttlePassEntity> get() = _editedShuttlePassState
+    private val _editedShuttlePassState = MutableStateFlow(ShuttlePass())
+    val editedShuttlePassState: MutableStateFlow<ShuttlePass> get() = _editedShuttlePassState
 
     fun isLateShuttle(tripType: String): Boolean {
         val currentTime: Calendar = Calendar.getInstance()
@@ -173,8 +173,7 @@ class ShuttleViewModel @Inject constructor(
     // when false - load local when no network, offline capable
     init { getAllRoutes(false)}
 
-    private val _postResult = MutableSharedFlow<Resource<
-            ShuttlePassWithPassengerResponseBodyDto>>(0)
+    private val _postResult = MutableSharedFlow<Resource<SyncResult>>(0)
     val postResult = _postResult.asSharedFlow()
 
 
@@ -211,17 +210,18 @@ class ShuttleViewModel @Inject constructor(
         }
     }
 
-    fun postShuttlePassWithPassenger(shuttlePassWithPassengerDto: List<ShuttlePassWithPassengerDto>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _postResult.emit(Resource.Loading(true))
-            val result = shuttlePassRepository.postShuttlePassWithPassenger(shuttlePassWithPassengerDto)
-            _postResult.emit(result) //success or fail
-            // Success or Error
-            _postResult.emit(Resource.Loading(false)) // optional: indicate loading finished if you want explicit off event
-        }
+    fun syncUnsynced(driverId: String) {
+        sync { shuttlePassRepository.syncUnsynced(driverId) }
     }
-    fun clearPostResult() {
+
+    fun syncPass(id: String) {
+        sync { shuttlePassRepository.syncPass(id) }
+    }
+
+    private fun sync(request: suspend () -> Resource<SyncResult>) {
         viewModelScope.launch {
+            _postResult.emit(Resource.Loading(true))
+            _postResult.emit(request()) //success or fail
             _postResult.emit(Resource.Loading(false))
         }
     }
@@ -325,7 +325,7 @@ class ShuttleViewModel @Inject constructor(
         _shuttlePassWithPassengers.update { it.copy(isLoading = true) }
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                shuttlePassRepository.getShuttlePassWithPassengerById(shuttlePassId)
+                shuttlePassRepository.observePass(shuttlePassId)
                     .collectLatest { data ->
                         _shuttlePassWithPassengers.update {
                             it.copy(
@@ -476,17 +476,22 @@ class ShuttleViewModel @Inject constructor(
 
 
 
-    fun finalizeShuttleDraft(driverId: String, shuttlePass: ShuttlePassEntity, passengers: List<PassengerQREntity>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            shuttlePassRepository.finalizeShuttleDraft(driverId,shuttlePass, passengers)
+    fun finalizeShuttleDraft(driverId: String, shuttlePass: ShuttlePass, passengers: List<PassengerQR>) {
+        viewModelScope.launch {
+            val result = shuttlePassRepository.finalizeDraft(driverId, shuttlePass, passengers)
+            if (result is Resource.Error) {
+                _uiEvents.emit(ShuttlePassUiEvent.ShowToast(result.message ?: "Failed to complete the shuttle pass"))
+            }
         }
     }
 
-    suspend fun insertShuttlePass(shuttlePass: ShuttlePassEntity) {
-        shuttlePassRepository.insertShuttlePass(shuttlePass)
+    // Throws on failure so the caller's existing error handling (toast) still runs.
+    suspend fun insertShuttlePass(shuttlePass: ShuttlePass) {
+        val result = shuttlePassRepository.insert(shuttlePass)
+        if (result is Resource.Error) throw IllegalStateException(result.message)
     }
 
-    fun deletePassenger(passenger: PassengerQREntity) {
+    fun deletePassenger(passenger: PassengerQR) {
         viewModelScope.launch(Dispatchers.IO) {
             passengerQRRepository.deletePassenger(passenger)
         }
@@ -494,31 +499,31 @@ class ShuttleViewModel @Inject constructor(
 
     fun deleteShuttlePassById(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            shuttlePassRepository.deleteShuttlePassById(id)
+            shuttlePassRepository.delete(id)
         }
     }
 
 
-    fun getAllShuttlePassWithPassenger(driverId: String) : Flow<List<ShuttlePassWithPassengerEntity>> {
-        return shuttlePassRepository.getAllShuttlePassWithPassengers(driverId)
+    fun getAllShuttlePassWithPassenger(driverId: String) : Flow<List<ShuttlePassWithPassenger>> {
+        return shuttlePassRepository.observePasses(driverId, PassFilter.All)
     }
 
-    fun getDraftedPassenger(shuttlePassId: String) : Flow<List<PassengerQREntity>> {
+    fun getDraftedPassenger(shuttlePassId: String) : Flow<List<PassengerQR>> {
         return passengerQRRepository.getDraftedPassengers(shuttlePassId)
     }
 
-    fun getDraftedShuttlePass(driverId: String) : Flow<ShuttlePassEntity?> {
-        return shuttlePassRepository.getDraftShuttlePass(driverId)
+    fun getDraftedShuttlePass(driverId: String) : Flow<ShuttlePass?> {
+        return shuttlePassRepository.observeDraft(driverId)
     }
 
-    fun getPassengerById(id: String) : Flow<PassengerQREntity> {
+    fun getPassengerById(id: String) : Flow<PassengerQR> {
         return passengerQRRepository.getPassengerById(id)
 
     }
 
 
-    fun getShuttlePassById(id: String) : Flow<ShuttlePassEntity> {
-        return shuttlePassRepository.getShuttlePassById(id)
+    fun getShuttlePassById(id: String) : Flow<ShuttlePass> {
+        return shuttlePassRepository.observeShuttlePass(id).filterNotNull()
     }
 
     fun getPassengerId(name: String, shuttlePassId: String, onResult: (String?) -> Unit) {
@@ -533,7 +538,7 @@ class ShuttleViewModel @Inject constructor(
     //get the id of drafted shuttlepass id
     fun getShuttlePassIdDraftByDriverId(driverId: String, onResult: (String?) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            val draftId = shuttlePassRepository.getShuttlePassIdDraftByDriverId(driverId)
+            val draftId = shuttlePassRepository.getDraftId(driverId)
             withContext(Dispatchers.Main) {
                 onResult(draftId)
             }
@@ -616,31 +621,32 @@ class ShuttleViewModel @Inject constructor(
     private val _routeName = MutableStateFlow("")
     val routeName: StateFlow<String> = _routeName
 
-    fun updatePassenger(passenger: PassengerQREntity) {
+    fun updatePassenger(passenger: PassengerQR) {
         viewModelScope.launch(Dispatchers.IO) {
             passengerQRRepository.updatePassenger(passenger)
         }
     }
 
-    fun updateShuttlePass(shuttlePass: List<ShuttlePassEntity>) {
+    fun updateShuttlePass(shuttlePass: List<ShuttlePass>) {
         viewModelScope.launch(Dispatchers.IO) {
-            shuttlePassRepository.updateShuttlePass(shuttlePass)
+            shuttlePassRepository.update(shuttlePass)
         }
     }
 
-    fun onUpdateShuttlePass(originalPass: ShuttlePassEntity) {
+    fun onUpdateShuttlePass(originalPass: ShuttlePass) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val routeId = getRouteIdByName(_shuttlePassInputState.value.route)
                 val plateNumber = getShuttleIdByPlateNumber(_shuttlePassInputState.value.plateNumber)
 
-                val updatedShuttlePass = listOf(ShuttlePassEntity(
+                val updatedShuttlePass = listOf(ShuttlePass(
                     id = originalPass.id,
                     routeId = routeId,
                     provider = _shuttlePassInputState.value.shuttleProvider,
                     driver = originalPass.driver,
                     plateNumber = plateNumber,
                     date = originalPass.date,
+                    dateCreated = originalPass.dateCreated,
                     tripType = _shuttlePassInputState.value.tripType,
                     departure = _shuttlePassInputState.value.departure,
                     arrival = _shuttlePassInputState.value.arrival,
@@ -649,19 +655,19 @@ class ShuttleViewModel @Inject constructor(
                     isDraft = originalPass.isDraft
                 ))
 
-                shuttlePassRepository.updateShuttlePass(updatedShuttlePass)
-                
-                _uiEvents.emit(ShuttlePassUiEvent.ShowToast("Changes saved successfully"))
-                _uiEvents.emit(ShuttlePassUiEvent.NavigateUp)
+                when (val result = shuttlePassRepository.update(updatedShuttlePass)) {
+                    is Resource.Error -> _uiEvents.emit(ShuttlePassUiEvent.ShowToast("Failed to save changes: ${result.message}"))
+                    else -> {
+                        _uiEvents.emit(ShuttlePassUiEvent.ShowToast("Changes saved successfully"))
+                        _uiEvents.emit(ShuttlePassUiEvent.NavigateUp)
+                    }
+                }
             } catch(e: Exception) {
                 _uiEvents.emit(ShuttlePassUiEvent.ShowToast("Failed to save changes: ${e.message}"))
             }
         }
     }
 
-    suspend fun getAllUnsyncedShuttlePasses(driverId: String) : List<ShuttlePassWithPassengerEntity>  {
-        return shuttlePassRepository.getAllUnsyncedShuttlePasses(driverId)
-    }
 
 
     private val _cardState = MutableStateFlow(CardState())
@@ -687,7 +693,7 @@ class ShuttleViewModel @Inject constructor(
 
     fun countUnsyncedShuttlePass(accountId: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            shuttlePassRepository.countUnsyncedShuttlePass(accountId).collectLatest { count ->
+            shuttlePassRepository.observeUnsyncedCount(accountId).collectLatest { count ->
                 _cardState.update {
                     it.copy(
                         unsyncedShuttleCount = count
@@ -700,7 +706,7 @@ class ShuttleViewModel @Inject constructor(
     fun countLateShuttlePass(accountId: String) {
         viewModelScope.launch(Dispatchers.IO) {
 
-            shuttlePassRepository.countLateShuttle(accountId).collectLatest { count ->
+            shuttlePassRepository.observeLateCount(accountId).collectLatest { count ->
                 Log.i("Count", count.toString())
                 _cardState.update {
                     it.copy(
@@ -798,14 +804,15 @@ class ShuttleViewModel @Inject constructor(
         loggedUserRepository.deleteRememberedUser()
     }
 
-    suspend fun deleteShuttlePassOnDue(driverId: String) : Int {
-        val deletedItem = shuttlePassRepository.deleteShuttlePassOnDue(driverId)
-        return deletedItem
-    }
-
-    suspend fun deleteAllDraftedShuttlePass(accountId: String) : Int {
-        val deletedItem = shuttlePassRepository.deleteAllDraftedShuttlePass(accountId)
-        return deletedItem
+    // Deletes synced passes and stale drafts older than one month; returns how many were removed.
+    suspend fun purgeExpired(driverId: String) : Int {
+        return when (val result = shuttlePassRepository.purgeExpired(driverId)) {
+            is Resource.Success -> result.data ?: 0
+            else -> {
+                Log.e("PurgeExpired", result.message ?: "unknown error")
+                0
+            }
+        }
     }
     fun submitManualAddPassenger() : Boolean {
 

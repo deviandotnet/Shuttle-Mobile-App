@@ -60,7 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.shuttleapp.data.local.ShuttlePassEntity
+import com.example.shuttleapp.domain.model.ShuttlePass
 import com.example.shuttleapp.presentation.components.ExpandedDropDown
 import com.example.shuttleapp.ui.theme.Black
 import com.example.shuttleapp.ui.theme.Gray

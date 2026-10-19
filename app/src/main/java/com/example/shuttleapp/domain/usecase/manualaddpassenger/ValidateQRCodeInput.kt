@@ -1,11 +1,11 @@
 package com.example.shuttleapp.domain.usecase.manualaddpassenger
 
-import com.example.shuttleapp.data.local.PassengerQREntity
+import com.example.shuttleapp.domain.model.PassengerQR
 import com.example.shuttleapp.domain.usecase.ShuttlePassValidationResult
 
 class ValidateQRCodeInput() {
 
-    fun execute(qrCode: String, qrCodes: List<PassengerQREntity>) : ShuttlePassValidationResult {
+    fun execute(qrCode: String, qrCodes: List<PassengerQR>) : ShuttlePassValidationResult {
 
 
         if(!qrCode.uppercase().contains("Passenger_".uppercase())) { //put !

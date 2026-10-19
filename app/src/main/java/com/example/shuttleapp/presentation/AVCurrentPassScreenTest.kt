@@ -54,8 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.shuttleapp.data.local.PassengerQREntity
-import com.example.shuttleapp.data.local.ShuttlePassEntity
+import com.example.shuttleapp.domain.model.PassengerQR
+import com.example.shuttleapp.domain.model.ShuttlePass
 import com.example.shuttleapp.presentation.components.EditDeleteChoiceDialog
 import com.example.shuttleapp.presentation.components.ModifiedTextField
 import com.example.shuttleapp.ui.theme.*
@@ -360,7 +360,7 @@ fun AVCurrentPassScreenTest(
 }
 
 @Composable
-fun ShuttlePassFormTest(shuttlePass: ShuttlePassEntity, draftPassengerList: List<PassengerQREntity>, viewModel: ShuttleViewModel = hiltViewModel(), navController: NavController) {
+fun ShuttlePassFormTest(shuttlePass: ShuttlePass, draftPassengerList: List<PassengerQR>, viewModel: ShuttleViewModel = hiltViewModel(), navController: NavController) {
 
     var showAddPassenger by remember { mutableStateOf(false) }
     var showConfirmation by remember { mutableStateOf(false) }
@@ -579,7 +579,7 @@ fun ShuttlePassFormTest(shuttlePass: ShuttlePassEntity, draftPassengerList: List
 }
 
 @Composable
-fun PassengerItemTest(viewModel: ShuttleViewModel  = hiltViewModel(), number: Int, item: PassengerQREntity) {
+fun PassengerItemTest(viewModel: ShuttleViewModel  = hiltViewModel(), number: Int, item: PassengerQR) {
 
     var showEditDeleteDialog by remember { mutableStateOf(false) }
     var showEditPassengerDialog by remember { mutableStateOf(false) }
@@ -752,7 +752,7 @@ fun EditPassengerDialog(id: String, viewModel: ShuttleViewModel  = hiltViewModel
 
                     if(viewModel.submitManualAddPassenger()) {
                         try {
-                            val updatedPassenger = PassengerQREntity(
+                            val updatedPassenger = PassengerQR(
                                 id = id,
                                 shuttlePassId = passenger.shuttlePassId,
                                 scannedQR = passengerState.qrCode,

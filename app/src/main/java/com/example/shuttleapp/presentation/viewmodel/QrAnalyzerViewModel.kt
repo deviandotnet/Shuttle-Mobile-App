@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.camera.core.ImageProxy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.shuttleapp.data.local.PassengerQREntity
+import com.example.shuttleapp.domain.model.PassengerQR
 import com.example.shuttleapp.domain.repository.PassengerQRRepository
 import com.example.shuttleapp.domain.repository.ShuttlePassRepository
 import com.example.shuttleapp.domain.usecase.manualaddpassenger.ValidateQRCodeInput
@@ -41,8 +41,8 @@ class QrAnalyzerViewModel @Inject constructor(
     private var _scannedQRListState = MutableStateFlow(ScannedQRListState())
     val scannedQRListState: StateFlow<ScannedQRListState> get() = _scannedQRListState
 
-    private val _passengerQR = MutableStateFlow(PassengerQREntity())
-    val passengerQR: StateFlow<PassengerQREntity> get() = _passengerQR
+    private val _passengerQR = MutableStateFlow(PassengerQR())
+    val passengerQR: StateFlow<PassengerQR> get() = _passengerQR
 
     private val _qrInputState = MutableStateFlow(QRInputState())
     val qrInputState: MutableStateFlow<QRInputState> get() = _qrInputState
@@ -129,7 +129,7 @@ class QrAnalyzerViewModel @Inject constructor(
         }
     }
 
-    fun getPassengerById(id: String) : Flow<PassengerQREntity> {
+    fun getPassengerById(id: String) : Flow<PassengerQR> {
         return passengerQRRepository.getPassengerById(id)
 
     }
@@ -159,7 +159,7 @@ class QrAnalyzerViewModel @Inject constructor(
         }
     }
     //for validation
-    private val _scannedPassengers = MutableStateFlow<List<PassengerQREntity>>(emptyList())
+    private val _scannedPassengers = MutableStateFlow<List<PassengerQR>>(emptyList())
 
     //TODO pass list here for validation for employee number and department, (use hashset
     fun submitScannedPassengerQR() : Boolean {
@@ -186,7 +186,7 @@ class QrAnalyzerViewModel @Inject constructor(
     }
 
 
-    fun insertPassengerQR(passengerQR: PassengerQREntity) {
+    fun insertPassengerQR(passengerQR: PassengerQR) {
 
         viewModelScope.launch(Dispatchers.IO) {
             passengerQRRepository.insertPassenger(passengerQR)
