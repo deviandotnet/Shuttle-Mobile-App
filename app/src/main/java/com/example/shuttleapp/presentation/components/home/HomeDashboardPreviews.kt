@@ -30,7 +30,7 @@ private val activeTrip = HomeDashboardUi(
 private val noTrip = HomeDashboardUi(greeting = "Good evening, Elmo", initials = "ER")
 
 @Composable
-private fun Dashboard(ui: HomeDashboardUi) = ShuttleAppTheme(dynamicColor = false) {
+private fun Dashboard(ui: HomeDashboardUi) = ShuttleAppTheme(darkTheme = false) {
     HomeDashboard(ui, onOpenProfile = {}, onPrimaryAction = {}, onOpenPass = {}, onViewAll = {}, onNavSelect = {})
 }
 
