@@ -48,9 +48,10 @@ import com.example.shuttleapp.Route
 @Composable
 fun TopBarComponent(
     openDrawer: () -> Unit = {},
-    navController: NavController,
+    navController: NavController? = null,
     title: String,
-    action: @Composable (RowScope.() -> Unit) ? = {}
+    action: @Composable (RowScope.() -> Unit) ? = {},
+    onBack: () -> Unit = { navController?.navigateUp() }
 ) {
 
     //region we are putting these variables to be put in the top bar or bottom bar components
@@ -58,9 +59,7 @@ fun TopBarComponent(
         //if we are NOT on a wishlist screen, then display the back button
         if(!title.contains("Good day, ")) {
             IconButton(
-                onClick = {
-                    navController.navigateUp()
-                })
+                onClick = onBack)
             {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,

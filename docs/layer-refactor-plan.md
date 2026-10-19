@@ -9,7 +9,9 @@ Ground rules for every phase:
 
 ---
 
-## Phase 1: `ShuttlePassRepository` speaks domain models
+## Phase 1: `ShuttlePassRepository` speaks domain models — ✅ done
+
+Also covered `PassengerQRRepository` (types only), so screens don't mix entity and domain passenger types.
 
 **Why first:** every screen reaches the data layer through this interface (`domain/repository/ShuttlePassRepository.kt:3-7` imports entities, DTOs and `retrofit2.Response`). Fixing it removes most of the `presentation → data` imports, because the screens get those types from here.
 
@@ -75,42 +77,18 @@ enum class PassFilter { All, Late, NotSynced }   // domain/model; presentation's
 
 ---
 
-## Phase 2: Sync screen (`ShuttlePassListScreen`) to MVI
+## Phase 2: Sync screen (`ShuttlePassListScreen`) to MVI — ✅ done (structure only)
 
-Mockups: `08-shuttle-pass-list.png`, `12-sync-success.png`, `13-sync-error.png`. Use the `shuttle-add-screen` and `android-presentation-mvi` skills.
+**Scope change:** MVI restructure only. The look is unchanged. The mockup 08/12/13 restyle waits until the design-system tokens (Inter, Midnight/Mint colors, type scale) are added to `ui/theme`.
 
-### 2.1 Files (new, in `presentation/passlist/`)
-```kotlin
-data class ShuttlePassListState(
-    val filter: PassFilter = PassFilter.All,
-    val items: List<PassListItemUi> = emptyList(),
-    val isLoading: Boolean = true,
-    val sync: SyncStatus = SyncStatus.Idle,
-)
-data class PassListItemUi(val id: String, val title: String, val dateLabel: String,
-                          val passengerCount: Int, val isSynced: Boolean, val isLate: Boolean)  // formatting done in VM
-sealed interface SyncStatus { data object Idle; data object Running; data class Success(val message: String); data class Failed(val message: String) }
+What landed:
+- `presentation/state/ShuttlePassListState.kt` (`ShuttlePassListState`, `ShuttlePassItemUi`, `SyncStatus`), and `presentation/events/ShuttlePassListAction.kt` / `ShuttlePassListEvent.kt`.
+- `ShuttlePassListViewModel`: reads `driverId` from `SavedStateHandle["id"]`, uses `filter.flatMapLatest { observePasses }` (fixing the old `FilterViewModel` collector leak), and resolves route names once per id. It formats rows, using each pass's own month for the `SPT-…` code. One `StateFlow`, plus a Channel for navigation events.
+- `ShuttlePassListRoot` / `ShuttlePassListScreen(state, onAction)`. A stateless `components/ShuttlePassCard` (a visual copy of HomeScreen's `ShuttlePassListItem`). `components/ObserveAsEvents`. `TopBarComponent` gained an `onBack` lambda, and `navController` is now optional.
+- Deleted `FilterViewModel` and `FilterState`. `UploadUiState` stays for `ShuttlePassItemScreen` (Phase 4). The old `ShuttlePassListState` used by HomeScreen was renamed `ShuttlePassListLegacyState` (removed in Phase 6).
+- Tests: `kotlinx-coroutines-test` + Turbine. `ShuttlePassListViewModelTest` (5 cases), `MainDispatcherRule`, and fakes in `app/src/test/.../testutil/`.
 
-sealed interface ShuttlePassListAction {
-    data class SelectFilter(val filter: PassFilter); data object UploadAll; data object DismissSyncResult
-    data class OpenPass(val id: String); data object Back
-}
-```
-- `ShuttlePassListViewModel(savedStateHandle, repo)`: read `driverId` from `savedStateHandle["id"]`. Hold `filter` in a `MutableStateFlow` and use `filter.flatMapLatest { repo.observePasses(driverId, it) }` → `stateIn`. This also fixes the current `FilterViewModel` bug, where every filter tap starts another collector that is never cancelled. `UploadAll` calls `repo.syncUnsynced(driverId)` and updates `sync`. When there's nothing to upload, show `Failed("No unsynced shuttle pass")`, or emit an event for a snackbar.
-- `ShuttlePassListRoot(onBack, onOpenPass)`: does `hiltViewModel()` + `collectAsStateWithLifecycle()`, and routes `OpenPass`/`Back` to the lambdas.
-- `ShuttlePassListScreen(state, onAction)`: dumb and previewable, split into components under 100 lines each (filter bar, list item, sync dialogs).
-
-### 2.2 Wiring and cleanup
-- `Navigation.kt`: this route renders `ShuttlePassListRoot`, and the lambdas call `navController`. Keep the string route for now; type-safe routes come in a later phase.
-- Delete `FilterViewModel`, `FilterState`, `UploadUiState`, and the old screen body.
-- `ShuttlePassItemScreen` also uploads (lines 79-120). For this phase, replace its post + screen-side `updateShuttlePass` with `ShuttleViewModel.syncPass(id)` → `repo.syncPass(id)`. Its full MVI conversion comes in Phase 4.
-
-### 2.3 Tests (first real tests in the repo)
-- Add `kotlinx-coroutines-test`, `app.cash.turbine`, and `androidx.room:room-testing` to the version catalog.
-- `ShuttlePassListViewModelTest` with a `FakeShuttlePassRepository`: switching filters, upload success/failure states, and "nothing to upload".
-- `ShuttlePassDaoTest` (instrumented, in-memory DB): `markSynced` only touches the given ids, and `countLateShuttle` ignores drafts.
-
-**Done when:** the sync screen has no `data` imports, takes `state` + `onAction` only, Upload All no longer crashes, and the tests pass.
+**Follow-up (done):** The androidTest classpath conflict is fixed. AGP pins androidTest dependencies to the app's runtime versions, and CameraX 1.5.1 resolved `androidx.concurrent:concurrent-futures` to 1.1.0, while `androidx.test` (junit 1.3.0 / espresso 3.7.0) needs 1.2.0. The app now declares `concurrent-futures` 1.2.0 (`libs.androidx.concurrent.futures`). `ShuttlePassDaoTest` (`app/src/androidTest/.../data/local/dao/`) is an in-memory Room test covering `markSynced`, drafts excluded from `countLateShuttle`, and `getAllShuttlePassFilteredByLate` matching the count. It uses `room-testing` 2.7.1 and `runBlocking`. `kotlinx-coroutines-test` 1.10.2 can't go on androidTest while the app runtime resolves coroutines 1.8.1, because the same strict alignment applies. It compiles, `lintDebug` passes, and all 3 cases pass on the Pixel_9 API 35 emulator (`./gradlew connectedDebugAndroidTest`).
 
 ---
 

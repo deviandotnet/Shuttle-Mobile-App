@@ -16,8 +16,8 @@ import com.example.shuttleapp.presentation.EditShuttlePassInformationScreen
 import com.example.shuttleapp.presentation.HomeScreen
 import com.example.shuttleapp.presentation.QRScannerScreen
 import com.example.shuttleapp.presentation.ShuttlePassItemScreen
-import com.example.shuttleapp.presentation.ShuttlePassListScreen
-import com.example.shuttleapp.presentation.viewmodel.FilterViewModel
+import com.example.shuttleapp.presentation.ShuttlePassListRoot
+import com.example.shuttleapp.presentation.viewmodel.ShuttlePassListViewModel
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
 import kotlinx.serialization.Serializable
 
@@ -76,13 +76,11 @@ fun Navigation(navController: NavHostController = rememberNavController()) {
                     defaultValue = ""
                 }
             )
-        ) { entry ->
-            val id = entry.arguments?.getString("id") ?: ""
-            ShuttlePassListScreen(
-                driverId = id,
-                shuttleViewModel = hiltViewModel<ShuttleViewModel>(),
-                filterViewModel = hiltViewModel<FilterViewModel>(),
-                navController = navController
+        ) {
+            ShuttlePassListRoot(
+                viewModel = hiltViewModel<ShuttlePassListViewModel>(),
+                onBack = { navController.navigateUp() },
+                onOpenPass = { id -> navController.navigate(Route.ShuttlePassItemScreen.route + "/$id") }
             )
         }
 

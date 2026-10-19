@@ -9,7 +9,7 @@ import com.example.shuttleapp.domain.repository.ShuttleRepository
 import com.example.shuttleapp.domain.repository.UserDataRepository
 import com.example.shuttleapp.domain.model.PassengerQR
 import com.example.shuttleapp.domain.model.ShuttlePass
-import com.example.shuttleapp.presentation.state.ShuttlePassListState
+import com.example.shuttleapp.presentation.state.ShuttlePassListLegacyState
 import com.example.shuttleapp.presentation.state.ShuttlePassState
 import com.example.shuttleapp.domain.model.ShuttlePassWithPassenger
 import com.example.shuttleapp.domain.model.PassFilter
@@ -100,8 +100,8 @@ class ShuttleViewModel @Inject constructor(
     private val _routeId = MutableStateFlow("")
     val routeId: MutableStateFlow<String> get() = _routeId
 
-    private val _shuttlePassListState = MutableStateFlow(ShuttlePassListState())
-    val shuttlePassListState: MutableStateFlow<ShuttlePassListState> get() = _shuttlePassListState
+    private val _shuttlePassListState = MutableStateFlow(ShuttlePassListLegacyState())
+    val shuttlePassListState: MutableStateFlow<ShuttlePassListLegacyState> get() = _shuttlePassListState
 
     private val _draftedShuttlePassState = MutableStateFlow(ShuttlePassState())
     val draftedShuttlePassState: StateFlow<ShuttlePassState> get() = _draftedShuttlePassState.asStateFlow()
@@ -208,10 +208,6 @@ class ShuttleViewModel @Inject constructor(
                 ex.printStackTrace()
             }
         }
-    }
-
-    fun syncUnsynced(driverId: String) {
-        sync { shuttlePassRepository.syncUnsynced(driverId) }
     }
 
     fun syncPass(id: String) {

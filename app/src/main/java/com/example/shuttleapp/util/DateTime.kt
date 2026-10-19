@@ -34,8 +34,9 @@ fun dateTimeCreated() : Long {
     return dateMilli
 }
 
-fun displayMonthYear() : String {
-    val dateMilli: Long =  System.currentTimeMillis()
+fun displayMonthYear() : String = formatMonthYear(System.currentTimeMillis())
+
+fun formatMonthYear(dateMilli: Long) : String {
     val format = SimpleDateFormat("yyyy-MM", Locale.getDefault())
     return format.format(Date(dateMilli))
 }
