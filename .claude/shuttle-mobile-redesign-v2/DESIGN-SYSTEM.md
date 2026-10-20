@@ -9,7 +9,7 @@ Use **Inter** throughout the product.
 - Semibold: 600
 - Bold: 700
 - Fallback stack: `Inter, "SF Pro Text", Roboto, sans-serif`
-- Use tabular numerals for times, dates, IDs, and passenger counts.
+- Use tabular numerals for times, dates, and passenger counts. Hyphenated pass IDs (`SPT-2026-10-0012`) use proportional figures, because tabular hyphens space them out.
 
 The generated PNG mockups are raster images and do not contain inspectable font metadata. Inter is the exact implementation font specified for recreating the visual system.
 
@@ -53,9 +53,24 @@ The generated PNG mockups are raster images and do not contain inspectable font 
 | Error soft | `#FDE7E7` | Error backgrounds |
 | Scrim | `#07113F` at 56% | Modal background dimming |
 
+## Navigation (mockups 04, 05)
+
+- **Bottom bar:** three destinations, Home · Passes · Sync. Each is a real screen, and the bar stays visible on all three. The selected item gets a Mist blue pill (64×32) with a Midnight icon and label. Sync carries an amber count badge for passes waiting to upload.
+- **Primary action:** one Midnight Extended FAB, bottom-right, 16dp above the bar. It reads "New pass", or "Current trip" while a draft is open. There is no full-width sticky button.
+- **Header:** the Midnight band draws behind the status bar (edge-to-edge, white system icons). The initials avatar is the only way to open the drawer. There is no gear on Home.
+- **Drawer:** an account menu, all in Midnight. From top to bottom:
+  - Brand line and close button.
+  - Profile: avatar, name, employee number, shuttle provider.
+  - Sync card: pending count, last-synced time, Mint "Sync now".
+  - Settings and Sign out.
+  - Version line.
+  - Skyline footer.
+  
+  It never repeats bottom-bar destinations.
+
 ## Dark mode
 
-Implemented in `ui/theme/ShuttleColors.kt` as semantic roles (`ShuttleTheme.colors.<role>`). The user picks System, Light or Dark in the drawer; System follows the device setting.
+Implemented in `ui/theme/ShuttleColors.kt` as semantic roles (`ShuttleTheme.colors.<role>`). The user picks System, Light or Dark on the Settings screen (drawer → Settings); System follows the device setting.
 
 | Role | Light | Dark | Usage |
 |---|---|---|---|
