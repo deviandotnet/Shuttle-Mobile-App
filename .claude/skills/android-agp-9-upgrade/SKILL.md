@@ -10,11 +10,11 @@ metadata:
 
 ## In this project (Shuttle-Mobile-App)
 
-**Status:** AGP **9.1.1** with Gradle 9.5.1, but the migration is **not finished**. The build still runs in AGP 9 compatibility mode.
+**Status:** the AGP 9 migration is **done** (commit `a2cd1df`, merged to master). AGP 9.1.1 and Gradle 9.5.1 run with built-in Kotlin and the new DSL. KSP (2.3.6) and Hilt (2.59.2) come from the version catalog. The `kotlin-android` plugin and `kotlinOptions` are gone, and the four opt-out flags (`android.builtInKotlin`, `android.newDsl`, `android.uniquePackageNames`, `android.enableAppCompileTimeRClass`) were removed from `gradle.properties`.
 
-- **Step 1:** bump KSP `2.3.2` to at least 2.3.6, and Hilt `2.57.2` to at least 2.59.2. Both are declared in the root `build.gradle.kts` and `app/build.gradle.kts`.
-- **Step 2:** `app/build.gradle.kts` still applies `kotlin-android` (`libs.plugins.kotlin.android`) and uses `kotlinOptions { jvmTarget = "11" }`. Both must be migrated to built-in Kotlin.
-- **Step 6:** `gradle.properties` still sets `android.builtInKotlin=false`, `android.newDsl=false`, `android.uniquePackageNames=false` and `android.enableAppCompileTimeRClass=false`. Remove them once the earlier steps pass.
+- **Don't reintroduce** `kotlin-android`, `kotlinOptions` or any of the removed opt-out flags. Use this skill for AGP 9 build errors or the next AGP bump.
+- **Leftovers before AGP 10:** `gradle.properties` still sets options that AGP 9 warns are deprecated and AGP 10 will remove: `android.usesSdkInManifest.disallowed=false`, `android.sdk.defaultTargetSdkToCompileSdkIfUnset=false`, `android.defaults.buildfeatures.resvalues=true` and `android.r8.optimizedResourceShrinking=false`. Drop each one once nothing depends on it.
+- If the Kotlin daemon fails with `Daemon compilation failed: null`, retry with `-Pkotlin.compiler.execution.strategy=in-process`.
 - Many dependencies are hard-coded strings in `app/build.gradle.kts`. Move the ones you touch into `gradle/libs.versions.toml` (see **android-project-structure**).
 - Hilt and Room use KSP, and kapt isn't used.
 - If `./gradlew` can't find Java on Windows, set `JAVA_HOME` to Android Studio's bundled `jbr`.

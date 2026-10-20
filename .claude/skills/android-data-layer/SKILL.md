@@ -35,7 +35,7 @@ description: >
   - annotate fields with Gson's `@SerializedName("camelCaseName")`;
   - don't rely on kotlinx `@Serializable`/`@SerialName`. Gson ignores them, and many existing DTOs carry `@Serializable` with no effect.
   - `.cursorrules` prefers kotlinx.serialization for new DTOs, but that only works after switching the converter in `AppModule` to the kotlinx converter for *all* APIs. Treat that as its own migration task, and do it only when asked.
-  - Release builds are minified by R8. Gson reads fields by reflection, so a DTO field without `@SerializedName` (and with no working keep rule) can be renamed and break JSON **only in release**. This is one more reason every DTO field needs `@SerializedName`.
+  - Release builds are minified by R8. Gson reads fields by reflection, so a DTO field without `@SerializedName` can be renamed and break JSON **only in release**. Every existing DTO field is annotated, and `app/proguard-rules.pro` keeps `com.example.shuttleapp.data.network.request.**` / `.response.**`. Keep both true: annotate every new field, and put new DTOs in those packages (or add a keep rule).
 - **Room is the source of truth for shuttle passes.** The UI observes DAO `Flow`s, and network results are written to Room, never shown directly.
 - **Schema changes:** bump `version` in `config/Database.kt` and register new entities/DAOs there. `fallbackToDestructiveMigration` means a version bump **wipes local data, including unsynced passes**. Before shipping a schema change, add a `Migration` (or enable `exportSchema` + `AutoMigration`) and remove the destructive fallback. Flag this to the user whenever you bump the version.
 - **Tokens and PII** go in `EncryptedSharedPreferences` (or an encrypted DB), per `.cursorrules`. Never store them in plain Room tables or plain SharedPreferences.
@@ -148,7 +148,6 @@ Don't copy these patterns into new code, and don't mass-refactor them unless ask
 - Several `ShuttleApi` GETs return bare `List<T>` instead of `Response<T>`, so HTTP errors surface as exceptions.
 - `ShuttleDatabase` DAO accessors are PascalCase functions (`ShuttlePassDao()`). Keep calling them as they are. Renaming them is a separate refactor.
 - `AuthRepositoryImpl` logs the full user data with `Log.i`. Don't log PII or tokens.
-- `app/proguard-rules.pro` keeps `com.example.shuttle.data.network.**`, which is the wrong package (the real one is `com.example.shuttleapp`), so DTOs are currently unprotected in release builds. See **android-r8-analyzer**.
 
 ## Checklist: adding data access
 

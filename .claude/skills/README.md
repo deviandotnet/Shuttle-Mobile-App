@@ -27,8 +27,8 @@ These come from Google. Each starts with a short **"In this project"** section (
 
 | Skill | Relevance here |
 |---|---|
-| [`android-r8-analyzer`](android-r8-analyzer/SKILL.md) | **Relevant: release risk.** Release is minified, but `proguard-rules.pro` keeps the wrong package (`com.example.shuttle…`), so Gson DTOs are unprotected. |
-| [`android-agp-9-upgrade`](android-agp-9-upgrade/SKILL.md) | **Relevant: migration incomplete.** AGP 9.1.1 runs in compatibility mode (`builtInKotlin=false`, `newDsl=false`, …). KSP and Hilt are below the versions it requires. |
+| [`android-r8-analyzer`](android-r8-analyzer/SKILL.md) | **Relevant.** Release is minified. DTO keep rules and `@SerializedName` are fixed; use this skill to audit or narrow `proguard-rules.pro`. |
+| [`android-agp-9-upgrade`](android-agp-9-upgrade/SKILL.md) | **Relevant for maintenance.** The migration is done (built-in Kotlin, new DSL, KSP 2.3.6, Hilt 2.59.2). A few deprecated `gradle.properties` options remain before AGP 10. |
 | [`android-edge-to-edge`](android-edge-to-edge/SKILL.md) | **Relevant.** `enableEdgeToEdge()` is called, but a root `systemBarsPadding()` in `MainActivity` cancels it. `accompanist-systemuicontroller` should be removed. |
 | [`android-navigation-3`](android-navigation-3/SKILL.md) | Nav3 isn't used (the app is on Navigation 2.9). Its [`type-safe-destinations.md`](android-navigation-3/references/android/guide/navigation/type-safe-destinations.md) reference *is* the guide for our Nav2 typed-route migration. |
 | [`android-migrate-xml-views-to-jetpack-compose`](android-migrate-xml-views-to-jetpack-compose/SKILL.md) | Not applicable: there are no XML layouts and `AGENTS.md` forbids them. Kept for reference only. |
@@ -37,11 +37,15 @@ The upstream frontmatter says "Complete terms in LICENSE.txt", but the `LICENSE.
 
 ## Known issues found while auditing the skills
 
-These are **app fixes that haven't been made yet**. The skills describe them, but no code has changed.
+**Open:**
 
-1. `app/proguard-rules.pro` targets `com.example.shuttle.data.network.**`, but the real package is `com.example.shuttleapp`. Release builds can break JSON parsing. See **android-r8-analyzer** and **android-data-layer**.
-2. The AGP 9 migration isn't finished: there are compatibility flags in `gradle.properties`, KSP is 2.3.2 (needs ≥ 2.3.6), Hilt is 2.57.2 (needs ≥ 2.59.2), and the `kotlin-android` plugin and `kotlinOptions` are still in use. See **android-agp-9-upgrade**.
-3. `MainActivity` wraps the whole app in `systemBarsPadding()`, which defeats edge-to-edge. See **android-edge-to-edge**.
+- `MainActivity` wraps the whole app in `systemBarsPadding()`, which defeats edge-to-edge, and `Theme.kt` still uses the deprecated `accompanist-systemuicontroller`. See **android-edge-to-edge**.
+- `gradle.properties` still has options AGP 9 deprecates (they go away in AGP 10). See **android-agp-9-upgrade**.
+
+**Fixed (merged to master):**
+
+- ~~`proguard-rules.pro` kept the wrong package (`com.example.shuttle…`), leaving Gson DTOs unprotected in release.~~ Fixed in `1bf667f`: the keep rules use `com.example.shuttleapp`, and every DTO field has `@SerializedName`.
+- ~~The AGP 9 migration ran in compatibility mode.~~ Fixed in `a2cd1df`: built-in Kotlin, the new DSL, KSP 2.3.6 and Hilt 2.59.2, with the opt-out flags removed.
 
 ## Writing or editing a project skill
 

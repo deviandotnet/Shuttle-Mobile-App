@@ -18,8 +18,12 @@ metadata:
 ## In this project (Shuttle-Mobile-App)
 
 - The release build minifies (`isMinifyEnabled = true`, `isShrinkResources = true` in `app/build.gradle.kts`). Rules live in `app/proguard-rules.pro`.
-- **Report this first:** the DTO keep rules target `com.example.shuttle.data.network.**`, but the real package is `com.example.shuttleapp`, so they match nothing. Retrofit uses **Gson** (reflection), and most DTOs lack `@SerializedName`, so R8 can rename DTO fields and break JSON in release builds only.
-- The correct fix is either `@SerializedName` on every DTO field (preferred; see **android-data-layer**) or a keep rule for `com.example.shuttleapp.data.network.request.**` / `.response.**`.
+- **DTO protection (fixed in commit `1bf667f`, merged to master):** Retrofit uses **Gson**, which reads fields by reflection. DTOs are now protected twice:
+  - `-keep` rules for `com.example.shuttleapp.data.network.request.**` / `.response.**`;
+  - `@SerializedName` on every DTO field.
+
+  Before the fix, the rules targeted the non-existent `com.example.shuttle` package. When analyzing, confirm any new DTO packages are covered too. If every field keeps `@SerializedName`, the broad package `-keep` rules could be narrowed later.
+- `-keep class net.zetetic.database.** { *; }` (SQLCipher, used for the encrypted DB) and `-dontwarn com.google.errorprone.annotations.**` are intentional. Check them against the library's consumer rules before suggesting removal.
 - Hilt, Room, Retrofit, OkHttp and Gson ship their own consumer rules, so app-level rules for them are redundant.
 - `gradle.properties` sets `android.r8.strictFullModeForKeepRules=false` and `android.r8.optimizedResourceShrinking=false`. Report both as opportunities.
 

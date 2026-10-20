@@ -54,7 +54,7 @@ Layer dependencies (Clean Architecture, from `AGENTS.md`):
 
 - Keep code in the package of the layer that owns it. Shared composables go in `presentation/components`, and shared non-UI helpers go in `util`.
 - Do not create new Gradle modules, `core`/`feature` modules or convention plugins. Modularization is out of scope for this app.
-- The build is on AGP 9.1.1 but still in compatibility mode: `gradle.properties` sets `android.builtInKotlin=false`, `android.newDsl=false` and others. Don't add new uses of the legacy DSL. Finishing the migration is covered by the **android-agp-9-upgrade** skill.
+- The build is on AGP 9.1.1 with built-in Kotlin and the new DSL, so there's no `kotlin-android` plugin and no `kotlinOptions`. Don't reintroduce the legacy DSL or the AGP 9 opt-out flags. See **android-agp-9-upgrade** for AGP build issues.
 - Put new dependency versions in `gradle/libs.versions.toml` and reference them as `libs.*`. Many dependencies in `app/build.gradle.kts` are still hard-coded strings. Migrate one only when you touch it.
 - New Room entities and DAOs are registered in `config/Database.kt`. New endpoints go on `AuthApi`/`ShuttleApi` or a new API provided in `di/AppModule.kt`.
 
