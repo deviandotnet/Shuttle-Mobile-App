@@ -15,23 +15,23 @@ private val samplePasses = listOf(
 )
 
 private val activeTrip = HomeDashboardUi(
-    greeting = "Good morning, Elmo",
-    initials = "ER",
+    greeting = "Good afternoon, Christian",
+    subtitle = "Tue, Oct 20 · 2 passes today",
+    initials = "CL",
     hasActiveTrip = true,
     routeTitle = "Villa Estrella · Incoming",
     departure = "16:30",
     passengerCount = 24,
     pendingSyncCount = 3,
     lateCount = 1,
-    recentPasses = samplePasses,
-    totalPassCount = 12
+    recentPasses = samplePasses
 )
 
-private val noTrip = HomeDashboardUi(greeting = "Good evening, Elmo", initials = "ER")
+private val noTrip = HomeDashboardUi(greeting = "Good evening, Elmo", subtitle = "Tue, Oct 20 · No passes yet today", initials = "ER")
 
 @Composable
 private fun Dashboard(ui: HomeDashboardUi, dark: Boolean = false) = ShuttleAppTheme(darkTheme = dark) {
-    HomeDashboard(ui, onOpenProfile = {}, onPrimaryAction = {}, onOpenPass = {}, onViewAll = {}, onNavSelect = {})
+    HomeDashboard(ui, onAction = {})
 }
 
 @Preview(name = "Phone", widthDp = 360, heightDp = 780)

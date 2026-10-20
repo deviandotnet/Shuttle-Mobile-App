@@ -37,7 +37,9 @@ class FakeShuttlePassRepository : ShuttlePassRepository {
     override fun observePass(id: String): Flow<ShuttlePassWithPassenger?> = emptyFlow()
     override fun observeShuttlePass(id: String): Flow<ShuttlePass?> = emptyFlow()
     override fun observeDraft(driverId: String): Flow<ShuttlePass?> = emptyFlow()
-    override fun observeUnsyncedCount(driverId: String): Flow<Int> = flowOf(0)
+    val unsyncedCount = MutableStateFlow(0)
+
+    override fun observeUnsyncedCount(driverId: String): Flow<Int> = unsyncedCount
     override fun observeLateCount(driverId: String): Flow<Int> = flowOf(0)
     override suspend fun getDraftId(driverId: String): String? = null
     override suspend fun insert(pass: ShuttlePass): Resource<Unit> = Resource.Success(Unit)

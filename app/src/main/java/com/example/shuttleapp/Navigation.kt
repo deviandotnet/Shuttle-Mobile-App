@@ -1,28 +1,32 @@
 package com.example.shuttleapp
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.shuttleapp.domain.model.PassFilter
 import com.example.shuttleapp.presentation.LoginScreen
 import com.example.shuttleapp.presentation.RegisterScreen
 import com.example.shuttleapp.presentation.AVCurrentPassScreenTest
 import com.example.shuttleapp.presentation.EditShuttlePassInformationScreen
 import com.example.shuttleapp.presentation.HomeScreen
 import com.example.shuttleapp.presentation.QRScannerScreen
+import com.example.shuttleapp.presentation.SettingsRoot
 import com.example.shuttleapp.presentation.ShuttlePassItemScreen
 import com.example.shuttleapp.presentation.ShuttlePassListRoot
+import com.example.shuttleapp.presentation.SyncRoot
+import com.example.shuttleapp.presentation.components.SystemBarsFrame
+import com.example.shuttleapp.presentation.components.home.HomeNavItem
 import com.example.shuttleapp.presentation.viewmodel.ShuttlePassListViewModel
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
 import com.example.shuttleapp.presentation.viewmodel.AppearanceViewModel
-import kotlinx.serialization.Serializable
+import com.example.shuttleapp.presentation.viewmodel.SyncViewModel
 
 @Composable
 fun Navigation(
@@ -33,122 +37,163 @@ fun Navigation(
     NavHost(navController = navController, startDestination = startDestination) {
 
         composable(route = Route.RegisterScreen.route) {
-            RegisterScreen(registerViewModel = hiltViewModel(), navController = navController)
+            SystemBarsFrame { RegisterScreen(registerViewModel = hiltViewModel(), navController = navController) }
         }
 
         composable(route = Route.LoginScreen.route) {
-            LoginScreen(loginViewModel = hiltViewModel(), navController = navController)
+            SystemBarsFrame { LoginScreen(loginViewModel = hiltViewModel(), navController = navController) }
         }
 
+        // Home, Passes and Sync are the bottom-bar tabs. They draw edge to edge and handle insets themselves.
         composable(
-            route = Route.HomeScreen.route + "/{id}",
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                }
-            )
+            route = Route.HomeScreen.pattern,
+            arguments = listOf(idArgument())
         ) { entry ->
             val id = entry.arguments?.getString("id") ?: ""
-            val appearanceViewModel = hiltViewModel<AppearanceViewModel>()
-            val themeMode by appearanceViewModel.themeMode.collectAsStateWithLifecycle()
             HomeScreen(
                 userId = id,
                 navController = navController,
                 viewModel = hiltViewModel<ShuttleViewModel>(),
-                themeMode = themeMode,
-                onThemeModeChange = appearanceViewModel::onThemeModeChange
+                syncViewModel = hiltViewModel<SyncViewModel>(),
+                onOpenSettings = {
+                    navController.navigate(Route.SettingsScreen.route) { launchSingleTop = true }
+                },
+                onOpenPassList = { filter -> navController.navigateToTab(HomeNavItem.Passes, id, filter) },
+                onNavigate = { item -> navController.navigateToTab(item, id) }
             )
+        }
+
+        composable(
+            route = Route.ShuttlePassListScreen.pattern,
+            arguments = listOf(
+                idArgument(),
+                navArgument(ShuttlePassListViewModel.FILTER_ARG) {
+                    type = NavType.StringType
+                    defaultValue = PassFilter.All.name
+                }
+            )
+        ) { entry ->
+            val id = entry.arguments?.getString("id") ?: ""
+            ShuttlePassListRoot(
+                viewModel = hiltViewModel<ShuttlePassListViewModel>(),
+                onBack = { navController.navigateUp() },
+                onOpenPass = { passId -> navController.navigate(Route.ShuttlePassItemScreen.route + "/$passId") },
+                onNavigate = { item -> navController.navigateToTab(item, id) }
+            )
+        }
+
+        composable(
+            route = Route.SyncScreen.pattern,
+            arguments = listOf(idArgument())
+        ) { entry ->
+            val id = entry.arguments?.getString("id") ?: ""
+            SyncRoot(
+                viewModel = hiltViewModel<SyncViewModel>(),
+                onOpenPass = { passId -> navController.navigate(Route.ShuttlePassItemScreen.route + "/$passId") },
+                onNavigate = { item -> navController.navigateToTab(item, id) }
+            )
+        }
+
+        composable(route = Route.SettingsScreen.route) {
+            SystemBarsFrame {
+                SettingsRoot(
+                    viewModel = hiltViewModel<AppearanceViewModel>(),
+                    onBack = { navController.navigateUp() }
+                )
+            }
         }
 
         composable(
             route = Route.AVCurrentPassScreen.route + "/{id}",
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                }
-            )
+            arguments = listOf(idArgument())
         ) { entry ->
             val id = entry.arguments?.getString("id") ?: ""
-            AVCurrentPassScreenTest(
-                userId = id,
-                viewModel = hiltViewModel<ShuttleViewModel>(),
-                navController = navController
-            )
-        }
-
-        composable(
-            route = Route.ShuttlePassListScreen.route + "/{id}",
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                }
-            )
-        ) {
-            ShuttlePassListRoot(
-                viewModel = hiltViewModel<ShuttlePassListViewModel>(),
-                onBack = { navController.navigateUp() },
-                onOpenPass = { id -> navController.navigate(Route.ShuttlePassItemScreen.route + "/$id") }
-            )
+            SystemBarsFrame {
+                AVCurrentPassScreenTest(
+                    userId = id,
+                    viewModel = hiltViewModel<ShuttleViewModel>(),
+                    navController = navController
+                )
+            }
         }
 
         composable(
             route = Route.ShuttlePassItemScreen.route + "/{id}",
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                })
+            arguments = listOf(idArgument())
         ) { entry ->
             val id = entry.arguments?.getString("id") ?: ""
-            ShuttlePassItemScreen(
-                id = id, 
-                viewModel = hiltViewModel<ShuttleViewModel>(), 
-                navController = navController
-            )
+            SystemBarsFrame {
+                ShuttlePassItemScreen(
+                    id = id,
+                    viewModel = hiltViewModel<ShuttleViewModel>(),
+                    navController = navController
+                )
+            }
         }
 
         composable(
             route = Route.EditShuttlePassInfoScreen.route + "/{id}",
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                }
-            )
+            arguments = listOf(idArgument())
         ) { entry ->
             val id = entry.arguments?.getString("id") ?: ""
-            EditShuttlePassInformationScreen(
-                id = id,
-                viewModel = hiltViewModel<ShuttleViewModel>(),
-                navController = navController
-            )
+            SystemBarsFrame {
+                EditShuttlePassInformationScreen(
+                    id = id,
+                    viewModel = hiltViewModel<ShuttleViewModel>(),
+                    navController = navController
+                )
+            }
         }
 
         composable(
             route = Route.QrScannerScreen.route + "/{id}",
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                }
-            )
+            arguments = listOf(idArgument())
         ) { entry ->
             val id = entry.arguments?.getString("id") ?: ""
-            QRScannerScreen(id, navController, qrAnalyzerViewModel = hiltViewModel())
+            SystemBarsFrame { QRScannerScreen(id, navController, qrAnalyzerViewModel = hiltViewModel()) }
         }
     }
 }
 
+private fun idArgument() = navArgument("id") {
+    type = NavType.StringType
+    defaultValue = ""
+}
+
+/**
+ * Switches between the bottom-bar tabs. Home stays at the root of the back stack and Passes / Sync replace
+ * each other on top of it, so Back from either tab returns Home.
+ */
+private fun NavController.navigateToTab(item: HomeNavItem, driverId: String, filter: PassFilter = PassFilter.All) {
+    val target = when (item) {
+        HomeNavItem.Home -> {
+            popBackStack(Route.HomeScreen.pattern, inclusive = false)
+            return
+        }
+        HomeNavItem.Passes -> Route.ShuttlePassListScreen.route + "/$driverId?${ShuttlePassListViewModel.FILTER_ARG}=${filter.name}"
+        HomeNavItem.Sync -> Route.SyncScreen.route + "/$driverId"
+    }
+    navigate(target) {
+        popUpTo(Route.HomeScreen.pattern)
+        launchSingleTop = true
+    }
+}
+
 sealed class Route(val route: String) {
-    object HomeScreen: Route("homescreen")
-    object ShuttlePassListScreen: Route("shuttlepasslistscreen")
+    object HomeScreen: Route("homescreen") {
+        const val pattern = "homescreen/{id}"
+    }
+    object ShuttlePassListScreen: Route("shuttlepasslistscreen") {
+        const val pattern = "shuttlepasslistscreen/{id}?filter={filter}"
+    }
+    object SyncScreen: Route("syncscreen") {
+        const val pattern = "syncscreen/{id}"
+    }
     object AVCurrentPassScreen: Route("shuttlepassscreen")
     object ShuttlePassItemScreen: Route("shuttlepassitemscreen")
     object EditShuttlePassInfoScreen: Route("editshuttlepassinfoscreen")
     object QrScannerScreen: Route("qrscannerscreen")
     object LoginScreen: Route("loginscreen")
     object RegisterScreen: Route("registerscreen")
+    object SettingsScreen: Route("settingsscreen")
 }

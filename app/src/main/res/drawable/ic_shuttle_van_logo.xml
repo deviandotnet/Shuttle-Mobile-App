@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Drawer logo (mockup 04): side-view van with speed lines. Single colour; tint it in Compose. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="56dp"
+    android:viewportWidth="120"
+    android:viewportHeight="56">
+
+    <!-- Speed lines -->
+    <path
+        android:pathData="M6,16 H22 M10,27 H26 M4,38 H20"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeColor="#FFFFFF" />
+
+    <!-- Body with wheel arches; windows cut out -->
+    <path
+        android:fillType="evenOdd"
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,6 H84 Q91,6 95,11 L106,25 Q116,27 116,35 V42 Q116,46 112,46 H107 A9,9 0 0,0 89,46 H57 A9,9 0 0,0 39,46 H34 Q30,46 30,42 V12 Q30,6 36,6 Z
+            M37,12 H52 V24 H37 Z
+            M56,12 H72 V24 H56 Z
+            M76,12 H86 Q89,12 91,15 L98,24 H76 Z" />
+
+    <!-- Wheels with hubs -->
+    <path
+        android:fillType="evenOdd"
+        android:fillColor="#FFFFFF"
+        android:pathData="M41,46 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 Z
+            M45,46 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z
+            M91,46 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 Z
+            M95,46 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+</vector>

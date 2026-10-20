@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** Backs the appearance picker in the drawer. MainActivity observes the same repository and re-themes. */
+/** Backs the appearance picker on the Settings screen. MainActivity observes the same repository and re-themes. */
 @HiltViewModel
 class AppearanceViewModel @Inject constructor(
     private val themePreferenceRepository: ThemePreferenceRepository

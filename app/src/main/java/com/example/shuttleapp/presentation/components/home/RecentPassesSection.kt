@@ -1,5 +1,6 @@
 package com.example.shuttleapp.presentation.components.home
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,23 +19,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
 import com.example.shuttleapp.ui.theme.Dimens
+import com.example.shuttleapp.ui.theme.ShuttleAppTheme
 import com.example.shuttleapp.ui.theme.ShuttleTheme
 import com.example.shuttleapp.ui.theme.ShuttleType
 
-/** "Recent shuttle passes" header plus one card of rows, with loading, error and empty states. */
+/** "Recent passes" header plus one card of rows, with loading, error (with Retry) and empty states. */
 @Composable
 fun RecentPassesSection(
     passes: List<ShuttlePassItemUi>,
-    totalCount: Int,
     isLoading: Boolean,
     error: String?,
     onOpenPass: (String) -> Unit,
     onViewAll: () -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = ShuttleTheme.colors
@@ -44,9 +47,14 @@ fun RecentPassesSection(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Recent shuttle passes", style = ShuttleType.Section, color = colors.textPrimary, modifier = Modifier.weight(1f))
+            Text(
+                "Recent passes",
+                style = ShuttleType.Section,
+                color = colors.textPrimary,
+                modifier = Modifier.weight(1f).semantics { heading() }
+            )
             TextButton(onClick = onViewAll) {
-                Text(if (totalCount > 0) "View all ($totalCount)" else "View all", style = ShuttleType.Label, color = colors.brandAccent, textDecoration = TextDecoration.Underline)
+                Text("View all", style = ShuttleType.Label.copy(fontSize = ShuttleType.BodyLarge.fontSize), color = colors.brandAccent)
             }
         }
         Card(
@@ -57,8 +65,15 @@ fun RecentPassesSection(
         ) {
             when {
                 isLoading -> CenteredBox { CircularProgressIndicator(color = colors.primary) }
-                error != null -> CenteredBox { Message("Couldn't load your passes. Please try again.", colors.error) }
-                passes.isEmpty() -> CenteredBox { Message("No completed passes yet. Start one with the button below.", colors.textSecondary) }
+                error != null -> CenteredBox {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Message("Couldn't load your passes.", colors.error)
+                        TextButton(onClick = onRetry, modifier = Modifier.padding(top = Dimens.SpaceXs)) {
+                            Text("Retry", style = ShuttleType.Label, color = colors.primary)
+                        }
+                    }
+                }
+                passes.isEmpty() -> CenteredBox { Message("No completed passes yet. Tap New pass to start one.", colors.textSecondary) }
                 else -> passes.forEachIndexed { index, pass ->
                     if (index > 0) HorizontalDivider(Modifier.padding(horizontal = Dimens.SpaceM), color = colors.divider)
                     RecentPassRow(pass, onClick = { onOpenPass(pass.id) })
@@ -85,19 +100,21 @@ private val previewPasses = listOf(
 )
 
 @Preview(widthDp = 360, showBackground = true)
+@Preview(widthDp = 360, showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun RecentPassesPreview() {
-    RecentPassesSection(previewPasses, totalCount = 12, isLoading = false, error = null, onOpenPass = {}, onViewAll = {}, modifier = Modifier.padding(16.dp))
+private fun RecentPassesPreview() = ShuttleAppTheme {
+    RecentPassesSection(previewPasses, isLoading = false, error = null, onOpenPass = {}, onViewAll = {}, onRetry = {}, modifier = Modifier.padding(16.dp))
 }
 
 @Preview(widthDp = 360, showBackground = true)
 @Composable
 private fun RecentPassesEmptyPreview() {
-    RecentPassesSection(emptyList(), totalCount = 0, isLoading = false, error = null, onOpenPass = {}, onViewAll = {}, modifier = Modifier.padding(16.dp))
+    RecentPassesSection(emptyList(), isLoading = false, error = null, onOpenPass = {}, onViewAll = {}, onRetry = {}, modifier = Modifier.padding(16.dp))
 }
 
 @Preview(widthDp = 360, showBackground = true)
+@Preview(widthDp = 360, showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun RecentPassesErrorPreview() {
-    RecentPassesSection(emptyList(), totalCount = 0, isLoading = false, error = "boom", onOpenPass = {}, onViewAll = {}, modifier = Modifier.padding(16.dp))
+private fun RecentPassesErrorPreview() = ShuttleAppTheme {
+    RecentPassesSection(emptyList(), isLoading = false, error = "boom", onOpenPass = {}, onViewAll = {}, onRetry = {}, modifier = Modifier.padding(16.dp))
 }

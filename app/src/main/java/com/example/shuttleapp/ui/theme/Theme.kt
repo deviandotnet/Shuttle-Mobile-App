@@ -7,8 +7,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.SideEffect
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 /** Maps the Shuttle roles onto Material 3 so stock components (fields, dialogs, menus) follow the theme. */
 private fun ShuttleColors.toColorScheme(): ColorScheme {
@@ -56,12 +54,7 @@ fun ShuttleAppTheme(
     content: @Composable () -> Unit
 ) {
     val colors = if (darkTheme) DarkShuttleColors else LightShuttleColors
-    val systemUiController = rememberSystemUiController()
-
-    // The app bar band is dark in both themes, so status bar icons stay light.
-    SideEffect {
-        systemUiController.setStatusBarColor(color = colors.brandBand, darkIcons = false)
-    }
+    // System bars are transparent (edge to edge, set up in MainActivity); screens paint behind them.
     CompositionLocalProvider(LocalShuttleColors provides colors) {
         MaterialTheme(
             colorScheme = colors.toColorScheme(),

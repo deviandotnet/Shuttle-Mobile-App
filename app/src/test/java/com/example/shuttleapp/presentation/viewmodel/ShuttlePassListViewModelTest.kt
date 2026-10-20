@@ -52,13 +52,35 @@ class ShuttlePassListViewModelTest {
         repository = FakeShuttlePassRepository()
         sessionRepository = FakeSessionRepository()
         networkMonitor = FakeNetworkMonitor()
-        viewModel = ShuttlePassListViewModel(
-            savedStateHandle = SavedStateHandle(mapOf("id" to "driver-1")),
-            shuttlePassRepository = repository,
-            itemUiMapper = ShuttlePassItemUiMapper(FakeRoutesRepository(mapOf("r1" to "Villa Estrella"))),
-            sessionRepository = sessionRepository,
-            networkMonitor = networkMonitor
-        )
+        viewModel = createViewModel()
+    }
+
+    private fun createViewModel(args: Map<String, Any?> = mapOf("id" to "driver-1")) = ShuttlePassListViewModel(
+        savedStateHandle = SavedStateHandle(args),
+        shuttlePassRepository = repository,
+        itemUiMapper = ShuttlePassItemUiMapper(FakeRoutesRepository(mapOf("r1" to "Villa Estrella"))),
+        uploadControllerFactory = PassUploadController.Factory(repository, sessionRepository, networkMonitor)
+    )
+
+    @Test
+    fun `filter route argument opens the list pre-filtered`() = runTest {
+        repository.passes.getValue(PassFilter.Late).value = listOf(pass("late", 2, isLate = true))
+        viewModel = createViewModel(mapOf("id" to "driver-1", ShuttlePassListViewModel.FILTER_ARG to "Late"))
+
+        viewModel.state.test {
+            val state = expectMostRecentItem()
+            assertEquals(PassFilter.Late, state.filter)
+            assertEquals(listOf("late"), state.items.map { it.id })
+        }
+    }
+
+    @Test
+    fun `pending count follows the unsynced passes for the Sync badge`() = runTest {
+        viewModel.state.test {
+            assertEquals(0, expectMostRecentItem().pendingCount)
+            repository.unsyncedCount.value = 4
+            assertEquals(4, awaitItem().pendingCount)
+        }
     }
 
     @Test

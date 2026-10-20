@@ -1,5 +1,6 @@
 package com.example.shuttleapp.presentation.components.home
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,34 +14,42 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.shuttleapp.ui.theme.ShuttleAppTheme
 import com.example.shuttleapp.ui.theme.Dimens
 import com.example.shuttleapp.ui.theme.ShuttleTheme
 import com.example.shuttleapp.ui.theme.ShuttleType
 
 /**
- * Midnight band at the top of Home: avatar, greeting and settings. It draws behind the status bar,
- * and [bottomExtra] leaves room for the route card that overlaps it.
+ * Midnight band at the top of Home: the avatar (the only way into the drawer), greeting and today's summary.
+ * It draws behind the status bar, and [bottomExtra] leaves room for the route card that overlaps it.
  */
 @Composable
 fun HomeHeader(
     greeting: String,
+    subtitle: String,
     initials: String,
     onOpenProfile: () -> Unit,
     contentPadding: PaddingValues,
@@ -54,26 +63,49 @@ fun HomeHeader(
             modifier = Modifier
                 .statusBarsPadding()
                 .padding(contentPadding)
-                .padding(top = Dimens.SpaceM, bottom = Dimens.SpaceM + bottomExtra),
+                .padding(top = Dimens.SpaceL, bottom = Dimens.SpaceL + bottomExtra),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceM)
         ) {
             InitialsAvatar(initials = initials, onClick = onOpenProfile)
             Column(Modifier.weight(1f)) {
-                Text(greeting, style = ShuttleType.AppBar, color = colors.onBrandBand, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                OneLineText(greeting, GreetingStyle, colors.onBrandBand, Modifier.semantics { heading() })
                 Text(
-                    "Here's today's shuttle activity",
+                    subtitle,
                     style = ShuttleType.Body,
                     color = colors.onBrandBandMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            IconButton(onClick = onOpenProfile, modifier = Modifier.size(Dimens.MinTouch)) {
-                Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = colors.onBrandBand)
-            }
         }
     }
+}
+
+private val GreetingStyle = ShuttleType.AppBar.copy(fontSize = 22.sp, lineHeight = 28.sp)
+private val GreetingMinSize = 16.sp
+
+/** Keeps [text] on one line by stepping the font size down to [GreetingMinSize], then ellipsizing. */
+@Composable
+private fun OneLineText(text: String, style: TextStyle, color: Color, modifier: Modifier = Modifier) {
+    var fontSize by remember(text) { mutableStateOf(style.fontSize) }
+    var ready by remember(text) { mutableStateOf(false) }
+    Text(
+        text,
+        style = style.copy(fontSize = fontSize),
+        color = color,
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.drawWithContent { if (ready) drawContent() },
+        onTextLayout = { result ->
+            if (result.hasVisualOverflow && fontSize.value > GreetingMinSize.value) {
+                fontSize = (fontSize.value - 1f).sp
+            } else {
+                ready = true
+            }
+        }
+    )
 }
 
 @Composable
@@ -91,9 +123,9 @@ private fun InitialsAvatar(initials: String, onClick: () -> Unit) {
     }
 }
 
-/** Faint route lines across the band, scaled to its size. */
+/** Faint route lines across the band, scaled to its size. Also used behind the drawer header. */
 @Composable
-private fun MapLines(modifier: Modifier) {
+internal fun MapLines(modifier: Modifier) {
     val colors = ShuttleTheme.colors
     Canvas(modifier) {
         val stroke = Stroke(width = 1.5.dp.toPx())
@@ -117,12 +149,26 @@ private fun MapLines(modifier: Modifier) {
 }
 
 @Preview(widthDp = 360)
+@Preview(widthDp = 360, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun HomeHeaderPreview() {
+private fun HomeHeaderPreview() = ShuttleAppTheme {
     HomeHeader(
-        greeting = "Good morning, Elmo",
-        initials = "ER",
+        greeting = "Good afternoon, Christian",
+        subtitle = "Tue, Oct 20 · 2 passes today",
+        initials = "CL",
         onOpenProfile = {},
         contentPadding = PaddingValues(horizontal = Dimens.PageMargin)
+    )
+}
+
+@Preview(widthDp = 320)
+@Composable
+private fun HomeHeaderLongNamePreview() = ShuttleAppTheme(darkTheme = false) {
+    HomeHeader(
+        greeting = "Good afternoon, Maria Concepcion",
+        subtitle = "Tue, Oct 20 · No passes yet today",
+        initials = "MV",
+        onOpenProfile = {},
+        contentPadding = PaddingValues(horizontal = Dimens.PageMarginNarrow)
     )
 }

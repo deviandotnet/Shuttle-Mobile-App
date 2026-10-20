@@ -14,6 +14,7 @@ import com.example.shuttleapp.domain.model.ShuttlePass
 import com.example.shuttleapp.domain.model.ShuttlePassWithPassenger
 import com.example.shuttleapp.domain.model.SyncResult
 import com.example.shuttleapp.domain.repository.ShuttlePassRepository
+import com.example.shuttleapp.domain.repository.SyncHistoryRepository
 import com.example.shuttleapp.util.Resource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +28,8 @@ import javax.inject.Inject
 
 class ShuttlePassRepositoryImpl @Inject constructor(
     private val api : ShuttleApi,
-    private val database: ShuttleDatabase
+    private val database: ShuttleDatabase,
+    private val syncHistory: SyncHistoryRepository
 ) : ShuttlePassRepository {
 
     private val dao get() = database.ShuttlePassDao()
@@ -149,7 +151,12 @@ class ShuttlePassRepositoryImpl @Inject constructor(
         }
 
         return when {
-            response.isSuccessful -> markUploaded(passes.map { it.shuttlePass.id }, response.body()?.message)
+            response.isSuccessful -> {
+                // The server has them now, whatever happens locally next; that is what "last synced" means.
+                val now = System.currentTimeMillis()
+                passes.map { it.shuttlePass.driver }.distinct().forEach { syncHistory.recordSync(it, now) }
+                markUploaded(passes.map { it.shuttlePass.id }, response.body()?.message)
+            }
             // AuthInterceptor has already flagged the token as expired; the passes stay unsynced.
             response.code() == 401 -> Resource.Error(AuthMessages.SESSION_EXPIRED)
             else -> Resource.Error("Failed. Status code: ${response.message()}")

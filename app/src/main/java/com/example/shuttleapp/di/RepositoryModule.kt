@@ -26,6 +26,8 @@ import com.example.shuttleapp.domain.repository.NetworkMonitor
 import com.example.shuttleapp.domain.repository.SessionRepository
 import com.example.shuttleapp.data.repositoryImpl.ThemePreferenceRepositoryImpl
 import com.example.shuttleapp.domain.repository.ThemePreferenceRepository
+import com.example.shuttleapp.data.repositoryImpl.SyncHistoryRepositoryImpl
+import com.example.shuttleapp.domain.repository.SyncHistoryRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -116,4 +118,10 @@ abstract class RepositoryModule {
     abstract fun bindThemePreferenceRepository(
         themePreferenceRepositoryImpl: ThemePreferenceRepositoryImpl
     ) : ThemePreferenceRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSyncHistoryRepository(
+        syncHistoryRepositoryImpl: SyncHistoryRepositoryImpl
+    ) : SyncHistoryRepository
 }

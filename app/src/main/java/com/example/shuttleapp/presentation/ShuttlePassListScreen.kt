@@ -1,11 +1,6 @@
 package com.example.shuttleapp.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import com.example.shuttleapp.presentation.components.ReauthDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,9 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.twotone.Cancel
-import androidx.compose.material.icons.twotone.CheckCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
@@ -41,17 +33,20 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.shuttleapp.domain.model.PassFilter
 import com.example.shuttleapp.presentation.components.ActionDropdownMenu
-import com.example.shuttleapp.presentation.components.InformationTextDialog
-import com.example.shuttleapp.presentation.components.LoadingDialog
 import com.example.shuttleapp.presentation.components.ObserveAsEvents
 import com.example.shuttleapp.presentation.components.ShuttlePassCard
 import com.example.shuttleapp.presentation.components.StyledSnackBarHost
-import com.example.shuttleapp.presentation.components.TopBarComponent
 import com.example.shuttleapp.presentation.events.ShuttlePassListAction
 import com.example.shuttleapp.presentation.events.ShuttlePassListEvent
 import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
 import com.example.shuttleapp.presentation.state.ShuttlePassListState
 import com.example.shuttleapp.presentation.state.SyncStatus
+import com.example.shuttleapp.presentation.state.PassUploadState
+import com.example.shuttleapp.presentation.components.ConnectionBanner
+import com.example.shuttleapp.presentation.components.UploadDialogs
+import com.example.shuttleapp.presentation.components.home.HomeBottomBar
+import com.example.shuttleapp.presentation.components.home.HomeNavItem
+import com.example.shuttleapp.presentation.components.home.TabTopBar
 import com.example.shuttleapp.presentation.viewmodel.ShuttlePassListViewModel
 import com.example.shuttleapp.ui.theme.ShuttleAppTheme
 import com.example.shuttleapp.ui.theme.ShuttleTheme
@@ -61,7 +56,8 @@ import kotlinx.coroutines.launch
 fun ShuttlePassListRoot(
     viewModel: ShuttlePassListViewModel,
     onBack: () -> Unit,
-    onOpenPass: (id: String) -> Unit
+    onOpenPass: (id: String) -> Unit,
+    onNavigate: (HomeNavItem) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     ObserveAsEvents(viewModel.events) { event ->
@@ -70,22 +66,28 @@ fun ShuttlePassListRoot(
             ShuttlePassListEvent.NavigateBack -> onBack()
         }
     }
-    ShuttlePassListScreen(state = state, onAction = viewModel::onAction)
+    ShuttlePassListScreen(state = state, onAction = viewModel::onAction, onNavigate = onNavigate)
 }
 
+/** Passes tab: every finished pass, filterable by Late / Not synced (Home's stat tiles open it pre-filtered). */
 @Composable
-fun ShuttlePassListScreen(state: ShuttlePassListState, onAction: (ShuttlePassListAction) -> Unit) {
+fun ShuttlePassListScreen(
+    state: ShuttlePassListState,
+    onAction: (ShuttlePassListAction) -> Unit,
+    onNavigate: (HomeNavItem) -> Unit
+) {
     val colors = ShuttleTheme.colors
     val snackBarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
+        containerColor = colors.canvas,
         snackbarHost = { StyledSnackBarHost(hostState = snackBarHostState) },
+        bottomBar = { HomeBottomBar(HomeNavItem.Passes, state.pendingCount, onNavigate) },
         topBar = {
-            TopBarComponent(
-                title = "Completed Shuttle Pass List",
-                onBack = { onAction(ShuttlePassListAction.Back) },
-                action = {
+            TabTopBar(
+                title = "Passes",
+                actions = {
                     ActionDropdownMenu(
                         onUploadAll = { onAction(ShuttlePassListAction.UploadAll) },
                         onDeleteAll = {
@@ -112,7 +114,11 @@ fun ShuttlePassListScreen(state: ShuttlePassListState, onAction: (ShuttlePassLis
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ConnectionBanners(state, onAction)
+            ConnectionBanner(
+                isOnline = state.isOnline,
+                needsSignIn = state.needsSignIn,
+                onSignIn = { onAction(ShuttlePassListAction.ShowReauth) }
+            )
             FilterChoiceSegmentedButton(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -123,49 +129,13 @@ fun ShuttlePassListScreen(state: ShuttlePassListState, onAction: (ShuttlePassLis
             HorizontalDivider(Modifier.fillMaxWidth())
             PassListContent(state, onAction)
         }
-        SyncResultDialog(state.sync, onDismiss = { onAction(ShuttlePassListAction.DismissSyncResult) })
-        state.reauth?.let { reauth ->
-            ReauthDialog(
-                state = reauth,
-                onSubmit = { username, password -> onAction(ShuttlePassListAction.SubmitReauth(username, password)) },
-                onDismiss = { onAction(ShuttlePassListAction.DismissReauth) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun ConnectionBanners(state: ShuttlePassListState, onAction: (ShuttlePassListAction) -> Unit) {
-    val colors = ShuttleTheme.colors
-    if (!state.isOnline) {
-        StatusBanner(
-            text = "Offline — passes are saved on this device",
-            background = colors.warningSoft,
-            color = colors.warningText
-        )
-    } else if (state.needsSignIn) {
-        StatusBanner(
-            text = "Sign in again to upload. Tap here.",
-            background = colors.errorSoft,
-            color = colors.error,
-            onClick = { onAction(ShuttlePassListAction.ShowReauth) }
+        UploadDialogs(
+            upload = PassUploadState(state.sync, state.isOnline, state.needsSignIn, state.reauth),
+            onDismissResult = { onAction(ShuttlePassListAction.DismissSyncResult) },
+            onSubmitReauth = { username, password -> onAction(ShuttlePassListAction.SubmitReauth(username, password)) },
+            onDismissReauth = { onAction(ShuttlePassListAction.DismissReauth) }
         )
     }
-}
-
-@Composable
-private fun StatusBanner(text: String, background: Color, color: Color, onClick: (() -> Unit)? = null) {
-    Text(
-        text = text,
-        color = color,
-        fontWeight = FontWeight.SemiBold,
-        textAlign = TextAlign.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(background)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-    )
 }
 
 @Composable
@@ -194,29 +164,6 @@ private fun ColumnScope.PassListContent(state: ShuttlePassListState, onAction: (
                 ShuttlePassCard(item = item, onClick = { onAction(ShuttlePassListAction.OpenPass(item.id)) })
             }
         }
-    }
-}
-
-@Composable
-private fun SyncResultDialog(sync: SyncStatus, onDismiss: () -> Unit) {
-    val colors = ShuttleTheme.colors
-    when (sync) {
-        SyncStatus.Idle -> Unit
-        SyncStatus.Running -> LoadingDialog()
-        is SyncStatus.Success -> InformationTextDialog(
-            onDismissRequest = onDismiss,
-            dialogTitle = "Success!",
-            dialogText = sync.message,
-            icon = Icons.TwoTone.CheckCircle,
-            iconTint = colors.success
-        )
-        is SyncStatus.Failed -> InformationTextDialog(
-            onDismissRequest = onDismiss,
-            dialogTitle = "Error!",
-            dialogText = sync.message,
-            icon = Icons.TwoTone.Cancel,
-            iconTint = colors.error
-        )
     }
 }
 
@@ -253,7 +200,7 @@ private val previewItems = listOf(
 @Composable
 private fun ShuttlePassListScreenPreview() {
     ShuttleAppTheme {
-        ShuttlePassListScreen(ShuttlePassListState(items = previewItems, isLoading = false), onAction = {})
+        ShuttlePassListScreen(ShuttlePassListState(items = previewItems, isLoading = false), onAction = {}, onNavigate = {})
     }
 }
 
@@ -261,7 +208,7 @@ private fun ShuttlePassListScreenPreview() {
 @Composable
 private fun ShuttlePassListScreenEmptyPreview() {
     ShuttleAppTheme {
-        ShuttlePassListScreen(ShuttlePassListState(isLoading = false), onAction = {})
+        ShuttlePassListScreen(ShuttlePassListState(isLoading = false), onAction = {}, onNavigate = {})
     }
 }
 
@@ -271,7 +218,8 @@ private fun ShuttlePassListScreenSyncFailedPreview() {
     ShuttleAppTheme {
         ShuttlePassListScreen(
             ShuttlePassListState(items = previewItems, isLoading = false, sync = SyncStatus.Failed("Cannot connect to network.")),
-            onAction = {}
+            onAction = {},
+            onNavigate = {}
         )
     }
 }
