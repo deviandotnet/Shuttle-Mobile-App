@@ -79,6 +79,36 @@ Source: `source/auth.html?<state>`. The states are `welcome`, `sign-in`, `sign-i
 - **Create account (03, 03a):** a Midnight app bar with a back arrow, and no stepper. Three groups with 16/24 bold headings: **About you** (first, middle and last name, full-width, no icons; middle name is required), **Work** (Shuttle provider as a picker with a chevron, Employee number with tabular digits) and **Sign-in details** (Username, Password, Repeat password). The **Create account** button and "Already registered? Sign in" are docked at the bottom over the scrolling form. Field errors sit under the field in Error red with an icon, e.g. "Passwords don't match. Type the same password in both fields." There is no length hint until a rule is enforced.
 - **Fields:** a 14/20 semibold label above a 52 px input (White, 1 px Border, 12 px radius) with an optional 22 px Text / Secondary leading icon. Focus is a 2 px Midnight border plus a 4 px Midnight 8% ring. Error is a 2 px Error border. Trailing actions such as the eye or the chevron get a 44 px target.
 
+## Scanner (mockups 14–14d)
+
+Source: `source/qr-scanner.html?<state>`. The states are `scanning`, `boarded`, `duplicate`, `invalid` and `denied`.
+
+- **Layout:** Midnight app bar titled "Scan passengers". Below it, a full-bleed camera feed with a Midnight scrim at 62% around a 240 × 240 window, which has a 20 px radius and corner brackets. Under the feed is a docked warm-white sheet, with a 24 px top radius, showing:
+  - the trip line (route → destination, departure time);
+  - "N on board" at Heading 2;
+  - the last three manifest rows, styled like mockup 07;
+  - two actions: Torch (outlined, 132 px) and Done (Midnight, returns to the pass).
+- **Auto-scan:** there is no shutter button. A valid code is saved the moment it is decoded.
+- **No dialogs:** each scan shows a result card under the window, and scanning never pauses. The card replaces the previous one and hides after about 3 s. Pair it with haptics: a short tick for boarded, a double buzz for a rejection.
+
+  | State | Brackets | Card | Copy |
+  |---|---|---|---|
+  | Boarded | Mint | Mint soft, Mint check | **Boarded** · `EMP-… · 16:26` · `#7`. The new row tops the list with a Mint soft fill |
+  | Duplicate | Amber | Warning soft, amber icon | **Already on board** · `EMP-… boarded at 16:19 as #3` |
+  | Not recognised | Red (`#F87171` on the dark feed) | Error soft, red icon | **Not a passenger QR** · "Ask for the QR on their shuttle pass." |
+
+  Card text is Midnight. The secondary line is Midnight at 74%, never Text / Secondary, which is too faint on the soft fills.
+- **Torch:** a toggle. When on, it fills Midnight with a Mint icon. It is disabled when the camera is unavailable.
+- **Camera access off:** the feed area becomes a Navy panel showing:
+  - a camera-off icon;
+  - the title "Camera access is off";
+  - the line "Scanning needs the camera. Passengers already on board stay on this pass.";
+  - a Mint "Allow camera" button;
+  - an "Open app settings" link, used once the system will no longer prompt.
+
+  The sheet and Done stay usable.
+- The hint above the window reads "Hold the passenger's QR in the frame / It scans on its own". There is no laser line, no status pill and no privacy footnote.
+
 ## Dark mode
 
 Implemented in `ui/theme/ShuttleColors.kt` as semantic roles (`ShuttleTheme.colors.<role>`). The user picks System, Light or Dark on the Settings screen (drawer → Settings); System follows the device setting.

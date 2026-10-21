@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shuttle pass mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --midnight:#07113F; --navy:#0B2A66; --brand-blue:#123A78; --mint:#55D6B4; --mint-dark:#16A37A; --mint-soft:#DFF8F1;
+    --warm:#FAF9F6; --white:#FFFFFF; --mist:#DCEAF2; --subtle:#F4F7FA; --text2:#65769A; --border:#B8C5D9; --divider:#E8EEF5;
+    --disabled:#9CA8BA; --warn:#F59E0B; --warn-soft:#FFF3D6; --warn-text:#B45309; --err:#DC2626;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:1024px; height:1536px; overflow:hidden; }
+  body { background:#F3F0EA; font-family:'Inter',sans-serif; color:var(--midnight); -webkit-font-smoothing:antialiased; }
+  .phone { position:absolute; left:212px; top:118px; width:600px; height:1300px; border-radius:66px; background:#15161A;
+           box-shadow:0 30px 60px rgba(7,17,63,.18), 0 8px 18px rgba(7,17,63,.12), inset 0 0 0 2px #2A2C33; }
+  .glass { position:absolute; left:14px; top:14px; width:572px; height:1272px; border-radius:52px; overflow:hidden; background:var(--warm); }
+  .screen { position:absolute; left:0; top:0; width:412px; height:916px; transform:scale(1.3883); transform-origin:0 0; overflow:hidden; background:var(--warm); }
+  .camera { position:absolute; left:50%; top:10px; width:13px; height:13px; margin-left:-6.5px; border-radius:50%; background:#0A0B0F; z-index:50; }
+  svg.i { width:24px; height:24px; fill:currentColor; flex:none; display:block; }
+  .tn { font-feature-settings:"tnum"; }
+
+  .status { position:absolute; left:0; right:0; top:0; height:36px; padding:0 22px; display:flex; align-items:center; justify-content:space-between;
+            color:#fff; font-size:14px; font-weight:600; z-index:40; }
+  .status .sys { display:flex; gap:6px; align-items:center; }
+  .status svg { width:16px; height:16px; fill:#fff; }
+
+  /* app bar band: the card overlaps its lower edge */
+  .band { position:absolute; left:0; right:0; top:0; height:150px; background:var(--midnight); overflow:hidden; }
+  .band svg.lines { position:absolute; inset:0; width:100%; height:100%; }
+  .bar { position:absolute; left:0; right:0; top:36px; height:64px; display:flex; align-items:center; padding:0 4px; color:#fff; z-index:5; }
+  .bar .ib { width:48px; height:48px; display:flex; align-items:center; justify-content:center; }
+  .bar h1 { flex:1; font-size:20px; line-height:28px; font-weight:600; letter-spacing:-.05px; margin-left:4px; }
+
+  .content { position:absolute; left:16px; right:16px; top:104px; }
+  .card { background:var(--white); border-radius:16px; box-shadow:0 2px 6px rgba(7,17,63,.06), 0 10px 24px rgba(7,17,63,.07); }
+
+  /* ---- pass card ---- */
+  .pass { position:relative; overflow:hidden; }
+  .pass .top { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 0; }
+  .pill { display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .pill i { width:7px; height:7px; border-radius:50%; }
+  .pill.draft { background:var(--warn-soft); color:var(--warn-text); } .pill.draft i { background:var(--warn); }
+  .pill.live { background:var(--mint-soft); color:var(--mint-dark); } .pill.live i { background:var(--mint-dark); box-shadow:0 0 0 3px rgba(22,163,122,.18); }
+  .pass .date { font-size:13px; font-weight:500; color:var(--text2); }
+  .stops { position:relative; padding:14px 20px 0 20px; }
+  .stop { display:flex; align-items:flex-start; gap:14px; height:56px; }
+  .stop .rail { width:20px; flex:none; display:flex; justify-content:center; padding-top:20px; position:relative; height:100%; }
+  .dot { width:12px; height:12px; border-radius:50%; border:3px solid var(--mint-dark); background:#fff; }
+  .pinend { width:12px; height:12px; border-radius:50%; background:var(--midnight); box-shadow:0 0 0 3px var(--mist); }
+  .line { position:absolute; left:29px; top:46px; height:42px; border-left:2px dotted var(--border); }
+  .stop .what { flex:1; min-width:0; }
+  .lbl { font-size:12px; line-height:16px; font-weight:600; letter-spacing:.48px; color:var(--text2); text-transform:uppercase; }
+  .val { font-size:17px; line-height:24px; font-weight:600; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .val.generic { color:var(--text2); font-weight:500; }
+  .stop .when { text-align:right; flex:none; }
+  .time { font-size:20px; line-height:24px; font-weight:700; letter-spacing:-.2px; margin-top:2px; font-feature-settings:"tnum"; }
+  .time.unset { color:var(--disabled); font-weight:600; font-feature-settings:normal; letter-spacing:1px; }
+  .foot { position:relative; margin-top:12px; border-top:1px solid var(--divider); height:84px; padding:14px 20px 0; }
+  .meta { display:flex; align-items:center; gap:10px; font-size:14px; line-height:20px; font-weight:500; color:var(--midnight); }
+  .meta + .meta { margin-top:8px; }
+  .meta svg { width:18px; height:18px; fill:var(--text2); }
+  .meta span.sub { color:var(--text2); font-weight:500; }
+  .foot svg.scene { position:absolute; right:0; bottom:0; width:168px; height:84px; }
+
+  /* ---- manifest ---- */
+  .sec { margin-top:24px; display:flex; align-items:baseline; justify-content:space-between; padding:0 8px; }
+  .sec h2 { font-size:20px; line-height:28px; font-weight:700; letter-spacing:-.1px; }
+  .sec span { font-size:14px; font-weight:500; color:var(--text2); font-feature-settings:"tnum"; }
+  .list { margin-top:10px; }
+  .row { display:flex; align-items:center; gap:14px; height:56px; padding:0 4px 0 14px; }
+  .row + .row { border-top:1px solid var(--divider); }
+  .num { width:32px; height:32px; border-radius:50%; background:var(--mist); color:var(--brand-blue); font-size:14px; font-weight:600;
+         display:flex; align-items:center; justify-content:center; flex:none; font-feature-settings:"tnum"; }
+  .row .t { flex:1; min-width:0; }
+  .row .t b { display:block; font-size:15px; line-height:20px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .t span { display:block; font-size:13px; line-height:18px; color:var(--text2); }
+  .row .tm { font-size:14px; font-weight:500; color:var(--text2); font-feature-settings:"tnum"; }
+  .row .more { width:40px; height:48px; display:flex; align-items:center; justify-content:center; color:var(--border); }
+  .row .more svg { width:20px; height:20px; }
+
+  .empty { margin-top:18px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .empty svg.seat { width:188px; height:132px; }
+  .empty h3 { font-size:18px; line-height:26px; font-weight:700; margin-top:10px; }
+  .empty p { font-size:15px; line-height:22px; color:var(--text2); margin-top:4px; max-width:290px; }
+
+  /* ---- actions ---- */
+  .actions { position:absolute; left:0; right:0; bottom:0; padding:12px 16px 30px; background:linear-gradient(rgba(250,249,246,0), var(--warm) 18px); }
+  .btn { height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:10px; font-size:16px; font-weight:600; }
+  .btn svg { width:22px; height:22px; }
+  .btn + .btn, .btn + .swipe { margin-top:10px; }
+  .btn.outline { border:1.5px solid var(--midnight); color:var(--midnight); background:var(--white); }
+  .btn.mint { background:var(--mint); color:var(--midnight); }
+  .btn.primary { background:var(--midnight); color:#fff; }
+  .swipe { position:relative; height:56px; border-radius:14px; background:var(--mint-soft); display:flex; align-items:center; justify-content:center;
+           font-size:16px; font-weight:600; color:var(--midnight); overflow:hidden; }
+  .swipe .fill { position:absolute; left:0; top:0; bottom:0; width:96px; background:linear-gradient(90deg, rgba(85,214,180,.45), rgba(85,214,180,0)); }
+  .swipe .thumb { position:absolute; left:4px; top:4px; width:48px; height:48px; border-radius:11px; background:var(--mint); color:var(--midnight);
+                  display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(7,17,63,.16); }
+  .swipe .lab { position:relative; margin-left:40px; display:flex; align-items:center; gap:6px; }
+  .swipe .hint { display:flex; color:var(--mint-dark); }
+  .swipe .hint svg { width:18px; height:18px; margin-left:-8px; }
+  .swipe .hint svg:nth-child(1) { opacity:.35; } .swipe .hint svg:nth-child(2) { opacity:.65; }
+  .caption { text-align:center; font-size:13px; color:var(--text2); margin-top:8px; }
+
+  /* ---- create form ---- */
+  .intro { padding:0 8px; }
+  .intro h2 { font-size:24px; line-height:32px; font-weight:700; letter-spacing:-.12px; color:#fff; }
+  .intro p { font-size:15px; line-height:22px; color:rgba(255,255,255,.75); margin-top:4px; }
+  .form { margin-top:20px; padding:20px 16px 8px; }
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:14px; line-height:20px; font-weight:600; margin-bottom:6px; }
+  .input { height:54px; border:1px solid var(--border); border-radius:12px; display:flex; align-items:center; gap:12px; padding:0 12px 0 14px;
+           font-size:16px; background:var(--white); }
+  .input svg { width:20px; height:20px; fill:var(--text2); }
+  .input .v { flex:1; }
+  .input .ph { flex:1; color:var(--text2); }
+  .input.focus { border:2px solid var(--midnight); padding-left:13px; }
+  .seg { display:flex; height:48px; border-radius:12px; background:var(--subtle); padding:4px; gap:4px; }
+  .seg div { flex:1; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; font-weight:600; color:var(--text2); }
+  .seg div svg { width:18px; height:18px; }
+  .seg .on { background:var(--white); color:var(--midnight); box-shadow:0 1px 3px rgba(7,17,63,.12); }
+  .help { font-size:13px; line-height:18px; color:var(--text2); margin-top:6px; }
+  .preview { margin-top:12px; padding:14px 16px; border-radius:16px; border:1.5px dashed var(--border); display:flex; align-items:center; gap:14px; }
+  .preview .mini { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .preview .mini i { display:block; }
+  .preview .mini .l { height:14px; border-left:2px dotted var(--border); }
+  .preview b { display:block; font-size:15px; font-weight:600; line-height:22px; }
+  .preview span { display:block; font-size:13px; color:var(--text2); line-height:18px; }
+
+  .gesture { position:absolute; bottom:8px; left:50%; width:120px; height:4px; margin-left:-60px; border-radius:2px; background:var(--midnight); opacity:.85; z-index:45; }
+  .s-create .v-empty, .s-create .v-manifest, .s-empty .v-create, .s-empty .v-manifest, .s-manifest .v-create, .s-manifest .v-empty { display:none !important; }
+  body.s-create .band { height:236px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+    <symbol id="edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+    <symbol id="dots" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+    <symbol id="add-c" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></symbol>
+    <symbol id="qr" viewBox="0 0 24 24"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2zM15 15h2v2h-2zM13 17h2v2h-2zM17 17h2v2h-2zM19 19h2v2h-2zM15 19h2v2h-2zM17 13h2v2h-2zM19 15h2v2h-2z"/></symbol>
+    <symbol id="go" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+    <symbol id="chev" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+    <symbol id="dchev" viewBox="0 0 24 24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM12.59 7.41L17.18 12l-4.59 4.59L14 18l6-6-6-6z"/></symbol>
+    <symbol id="down" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></symbol>
+    <symbol id="bus" viewBox="0 0 24 24"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/></symbol>
+    <symbol id="person" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+    <symbol id="route" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></symbol>
+    <symbol id="in" viewBox="0 0 24 24"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></symbol>
+    <symbol id="out" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></symbol>
+  </defs>
+</svg>
+
+<div class="phone"><div class="glass"><div class="screen">
+  <div class="band">
+    <svg class="lines" viewBox="0 0 412 236" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="1.5">
+      <path d="M0 80 C120 40 230 160 412 102"/><path d="M226 236 Q330 130 412 162"/><circle cx="372" cy="40" r="70"/>
+    </svg>
+  </div>
+  <div class="status"><span class="tn">4:42</span><span class="sys">
+    <svg viewBox="0 0 24 24"><path d="M12 21L.5 7.5C3.5 5 7.5 3.5 12 3.5S20.5 5 23.5 7.5z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M2 22h20V2z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M16 4h-2V2h-4v2H8c-.55 0-1 .45-1 1v16c0 .55.45 1 1 1h8c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1z"/></svg></span></div>
+
+  <div class="bar">
+    <div class="ib"><svg class="i"><use href="#back"/></svg></div>
+    <h1 class="v-create" style="flex:1">New shuttle pass</h1>
+    <h1 class="v-empty" style="flex:1">Shuttle pass</h1>
+    <h1 class="v-manifest" style="flex:1">Shuttle pass</h1>
+    <div class="ib v-empty"><svg class="i"><use href="#edit"/></svg></div>
+    <div class="ib v-empty"><svg class="i"><use href="#dots"/></svg></div>
+    <div class="ib v-manifest"><svg class="i"><use href="#edit"/></svg></div>
+    <div class="ib v-manifest"><svg class="i"><use href="#dots"/></svg></div>
+  </div>
+
+  <!-- ============ CREATE ============ -->
+  <div class="content v-create" style="top:112px">
+    <div class="intro">
+      <h2>Set up today's trip</h2>
+      <p>Pick the route, direction and shuttle. You'll scan passengers next.</p>
+    </div>
+    <div class="card form">
+      <div class="field"><label>Route</label>
+        <div class="input"><svg viewBox="0 0 24 24"><use href="#route"/></svg><span class="v">Villa Estrella</span><svg viewBox="0 0 24 24"><use href="#down"/></svg></div></div>
+      <div class="field"><label>Trip type</label>
+        <div class="seg"><div class="on"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#in"/></svg>Incoming</div><div><svg viewBox="0 0 24 24" fill="currentColor"><use href="#out"/></svg>Outgoing</div></div>
+        <div class="help">Incoming picks up along the route and drops off at the plant.</div></div>
+      <div class="field"><label>Plate number</label>
+        <div class="input focus"><svg viewBox="0 0 24 24"><use href="#bus"/></svg><span class="ph">Select a shuttle</span><svg viewBox="0 0 24 24"><use href="#down"/></svg></div></div>
+    </div>
+    <div class="preview">
+      <div class="mini"><i class="dot"></i><i class="l"></i><i class="pinend"></i></div>
+      <div style="flex:1"><b>Villa Estrella → Drop-off point</b><span>Incoming · Shuttle not selected</span></div>
+    </div>
+  </div>
+  <div class="actions v-create">
+    <div class="btn primary"><svg class="i"><use href="#add-c"/></svg>Create shuttle pass</div>
+  </div>
+
+  <!-- ============ PASS CARD (empty + manifest) ============ -->
+  
+  <div class="content v-empty">
+    <div class="card pass">
+      <div class="top"><span class="pill draft"><i></i>Not departed</span><span class="date tn">Tue, Oct 20, 2026</span></div>
+      <div class="stops">
+        <div class="line"></div>
+        <div class="stop"><div class="rail"><i class="dot"></i></div>
+          <div class="what"><div class="lbl">From</div><div class="val">Villa Estrella</div></div>
+          <div class="when"><div class="lbl">Departure</div><div class="time unset">--:--</div></div></div>
+        <div class="stop"><div class="rail"><i class="pinend"></i></div>
+          <div class="what"><div class="lbl">To</div><div class="val generic">Drop-off point</div></div>
+          <div class="when"><div class="lbl">Arrival</div><div class="time unset">--:--</div></div></div>
+      </div>
+      <div class="foot">
+        <div class="meta"><svg viewBox="0 0 24 24"><use href="#bus"/></svg>ABDA 3332 <span class="sub">· BCTSS</span></div>
+        <div class="meta"><svg viewBox="0 0 24 24"><use href="#person"/></svg>Christian Losamia</div>
+        <svg class="scene" viewBox="0 0 168 84"><use href="#scene"/></svg>
+      </div>
+    </div>
+    <div class="sec"><h2>Passenger manifest</h2><span>0 passengers</span></div>
+    <div class="empty">
+      <svg class="seat" viewBox="0 0 188 132">
+        <ellipse cx="94" cy="116" rx="80" ry="12" fill="#DCEAF2"/>
+        <g fill="#EAF2F7"><circle cx="30" cy="40" r="9"/><circle cx="42" cy="36" r="12"/><circle cx="54" cy="41" r="8"/>
+          <circle cx="146" cy="28" r="8"/><circle cx="157" cy="24" r="11"/><circle cx="168" cy="29" r="7"/></g>
+        <rect x="70" y="22" width="30" height="66" rx="10" fill="#B8C5D9"/>
+        <rect x="76" y="14" width="22" height="16" rx="6" fill="#DCEAF2"/>
+        <rect x="70" y="78" width="62" height="16" rx="8" fill="#DCEAF2"/>
+        <path d="M66 46 v36 q0 14 14 14 h44" stroke="#07113F" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <rect x="96" y="96" width="7" height="16" fill="#07113F"/><rect x="82" y="110" width="36" height="5" rx="2.5" fill="#07113F"/>
+        <circle cx="134" cy="46" r="17" fill="#55D6B4"/><path d="M134 38v16M126 46h16" stroke="#07113F" stroke-width="3.2" stroke-linecap="round"/>
+      </svg>
+      <h3>No passengers yet</h3>
+      <p>Scan each passenger's QR code as they board.</p>
+    </div>
+  </div>
+  <div class="actions v-empty">
+    <div class="btn outline"><svg class="i"><use href="#qr"/></svg>Add passenger</div>
+    <div class="btn mint"><svg class="i"><use href="#go"/></svg>Start departure</div>
+  </div>
+
+  <div class="content v-manifest">
+    <div class="card pass">
+      <div class="top"><span class="pill live"><i></i>In transit</span><span class="date tn">Tue, Oct 20, 2026</span></div>
+      <div class="stops">
+        <div class="line"></div>
+        <div class="stop"><div class="rail"><i class="dot"></i></div>
+          <div class="what"><div class="lbl">From</div><div class="val">Villa Estrella</div></div>
+          <div class="when"><div class="lbl">Departure</div><div class="time">16:30</div></div></div>
+        <div class="stop"><div class="rail"><i class="pinend"></i></div>
+          <div class="what"><div class="lbl">To</div><div class="val generic">Drop-off point</div></div>
+          <div class="when"><div class="lbl">Arrival</div><div class="time unset">--:--</div></div></div>
+      </div>
+      <div class="foot">
+        <div class="meta"><svg viewBox="0 0 24 24"><use href="#bus"/></svg>ABDA 3332 <span class="sub">· BCTSS</span></div>
+        <div class="meta"><svg viewBox="0 0 24 24"><use href="#person"/></svg>Christian Losamia</div>
+        <svg class="scene" viewBox="0 0 168 84"><use href="#scene"/></svg>
+      </div>
+    </div>
+    <div class="sec"><h2>Passenger manifest</h2><span>6 passengers</span></div>
+    <div class="card list">
+      <div class="row"><div class="num">6</div><div class="t"><b>EMP-15125112</b></div><div class="tm">16:24</div><div class="more"><svg class="i"><use href="#dots"/></svg></div></div>
+      <div class="row"><div class="num">5</div><div class="t"><b>EMP-15124987</b></div><div class="tm">16:22</div><div class="more"><svg class="i"><use href="#dots"/></svg></div></div>
+      <div class="row"><div class="num">4</div><div class="t"><b>EMP-15120034</b></div><div class="tm">16:21</div><div class="more"><svg class="i"><use href="#dots"/></svg></div></div>
+      <div class="row"><div class="num">3</div><div class="t"><b>EMP-15118876</b></div><div class="tm">16:19</div><div class="more"><svg class="i"><use href="#dots"/></svg></div></div>
+      <div class="row"><div class="num">2</div><div class="t"><b>EMP-15117702</b></div><div class="tm">16:18</div><div class="more"><svg class="i"><use href="#dots"/></svg></div></div>
+      <div class="row"><div class="num">1</div><div class="t"><b>EMP-15110459</b></div><div class="tm">16:15</div><div class="more"><svg class="i"><use href="#dots"/></svg></div></div>
+    </div>
+  </div>
+  <div class="actions v-manifest">
+    <div class="btn outline"><svg class="i"><use href="#qr"/></svg>Add passenger</div>
+    <div class="swipe"><div class="fill"></div><div class="thumb"><svg class="i"><use href="#dchev"/></svg></div>
+      <div class="lab">Swipe to complete pass<span class="hint"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#chev"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><use href="#chev"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><use href="#chev"/></svg></span></div></div>
+  </div>
+
+  <svg width="0" height="0" style="position:absolute"><defs>
+    <symbol id="scene" viewBox="0 0 168 84">
+      <g fill="#EEF4F8"><rect x="50" y="16" width="14" height="50" rx="2"/><rect x="68" y="4" width="18" height="62" rx="2"/><rect x="90" y="22" width="14" height="44" rx="2"/>
+        <rect x="108" y="10" width="16" height="56" rx="2"/><rect x="128" y="26" width="14" height="40" rx="2"/><rect x="146" y="14" width="16" height="52" rx="2"/></g>
+      <path d="M0 84 C50 62 110 76 168 50 V84 Z" fill="#DCEAF2"/>
+      <path d="M30 84 C80 66 128 78 168 62 V84 Z" fill="#123A78"/>
+      <path d="M50 80 C90 68 130 76 168 68" stroke="#fff" stroke-width="1.4" stroke-dasharray="6 5" fill="none" opacity=".7"/>
+      <g transform="translate(62 40) scale(.78)">
+        <ellipse cx="44" cy="40" rx="46" ry="4" fill="rgba(7,17,63,.14)"/>
+        <rect x="0" y="0" width="92" height="36" rx="7" fill="#07113F"/>
+        <rect x="6" y="6" width="14" height="11" rx="2" fill="#DCEAF2"/><rect x="23" y="6" width="14" height="11" rx="2" fill="#DCEAF2"/>
+        <rect x="40" y="6" width="14" height="11" rx="2" fill="#DCEAF2"/><rect x="57" y="6" width="12" height="11" rx="2" fill="#DCEAF2"/>
+        <rect x="73" y="6" width="14" height="20" rx="2" fill="#DCEAF2"/><rect x="0" y="21" width="68" height="3" fill="#55D6B4"/>
+        <circle cx="20" cy="36" r="7" fill="#07113F"/><circle cx="20" cy="36" r="3" fill="#fff"/>
+        <circle cx="72" cy="36" r="7" fill="#07113F"/><circle cx="72" cy="36" r="3" fill="#fff"/>
+      </g>
+      <g transform="translate(146 14)"><path d="M8 0C3.6 0 0 3.6 0 8c0 6 8 14 8 14s8-8 8-14c0-4.4-3.6-8-8-8z" fill="#55D6B4"/><circle cx="8" cy="8" r="3" fill="#fff"/></g>
+    </symbol>
+  </defs></svg>
+
+  <div class="gesture"></div>
+</div><div class="camera"></div></div></div>
+<script>
+  document.body.className = 's-' + (location.search.replace('?', '') || 'manifest');
+</script>
+</body>
+</html>

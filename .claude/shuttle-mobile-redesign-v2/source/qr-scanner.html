@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>QR scanner mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --midnight:#07113F; --navy:#0B2A66; --brand-blue:#123A78; --mint:#55D6B4; --mint-dark:#16A37A; --mint-soft:#DFF8F1;
+    --warm:#FAF9F6; --white:#FFFFFF; --mist:#DCEAF2; --subtle:#F4F7FA; --text2:#65769A; --border:#B8C5D9; --divider:#E8EEF5;
+    --disabled:#9CA8BA; --warn:#F59E0B; --warn-soft:#FFF3D6; --warn-text:#B45309; --err:#DC2626; --err-soft:#FDE7E7;
+    --state:var(--mint);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:1024px; height:1536px; overflow:hidden; }
+  body { background:#F3F0EA; font-family:'Inter',sans-serif; color:var(--midnight); -webkit-font-smoothing:antialiased; }
+  .phone { position:absolute; left:212px; top:118px; width:600px; height:1300px; border-radius:66px; background:#15161A;
+           box-shadow:0 30px 60px rgba(7,17,63,.18), 0 8px 18px rgba(7,17,63,.12), inset 0 0 0 2px #2A2C33; }
+  .glass { position:absolute; left:14px; top:14px; width:572px; height:1272px; border-radius:52px; overflow:hidden; background:var(--warm); }
+  .screen { position:absolute; left:0; top:0; width:412px; height:916px; transform:scale(1.3883); transform-origin:0 0; overflow:hidden; background:var(--midnight); }
+  .camera { position:absolute; left:50%; top:10px; width:13px; height:13px; margin-left:-6.5px; border-radius:50%; background:#0A0B0F; z-index:50; }
+  svg.i { width:24px; height:24px; fill:currentColor; flex:none; display:block; }
+  .tn { font-feature-settings:"tnum"; }
+
+  .status { position:absolute; left:0; right:0; top:0; height:36px; padding:0 22px; display:flex; align-items:center; justify-content:space-between;
+            color:#fff; font-size:14px; font-weight:600; z-index:40; }
+  .status .sys { display:flex; gap:6px; align-items:center; }
+  .status svg { width:16px; height:16px; fill:#fff; }
+
+  .band { position:absolute; left:0; right:0; top:0; height:100px; background:var(--midnight); overflow:hidden; z-index:20; }
+  .band svg.lines { position:absolute; inset:0; width:100%; height:100%; }
+  .bar { position:absolute; left:0; right:0; top:36px; height:64px; display:flex; align-items:center; padding:0 4px; color:#fff; z-index:25; }
+  .bar .ib { width:48px; height:48px; display:flex; align-items:center; justify-content:center; }
+  .bar h1 { flex:1; font-size:20px; line-height:28px; font-weight:600; letter-spacing:-.05px; margin-left:4px; }
+
+  /* ---- viewfinder ---- */
+  .vf { position:absolute; left:0; right:0; top:100px; height:484px; overflow:hidden; background:#1B2338; }
+  .vf svg.feed { position:absolute; inset:0; width:100%; height:100%; }
+  .win { position:absolute; left:86px; top:82px; width:240px; height:240px; border-radius:20px;
+         box-shadow:0 0 0 600px rgba(7,17,63,.62); }
+  .win i { position:absolute; width:40px; height:40px; border:0 solid var(--state); }
+  .win i:nth-child(1) { left:-3px; top:-3px; border-width:4px 0 0 4px; border-top-left-radius:22px; }
+  .win i:nth-child(2) { right:-3px; top:-3px; border-width:4px 4px 0 0; border-top-right-radius:22px; }
+  .win i:nth-child(3) { left:-3px; bottom:-3px; border-width:0 0 4px 4px; border-bottom-left-radius:22px; }
+  .win i:nth-child(4) { right:-3px; bottom:-3px; border-width:0 4px 4px 0; border-bottom-right-radius:22px; }
+  .s-scanning .win i { border-color:rgba(255,255,255,.92); }
+  .s-boarded { --state:var(--mint); } .s-duplicate { --state:var(--warn); } .s-invalid { --state:#F87171; }
+  .s-boarded .win, .s-duplicate .win, .s-invalid .win { outline:2px solid var(--state); outline-offset:-2px; }
+  .hint { position:absolute; left:24px; right:24px; top:24px; text-align:center; color:#fff; font-size:15px; line-height:22px; font-weight:500; }
+  .hint span { display:block; color:rgba(255,255,255,.76); font-weight:400; font-size:14px; line-height:20px; }
+
+  .result { position:absolute; left:16px; right:16px; top:344px; min-height:68px; border-radius:16px; padding:12px 14px; display:flex; align-items:center; gap:12px;
+            box-shadow:0 4px 10px rgba(0,0,0,.18), 0 14px 28px rgba(0,0,0,.18); }
+  .result .ic { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none; }
+  .result .ic svg { width:24px; height:24px; }
+  .result b { display:block; font-size:16px; line-height:22px; font-weight:700; }
+  .result span { display:block; font-size:14px; line-height:20px; font-weight:500; color:rgba(7,17,63,.74); }
+  .result .t { flex:1; min-width:0; }
+  .result .n { font-size:13px; font-weight:600; color:rgba(7,17,63,.74); align-self:flex-start; margin-top:3px; }
+  .result.ok  { background:var(--mint-soft); } .result.ok .ic { background:var(--mint); color:var(--midnight); }
+  .result.dup { background:var(--warn-soft); } .result.dup .ic { background:var(--warn); color:var(--midnight); }
+  .result.bad { background:var(--err-soft); } .result.bad .ic { background:var(--err); color:#fff; }
+
+  /* ---- permission off ---- */
+  .off { position:absolute; left:0; right:0; top:100px; height:484px; background:var(--navy); display:flex; flex-direction:column; align-items:center; padding:52px 32px 0; text-align:center; overflow:hidden; }
+  .off svg.lines { position:absolute; inset:0; width:100%; height:100%; }
+  .off .art { position:relative; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; }
+  .off h2 { position:relative; margin-top:24px; font-size:22px; line-height:30px; font-weight:700; color:#fff; letter-spacing:-.1px; }
+  .off p { position:relative; margin-top:8px; font-size:15px; line-height:22px; color:rgba(255,255,255,.78); max-width:300px; }
+  .off .btn { position:relative; margin-top:28px; width:220px; }
+  .off .link { position:relative; margin-top:6px; height:48px; display:flex; align-items:center; font-size:15px; font-weight:600; color:#fff; }
+
+  /* ---- docked sheet ---- */
+  .sheet { position:absolute; left:0; right:0; top:560px; bottom:0; background:var(--warm); border-radius:24px 24px 0 0; padding:20px 16px 0; z-index:10;
+           box-shadow:0 -6px 20px rgba(7,17,63,.18); }
+  .trip { display:flex; align-items:center; gap:8px; padding:0 8px; font-size:13px; line-height:18px; font-weight:500; color:var(--text2); }
+  .trip svg { width:16px; height:16px; fill:var(--text2); }
+  .trip .r { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .count { margin-top:4px; padding:0 8px; display:flex; align-items:baseline; gap:8px; }
+  .count h2 { font-size:24px; line-height:32px; font-weight:700; letter-spacing:-.12px; }
+  .count h2 .tn { letter-spacing:0; }
+
+  .card { background:var(--white); border-radius:16px; box-shadow:0 2px 6px rgba(7,17,63,.06), 0 10px 24px rgba(7,17,63,.07); }
+  .list { margin-top:10px; overflow:hidden; }
+  .row { display:flex; align-items:center; gap:14px; height:52px; padding:0 18px 0 14px; }
+  .row + .row { border-top:1px solid var(--divider); }
+  .row.new { background:var(--mint-soft); }
+  .num { width:32px; height:32px; border-radius:50%; background:var(--mist); color:var(--brand-blue); font-size:14px; font-weight:600;
+         display:flex; align-items:center; justify-content:center; flex:none; font-feature-settings:"tnum"; }
+  .row.new .num { background:var(--mint); color:var(--midnight); }
+  .row b { flex:1; font-size:15px; line-height:20px; font-weight:600; }
+  .row .tm { font-size:14px; font-weight:500; color:var(--text2); font-feature-settings:"tnum"; }
+  .row.new .tm { color:var(--midnight); }
+
+  .actions { position:absolute; left:16px; right:16px; bottom:30px; display:flex; gap:12px; }
+  .btn { height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:10px; font-size:16px; font-weight:600; }
+  .btn svg { width:22px; height:22px; fill:currentColor; }
+  .btn.primary { flex:1; background:var(--midnight); color:#fff; }
+  .btn.mint { background:var(--mint); color:var(--midnight); }
+  .btn.torch { width:132px; border:1.5px solid var(--midnight); color:var(--midnight); background:var(--white); }
+  .btn.torch.on { background:var(--midnight); color:#fff; }
+  .btn.torch.on svg { color:var(--mint); }
+  .btn.torch.dis { border-color:var(--border); color:var(--disabled); background:var(--subtle); }
+
+  .gesture { position:absolute; bottom:8px; left:50%; width:120px; height:4px; margin-left:-60px; border-radius:2px; background:var(--midnight); opacity:.85; z-index:45; }
+
+  .v-ok, .v-dup, .v-bad, .v-off, .v-6, .v-7 { display:none !important; }
+  .s-boarded .v-ok, .s-duplicate .v-dup, .s-invalid .v-bad, .s-denied .v-off { display:flex !important; }
+  .s-denied .v-cam { display:none !important; }
+  .s-boarded .v-7 { display:inline !important; } .s-scanning .v-6, .s-duplicate .v-6, .s-invalid .v-6, .s-denied .v-6 { display:inline !important; }
+  .s-boarded .row.v-7r { display:flex !important; }
+  .row.v-7r { display:none; }
+  .s-boarded .row.v-last { display:none; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+    <symbol id="route" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+    <symbol id="replay" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></symbol>
+    <symbol id="block" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/></symbol>
+    <symbol id="torch" viewBox="0 0 24 24"><path d="M6 2v6l2 3v11h8V11l2-3V2H6zm6 13.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM16 6H8V4h8v2z"/></symbol>
+    <symbol id="done" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></symbol>
+    <symbol id="camoff" viewBox="0 0 24 24"><path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z"/></symbol>
+    <symbol id="cam" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></symbol>
+  </defs>
+</svg>
+
+<div class="phone"><div class="glass"><div class="screen">
+  <div class="band">
+    <svg class="lines" viewBox="0 0 412 100" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="1.5">
+      <path d="M0 60 C120 20 230 120 412 70"/><circle cx="372" cy="20" r="70"/>
+    </svg>
+  </div>
+  <div class="status"><span class="tn">4:26</span><span class="sys">
+    <svg viewBox="0 0 24 24"><path d="M12 21L.5 7.5C3.5 5 7.5 3.5 12 3.5S20.5 5 23.5 7.5z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M2 22h20V2z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M16 4h-2V2h-4v2H8c-.55 0-1 .45-1 1v16c0 .55.45 1 1 1h8c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1z"/></svg></span></div>
+  <div class="bar">
+    <div class="ib"><svg class="i"><use href="#back"/></svg></div>
+    <h1>Scan passengers</h1>
+  </div>
+
+  <!-- ============ VIEWFINDER ============ -->
+  <div class="vf v-cam">
+    <svg class="feed" viewBox="0 0 412 484" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="7"/></filter>
+        <filter id="lite" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="0.6"/></filter>
+        <linearGradient id="cabin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B4A63"/><stop offset=".45" stop-color="#1F2A44"/><stop offset="1" stop-color="#101A33"/></linearGradient>
+        <linearGradient id="seat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2C3E6B"/><stop offset="1" stop-color="#15224A"/></linearGradient>
+        <linearGradient id="card" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6EAF0"/></linearGradient>
+      </defs>
+      <rect width="412" height="484" fill="url(#cabin)"/>
+      <g filter="url(#soft)">
+        <rect x="-20" y="10" width="140" height="120" rx="10" fill="#7C8FA8" opacity=".55"/>
+        <rect x="150" y="0" width="120" height="96" rx="10" fill="#8EA0B6" opacity=".45"/>
+        <rect x="300" y="14" width="140" height="110" rx="10" fill="#7C8FA8" opacity=".5"/>
+        <rect x="-30" y="150" width="170" height="300" rx="40" fill="url(#seat)"/>
+        <rect x="270" y="140" width="180" height="320" rx="40" fill="url(#seat)"/>
+        <rect x="100" y="230" width="220" height="280" rx="46" fill="#22335E"/>
+        <rect x="0" y="420" width="412" height="80" fill="#0D1530"/>
+      </g>
+      <!-- hand + pass held up to the camera -->
+
+      <g transform="translate(0 10) rotate(-4 206 192)" filter="url(#lite)">
+        <rect x="104" y="86" width="204" height="216" rx="12" fill="rgba(0,0,0,.25)" transform="translate(4 8)"/>
+        <rect x="104" y="86" width="204" height="216" rx="12" fill="url(#card)"/>
+        <g id="qrcode" transform="translate(126 108)"></g>
+      </g>
+      <rect width="412" height="484" fill="rgba(7,17,63,.08)"/>
+    </svg>
+    <div class="win"><i></i><i></i><i></i><i></i></div>
+    <div class="hint">Hold the passenger's QR in the frame<span>It scans on its own</span></div>
+
+    <div class="result ok v-ok"><div class="ic"><svg><use href="#check"/></svg></div>
+      <div class="t"><b>Boarded</b><span>EMP-15125113 · <span style="display:inline" class="tn">16:26</span></span></div><div class="n tn">#7</div></div>
+    <div class="result dup v-dup"><div class="ic"><svg><use href="#replay"/></svg></div>
+      <div class="t"><b>Already on board</b><span>EMP-15118876 boarded at <span style="display:inline" class="tn">16:19</span> as #3</span></div></div>
+    <div class="result bad v-bad"><div class="ic"><svg><use href="#block"/></svg></div>
+      <div class="t"><b>Not a passenger QR</b><span>Ask for the QR on their shuttle pass.</span></div></div>
+  </div>
+
+  <!-- ============ CAMERA ACCESS OFF ============ -->
+  <div class="off v-off">
+    <svg class="lines" viewBox="0 0 412 484" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1.5">
+      <path d="M0 380 C120 330 260 450 412 360"/><circle cx="40" cy="60" r="90"/>
+    </svg>
+    <div class="art"><svg viewBox="0 0 24 24" style="width:56px;height:56px;fill:#DCEAF2"><use href="#camoff"/></svg></div>
+    <h2>Camera access is off</h2>
+    <p>Scanning needs the camera. Passengers already on board stay on this pass.</p>
+    <div class="btn mint"><svg><use href="#cam"/></svg>Allow camera</div>
+    <div class="link">Open app settings</div>
+  </div>
+
+  <!-- ============ DOCKED SHEET ============ -->
+  <div class="sheet">
+    <div class="trip"><svg viewBox="0 0 24 24"><use href="#route"/></svg><span class="r">Villa Estrella → Drop-off point</span><span class="tn">Departs 16:30</span></div>
+    <div class="count"><h2><span class="tn v-6">6</span><span class="tn v-7">7</span> on board</h2></div>
+    <div class="card list">
+      <div class="row new v-7r"><div class="num">7</div><b>EMP-15125113</b><span class="tm">16:26</span></div>
+      <div class="row"><div class="num">6</div><b>EMP-15125112</b><span class="tm">16:24</span></div>
+      <div class="row"><div class="num">5</div><b>EMP-15124987</b><span class="tm">16:22</span></div>
+      <div class="row v-last"><div class="num">4</div><b>EMP-15120034</b><span class="tm">16:21</span></div>
+    </div>
+    <div class="actions">
+      <div class="btn torch" id="torchBtn"><svg><use href="#torch"/></svg>Torch</div>
+      <div class="btn primary"><svg><use href="#done"/></svg>Done</div>
+    </div>
+  </div>
+
+  <div class="gesture"></div>
+</div><div class="camera"></div></div></div>
+<script>
+  const state = location.search.replace('?', '') || 'scanning';
+  document.body.className = 's-' + state;
+  if (state === 'boarded' || state === 'invalid') document.getElementById("torchBtn").classList.add('on');
+  if (state === 'denied') document.getElementById("torchBtn").classList.add('dis');
+
+  // Seeded QR-like matrix (25x25, version-2 shape) with real finder and timing patterns.
+  const N = 25, M = 6.4, g = document.getElementById('qrcode');
+  let s = 20261020; const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const finder = (r, c) => [[0,0],[0,N-7],[N-7,0]].some(([fr, fc]) => r >= fr - 1 && r <= fr + 7 && c >= fc - 1 && c <= fc + 7);
+  let d = '';
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    if (finder(r, c)) continue;
+    const align = r >= 16 && r <= 20 && c >= 16 && c <= 20;
+    let on;
+    if (align) on = (r === 16 || r === 20 || c === 16 || c === 20 || (r === 18 && c === 18));
+    else if (r === 6) on = c % 2 === 0; else if (c === 6) on = r % 2 === 0; else on = rnd() > .52;
+    if (on) d += `M${c*M} ${r*M}h${M}v${M}h-${M}z`;
+  }
+  const ns = 'http://www.w3.org/2000/svg';
+  const p = document.createElementNS(ns, 'path'); p.setAttribute('d', d); p.setAttribute('fill', '#07113F'); g.appendChild(p);
+  [[0,0],[0,N-7],[N-7,0]].forEach(([r, c]) => {
+    [[7, '#07113F'], [5, '#fff'], [3, '#07113F']].forEach(([k, f], i) => {
+      const q = document.createElementNS(ns, 'rect');
+      q.setAttribute('x', (c + i) * M); q.setAttribute('y', (r + i) * M); q.setAttribute('width', k * M); q.setAttribute('height', k * M);
+      q.setAttribute('fill', f); g.appendChild(q);
+    });
+  });
+</script>
+</body>
+</html>
