@@ -40,7 +40,7 @@ Package `com.example.shuttleapp`, source root `app/src/main/java/com/example/shu
 - `.claude/screenshots/`: Screenshots of the current app, used by the README.
 
 ## Design Reference
-- `.claude/shuttle-mobile-redesign-v2/`: Redesign mockups (`01-welcome.png` … `14-qr-scanner.png`) covering welcome, sign-in, registration, drawer, dashboard, shuttle pass, manifest, sync, and QR scanner screens.
+- `.claude/shuttle-mobile-redesign-v2/`: Redesign mockups (`01-welcome.png` … `14-qr-scanner.png`) covering welcome, sign-in (`02a`: wrong credentials), registration (`03a`: field error), drawer, dashboard, shuttle pass, manifest, sync, and QR scanner screens. HTML sources for regenerated mockups are in `source/`.
 - `.claude/shuttle-mobile-redesign-v2/DESIGN-SYSTEM.md`: Visual system (Inter typeface, type scale, and tokens). Follow it when building or restyling UI.
 
 ## Skills

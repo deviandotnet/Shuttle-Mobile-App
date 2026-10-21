@@ -68,6 +68,17 @@ The generated PNG mockups are raster images and do not contain inspectable font 
   
   It never repeats bottom-bar destinations.
 
+## Auth (mockups 01–03a)
+
+Source: `source/auth.html?<state>`. The states are `welcome`, `sign-in`, `sign-in-error`, `create-account` and `create-account-error`.
+
+- **Brand band:** Midnight, edge-to-edge behind the status bar, with faint route lines, the van wordmark (`ic_shuttle_van_logo`, 13 px Overline-style caps at +18%), the flat skyline, a Brand blue road with a dashed centre line, a Mint pin and a dotted Mint route. The white van sits on the road. A warm-white sheet with a 24 px top radius overlaps the band's foot. The band is 440 px tall on Welcome and 272 px on Sign in, so the form and button stay above the keyboard.
+- **Welcome (01):** a 48/52 Display headline ("Scan in. Sync up."), one Body large line, and the actions pinned to the bottom: **Sign in** (Midnight, primary) above **Create account** (outlined). Returning drivers are the common case, so Sign in leads. There are no carousel dots.
+- **Sign in (02):** a Heading 1 "Welcome back" plus one line. Username and Password fields, the password eye toggle, and a Caption helper: "Forgot it? Your shuttle provider can reset it." There is no reset flow, so there is no link. A divider labelled "New to Shuttle Mobile?" sits above an outlined Create account button at the bottom.
+- **Sign-in error (02a):** both fields get a 2 px Error border. An Error soft alert sits above the button: **Username or password is incorrect** · "Check both and try again. Your shuttle provider can reset your password." The helper line is hidden while the alert shows.
+- **Create account (03, 03a):** a Midnight app bar with a back arrow, and no stepper. Three groups with 16/24 bold headings: **About you** (first, middle and last name, full-width, no icons; middle name is required), **Work** (Shuttle provider as a picker with a chevron, Employee number with tabular digits) and **Sign-in details** (Username, Password, Repeat password). The **Create account** button and "Already registered? Sign in" are docked at the bottom over the scrolling form. Field errors sit under the field in Error red with an icon, e.g. "Passwords don't match. Type the same password in both fields." There is no length hint until a rule is enforced.
+- **Fields:** a 14/20 semibold label above a 52 px input (White, 1 px Border, 12 px radius) with an optional 22 px Text / Secondary leading icon. Focus is a 2 px Midnight border plus a 4 px Midnight 8% ring. Error is a 2 px Error border. Trailing actions such as the eye or the chevron get a 44 px target.
+
 ## Dark mode
 
 Implemented in `ui/theme/ShuttleColors.kt` as semantic roles (`ShuttleTheme.colors.<role>`). The user picks System, Light or Dark on the Settings screen (drawer → Settings); System follows the device setting.
