@@ -7,6 +7,7 @@ import com.example.shuttleapp.domain.model.PassFilter
 import com.example.shuttleapp.domain.repository.ShuttlePassRepository
 import com.example.shuttleapp.presentation.events.ShuttlePassListAction
 import com.example.shuttleapp.presentation.events.ShuttlePassListEvent
+import com.example.shuttleapp.presentation.mapper.PassListFormat
 import com.example.shuttleapp.presentation.mapper.ShuttlePassItemUiMapper
 import com.example.shuttleapp.presentation.state.ShuttlePassListState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +27,7 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ShuttlePassListViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val shuttlePassRepository: ShuttlePassRepository,
     private val itemUiMapper: ShuttlePassItemUiMapper,
     uploadControllerFactory: PassUploadController.Factory
@@ -36,6 +37,8 @@ class ShuttlePassListViewModel @Inject constructor(
 
     /** Home's stat tiles open the list already filtered (route argument "filter"). */
     private val filter = MutableStateFlow(PassFilter.fromRoute(savedStateHandle.get<String>(FILTER_ARG)))
+    /** Survives process death so the driver comes back to the same search. */
+    private val query = savedStateHandle.getStateFlow(QUERY_KEY, "")
     private val upload = uploadControllerFactory.create(driverId, viewModelScope)
 
     private val _events = Channel<ShuttlePassListEvent>(Channel.BUFFERED)
@@ -46,27 +49,43 @@ class ShuttlePassListViewModel @Inject constructor(
         .flatMapLatest { shuttlePassRepository.observePasses(driverId, it) }
         .map { passes -> itemUiMapper.toUi(passes) }
 
+    private val sections = combine(items, query) { items, query ->
+        PassListFormat.groupByDay(items.filter { PassListFormat.matches(it, query) }, System.currentTimeMillis())
+    }
+
+    private val counts = combine(
+        shuttlePassRepository.observeUnsyncedCount(driverId),
+        shuttlePassRepository.observeLateCount(driverId)
+    ) { pending, late -> pending to late }
+
     val state: StateFlow<ShuttlePassListState> = combine(
-        items,
-        filter,
+        sections,
+        combine(filter, query) { filter, query -> filter to query },
         upload.state,
-        shuttlePassRepository.observeUnsyncedCount(driverId)
-    ) { items, filter, upload, pending ->
+        counts
+    ) { sections, (filter, query), upload, (pending, late) ->
         ShuttlePassListState(
             filter = filter,
-            items = items,
+            query = query,
+            sections = sections,
             isLoading = false,
             sync = upload.sync,
             isOnline = upload.isOnline,
             needsSignIn = upload.needsSignIn,
             reauth = upload.reauth,
-            pendingCount = pending
+            pendingCount = pending,
+            lateCount = late
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShuttlePassListState(filter = filter.value))
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        ShuttlePassListState(filter = filter.value, query = query.value)
+    )
 
     fun onAction(action: ShuttlePassListAction) {
         when (action) {
             is ShuttlePassListAction.SelectFilter -> filter.value = action.filter
+            is ShuttlePassListAction.QueryChange -> savedStateHandle[QUERY_KEY] = action.query
             ShuttlePassListAction.UploadAll -> upload.uploadAll()
             ShuttlePassListAction.DismissSyncResult -> upload.dismissResult()
             is ShuttlePassListAction.OpenPass -> send(ShuttlePassListEvent.NavigateToPass(action.id))
@@ -83,6 +102,7 @@ class ShuttlePassListViewModel @Inject constructor(
 
     companion object {
         const val FILTER_ARG = "filter"
+        private const val QUERY_KEY = "query"
         const val OFFLINE_MESSAGE = PassUploadController.OFFLINE_MESSAGE
     }
 }

@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.shuttleapp.presentation.components.PassRow
 import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
 import com.example.shuttleapp.ui.theme.Dimens
 import com.example.shuttleapp.ui.theme.ShuttleAppTheme
@@ -76,7 +77,7 @@ fun RecentPassesSection(
                 passes.isEmpty() -> CenteredBox { Message("No completed passes yet. Tap New pass to start one.", colors.textSecondary) }
                 else -> passes.forEachIndexed { index, pass ->
                     if (index > 0) HorizontalDivider(Modifier.padding(horizontal = Dimens.SpaceM), color = colors.divider)
-                    RecentPassRow(pass, onClick = { onOpenPass(pass.id) })
+                    PassRow(pass, onClick = { onOpenPass(pass.id) })
                 }
             }
         }
@@ -94,9 +95,9 @@ private fun Message(text: String, color: Color) {
 }
 
 private val previewPasses = listOf(
-    ShuttlePassItemUi("1", "SPT-0125-00001", "Jan 02, 2025 10:45", "Villa Estrella · Incoming", isLate = false, isSynced = true),
-    ShuttlePassItemUi("2", "SPT-0125-00002", "Jan 02, 2025 08:20", "Villa Estrella · Outgoing", isLate = true, isSynced = false),
-    ShuttlePassItemUi("3", "SPT-0125-00003", "Jan 01, 2025 17:10", "Mamatid · Incoming", isLate = false, isSynced = false)
+    ShuttlePassItemUi("1", "SPT-0125-00001", "Jan 02, 2025 10:45", "Villa Estrella · Incoming", isLate = false, isSynced = true, summary = "Villa Estrella · In · 10:45"),
+    ShuttlePassItemUi("2", "SPT-0125-00002", "Jan 02, 2025 08:20", "Villa Estrella · Outgoing", isLate = true, isSynced = false, summary = "Villa Estrella · Out · 08:20"),
+    ShuttlePassItemUi("3", "SPT-0125-00003", "Jan 01, 2025 17:10", "Mamatid · Incoming", isLate = false, isSynced = false, summary = "Mamatid · In · 17:10")
 )
 
 @Preview(widthDp = 360, showBackground = true)

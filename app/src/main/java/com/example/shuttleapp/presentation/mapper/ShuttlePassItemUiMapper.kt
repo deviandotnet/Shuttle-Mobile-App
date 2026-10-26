@@ -23,14 +23,26 @@ class ShuttlePassItemUiMapper @Inject constructor(
 
     suspend fun toUi(item: ShuttlePassWithPassenger): ShuttlePassItemUi {
         val pass = item.shuttlePass
+        val route = routeName(pass.routeId)
         return ShuttlePassItemUi(
             id = pass.id,
             code = "SPT-${formatMonthYear(pass.dateCreated)}-${pass.id.takeLast(12).uppercase()}",
             schedule = "${pass.date}  ${formatTimeHHmm(pass.departure)} — ${formatTimeHHmm(pass.arrival)}",
-            routeAndTrip = "${routeName(pass.routeId)} · ${pass.tripType}",
+            routeAndTrip = "$route · ${pass.tripType}",
             isLate = pass.isLateShuttle,
-            isSynced = pass.isSynced
+            isSynced = pass.isSynced,
+            summary = listOf(route, shortTrip(pass.tripType), formatTimeHHmm(pass.departure))
+                .filter(String::isNotBlank)
+                .joinToString(" · "),
+            createdAt = pass.dateCreated
         )
+    }
+
+    /** "Incoming" → "In", "Outgoing" → "Out"; anything else is shown as stored. */
+    private fun shortTrip(tripType: String): String = when (tripType.trim().lowercase()) {
+        "incoming" -> "In"
+        "outgoing" -> "Out"
+        else -> tripType
     }
 
     private suspend fun routeName(routeId: String): String {
