@@ -58,7 +58,7 @@ object DashboardFormat {
         SimpleDateFormat(pattern, locale).apply { this.timeZone = timeZone }.format(Date(millis))
 
     /** Calendar days from [fromMillis] to [toMillis] in [timeZone]; 0 means the same day. Rounds away DST shifts. */
-    private fun daysBetween(fromMillis: Long, toMillis: Long, timeZone: TimeZone): Int {
+    internal fun daysBetween(fromMillis: Long, toMillis: Long, timeZone: TimeZone): Int {
         fun startOfDay(millis: Long): Long = Calendar.getInstance(timeZone).apply {
             timeInMillis = millis
             set(Calendar.HOUR_OF_DAY, 0)

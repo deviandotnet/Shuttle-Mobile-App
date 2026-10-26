@@ -11,7 +11,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flowOf
 
 class FakeShuttlePassRepository : ShuttlePassRepository {
 
@@ -44,7 +43,8 @@ class FakeShuttlePassRepository : ShuttlePassRepository {
     val unsyncedCount = MutableStateFlow(0)
 
     override fun observeUnsyncedCount(driverId: String): Flow<Int> = unsyncedCount
-    override fun observeLateCount(driverId: String): Flow<Int> = flowOf(0)
+    val lateCount = MutableStateFlow(0)
+    override fun observeLateCount(driverId: String): Flow<Int> = lateCount
     override suspend fun getDraftId(driverId: String): String? = null
     val inserted = mutableListOf<ShuttlePass>()
     val updated = mutableListOf<ShuttlePass>()

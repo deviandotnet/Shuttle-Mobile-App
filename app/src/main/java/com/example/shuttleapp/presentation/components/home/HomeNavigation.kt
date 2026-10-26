@@ -25,6 +25,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -100,16 +101,23 @@ fun HomeNavRail(
     }
 }
 
-/** App bar for the Passes and Sync tabs: Midnight, no back arrow (the bar is the navigation). */
+/**
+ * App bar for the Passes and Sync tabs: Midnight, no back arrow (the bar is the navigation).
+ * Pass a transparent [containerColor] when the bar sits on a taller brand band of its own.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TabTopBar(title: String, actions: @Composable RowScope.() -> Unit = {}) {
+fun TabTopBar(
+    title: String,
+    actions: @Composable RowScope.() -> Unit = {},
+    containerColor: Color = ShuttleTheme.colors.brandBand
+) {
     val colors = ShuttleTheme.colors
     TopAppBar(
         title = { Text(title, style = ShuttleType.AppBar, modifier = Modifier.semantics { heading() }) },
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = colors.brandBand,
+            containerColor = containerColor,
             titleContentColor = colors.onBrandBand,
             actionIconContentColor = colors.onBrandBand
         )

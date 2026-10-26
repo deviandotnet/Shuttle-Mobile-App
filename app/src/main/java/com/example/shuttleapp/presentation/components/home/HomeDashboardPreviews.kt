@@ -7,11 +7,11 @@ import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
 import com.example.shuttleapp.ui.theme.ShuttleAppTheme
 
 private val samplePasses = listOf(
-    ShuttlePassItemUi("1", "SPT-0125-00001", "2025-01-02  10:45 — 11:30", "Villa Estrella · Incoming", isLate = false, isSynced = true),
-    ShuttlePassItemUi("2", "SPT-0125-00002", "2025-01-02  08:20 — 09:05", "Villa Estrella · Outgoing", isLate = true, isSynced = false),
-    ShuttlePassItemUi("3", "SPT-0125-00003", "2025-01-01  17:10 — 18:00", "Mamatid · Incoming", isLate = false, isSynced = false),
-    ShuttlePassItemUi("4", "SPT-0125-00004", "2025-01-01  06:20 — 07:05", "Mamatid · Outgoing", isLate = false, isSynced = true),
-    ShuttlePassItemUi("5", "SPT-1224-00005", "2024-12-31  17:05 — 17:55", "Villa Estrella · Incoming", isLate = false, isSynced = true)
+    ShuttlePassItemUi("1", "SPT-0125-00001", "2025-01-02  10:45 — 11:30", "Villa Estrella · Incoming", isLate = false, isSynced = true, summary = "Villa Estrella · In · 10:45"),
+    ShuttlePassItemUi("2", "SPT-0125-00002", "2025-01-02  08:20 — 09:05", "Villa Estrella · Outgoing", isLate = true, isSynced = false, summary = "Villa Estrella · Out · 08:20"),
+    ShuttlePassItemUi("3", "SPT-0125-00003", "2025-01-01  17:10 — 18:00", "Mamatid · Incoming", isLate = false, isSynced = false, summary = "Mamatid · In · 17:10"),
+    ShuttlePassItemUi("4", "SPT-0125-00004", "2025-01-01  06:20 — 07:05", "Mamatid · Outgoing", isLate = false, isSynced = true, summary = "Mamatid · Out · 06:20"),
+    ShuttlePassItemUi("5", "SPT-1224-00005", "2024-12-31  17:05 — 17:55", "Villa Estrella · Incoming", isLate = false, isSynced = true, summary = "Villa Estrella · In · 17:05")
 )
 
 private val activeTrip = HomeDashboardUi(

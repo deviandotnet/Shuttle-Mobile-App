@@ -4,6 +4,7 @@ import com.example.shuttleapp.domain.model.PassFilter
 
 sealed interface ShuttlePassListAction {
     data class SelectFilter(val filter: PassFilter) : ShuttlePassListAction
+    data class QueryChange(val query: String) : ShuttlePassListAction
     data object UploadAll : ShuttlePassListAction
     data object DismissSyncResult : ShuttlePassListAction
     data class OpenPass(val id: String) : ShuttlePassListAction

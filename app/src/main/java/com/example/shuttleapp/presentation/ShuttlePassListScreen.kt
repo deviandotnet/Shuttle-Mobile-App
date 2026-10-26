@@ -1,55 +1,64 @@
 package com.example.shuttleapp.presentation
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.shuttleapp.domain.model.PassFilter
 import com.example.shuttleapp.presentation.components.ActionDropdownMenu
-import com.example.shuttleapp.presentation.components.ObserveAsEvents
-import com.example.shuttleapp.presentation.components.ShuttlePassCard
-import com.example.shuttleapp.presentation.components.StyledSnackBarHost
-import com.example.shuttleapp.presentation.events.ShuttlePassListAction
-import com.example.shuttleapp.presentation.events.ShuttlePassListEvent
-import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
-import com.example.shuttleapp.presentation.state.ShuttlePassListState
-import com.example.shuttleapp.presentation.state.SyncStatus
-import com.example.shuttleapp.presentation.state.PassUploadState
 import com.example.shuttleapp.presentation.components.ConnectionBanner
+import com.example.shuttleapp.presentation.components.ObserveAsEvents
+import com.example.shuttleapp.presentation.components.PassFilterTabs
+import com.example.shuttleapp.presentation.components.PassRow
+import com.example.shuttleapp.presentation.components.PassSearchField
+import com.example.shuttleapp.presentation.components.StyledSnackBarHost
 import com.example.shuttleapp.presentation.components.UploadDialogs
 import com.example.shuttleapp.presentation.components.home.HomeBottomBar
 import com.example.shuttleapp.presentation.components.home.HomeNavItem
+import com.example.shuttleapp.presentation.components.home.MapLines
 import com.example.shuttleapp.presentation.components.home.TabTopBar
+import com.example.shuttleapp.presentation.events.ShuttlePassListAction
+import com.example.shuttleapp.presentation.events.ShuttlePassListEvent
+import com.example.shuttleapp.presentation.state.PassDaySection
+import com.example.shuttleapp.presentation.state.PassUploadState
+import com.example.shuttleapp.presentation.state.ShuttlePassItemUi
+import com.example.shuttleapp.presentation.state.ShuttlePassListState
+import com.example.shuttleapp.presentation.state.SyncStatus
 import com.example.shuttleapp.presentation.viewmodel.ShuttlePassListViewModel
+import com.example.shuttleapp.ui.theme.Dimens
 import com.example.shuttleapp.ui.theme.ShuttleAppTheme
 import com.example.shuttleapp.ui.theme.ShuttleTheme
+import com.example.shuttleapp.ui.theme.ShuttleType
 import kotlinx.coroutines.launch
 
 @Composable
@@ -69,7 +78,7 @@ fun ShuttlePassListRoot(
     ShuttlePassListScreen(state = state, onAction = viewModel::onAction, onNavigate = onNavigate)
 }
 
-/** Passes tab: every finished pass, filterable by Late / Not synced (Home's stat tiles open it pre-filtered). */
+/** Passes tab: every finished pass by day, searchable and filterable by Late / Not synced (Home's stat tiles open it pre-filtered). */
 @Composable
 fun ShuttlePassListScreen(
     state: ShuttlePassListState,
@@ -85,22 +94,19 @@ fun ShuttlePassListScreen(
         snackbarHost = { StyledSnackBarHost(hostState = snackBarHostState) },
         bottomBar = { HomeBottomBar(HomeNavItem.Passes, state.pendingCount, onNavigate) },
         topBar = {
-            TabTopBar(
-                title = "Passes",
-                actions = {
-                    ActionDropdownMenu(
-                        onUploadAll = { onAction(ShuttlePassListAction.UploadAll) },
-                        onDeleteAll = {
-                            coroutineScope.launch {
-                                snackBarHostState.showSnackbar(
-                                    message = "Delete not authorized",
-                                    actionLabel = "Dismiss",
-                                    withDismissAction = true,
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        }
-                    )
+            PassListHeader(
+                query = state.query,
+                onQueryChange = { onAction(ShuttlePassListAction.QueryChange(it)) },
+                onUploadAll = { onAction(ShuttlePassListAction.UploadAll) },
+                onDeleteAll = {
+                    coroutineScope.launch {
+                        snackBarHostState.showSnackbar(
+                            message = "Delete not authorized",
+                            actionLabel = "Dismiss",
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Short
+                        )
+                    }
                 }
             )
         }
@@ -110,23 +116,19 @@ fun ShuttlePassListScreen(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
                 .fillMaxSize()
-                .background(colors.canvas),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             ConnectionBanner(
                 isOnline = state.isOnline,
                 needsSignIn = state.needsSignIn,
                 onSignIn = { onAction(ShuttlePassListAction.ShowReauth) }
             )
-            FilterChoiceSegmentedButton(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                selectedFilter = state.filter,
-                onFilterSelected = { onAction(ShuttlePassListAction.SelectFilter(it)) }
+            PassFilterTabs(
+                selected = state.filter,
+                lateCount = state.lateCount,
+                notSyncedCount = state.pendingCount,
+                onSelect = { onAction(ShuttlePassListAction.SelectFilter(it)) },
+                modifier = Modifier.padding(start = Dimens.PageMarginNarrow, end = Dimens.PageMarginNarrow, top = Dimens.SpaceM)
             )
-            HorizontalDivider(Modifier.fillMaxWidth())
             PassListContent(state, onAction)
         }
         UploadDialogs(
@@ -138,88 +140,166 @@ fun ShuttlePassListScreen(
     }
 }
 
+/** Midnight band: the "Passes" app bar with its ⋮ menu, and the search box under it. */
 @Composable
-private fun ColumnScope.PassListContent(state: ShuttlePassListState, onAction: (ShuttlePassListAction) -> Unit) {
+private fun PassListHeader(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onUploadAll: () -> Unit,
+    onDeleteAll: () -> Unit
+) {
+    val colors = ShuttleTheme.colors
+    Box(Modifier.fillMaxWidth().background(colors.brandBand)) {
+        MapLines(Modifier.matchParentSize())
+        Column {
+            TabTopBar(
+                title = "Passes",
+                containerColor = Color.Transparent,
+                actions = { ActionDropdownMenu(onUploadAll = onUploadAll, onDeleteAll = onDeleteAll) }
+            )
+            PassSearchField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier.padding(start = Dimens.PageMarginNarrow, end = Dimens.PageMarginNarrow, bottom = Dimens.SpaceM)
+            )
+        }
+    }
+}
+
+@Composable
+private fun PassListContent(state: ShuttlePassListState, onAction: (ShuttlePassListAction) -> Unit) {
     val colors = ShuttleTheme.colors
     when {
         state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = colors.primary)
         }
-        state.items.isEmpty() -> {
-            Spacer(Modifier.weight(0.10f))
-            Text(
-                text = "No items to display",
-                fontStyle = FontStyle.Italic,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            Spacer(Modifier.weight(0.90f))
-        }
+        state.sections.isEmpty() -> EmptyPasses(
+            filter = state.filter,
+            query = state.query,
+            onClearSearch = { onAction(ShuttlePassListAction.QueryChange("")) }
+        )
         else -> LazyColumn(
-            modifier = Modifier
-                .background(color = colors.canvas)
-                .padding(8.dp)
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = Dimens.PageMarginNarrow, vertical = Dimens.SpaceS)
         ) {
-            items(state.items, key = { it.id }) { item ->
-                ShuttlePassCard(item = item, onClick = { onAction(ShuttlePassListAction.OpenPass(item.id)) })
+            // Header and card are one item, so a day's card is never split across items.
+            state.sections.forEach { section ->
+                item(key = section.key) {
+                    PassDayCard(section, onOpenPass = { onAction(ShuttlePassListAction.OpenPass(it)) })
+                }
+            }
+        }
+    }
+}
+
+/** "Today · Tue, Oct 20" and one card of that day's passes. */
+@Composable
+private fun PassDayCard(section: PassDaySection, onOpenPass: (String) -> Unit, modifier: Modifier = Modifier) {
+    val colors = ShuttleTheme.colors
+    Column(modifier.fillMaxWidth().padding(top = Dimens.SpaceM)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.SpaceXs).padding(bottom = Dimens.SpaceS),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(
+                section.title,
+                style = ShuttleType.Label,
+                color = colors.textPrimary,
+                modifier = Modifier.weight(1f).semantics { heading() }
+            )
+            Text(section.dateLabel, style = ShuttleType.CaptionNumeric, color = colors.textSecondary)
+        }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(Dimens.RadiusCard),
+            colors = CardDefaults.cardColors(containerColor = colors.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            section.passes.forEachIndexed { index, pass ->
+                if (index > 0) HorizontalDivider(Modifier.padding(horizontal = Dimens.SpaceM), color = colors.divider)
+                PassRow(pass, onClick = { onOpenPass(pass.id) })
             }
         }
     }
 }
 
 @Composable
-private fun FilterChoiceSegmentedButton(
-    modifier: Modifier = Modifier,
-    selectedFilter: PassFilter,
-    onFilterSelected: (PassFilter) -> Unit
-) {
-    val options = listOf(
-        "All" to PassFilter.All,
-        "Late" to PassFilter.Late,
-        "Not Synced" to PassFilter.NotSynced
-    )
-
-    SingleChoiceSegmentedButtonRow(modifier = modifier) {
-        options.forEachIndexed { index, (label, filter) ->
-            SegmentedButton(
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                onClick = { onFilterSelected(filter) },
-                selected = filter == selectedFilter,
-                label = { Text(label) }
-            )
+private fun EmptyPasses(filter: PassFilter, query: String, onClearSearch: () -> Unit) {
+    val colors = ShuttleTheme.colors
+    val message = when {
+        query.isNotBlank() -> "No passes match “${query.trim()}”."
+        filter == PassFilter.Late -> "No late passes."
+        filter == PassFilter.NotSynced -> "Everything is synced. New passes appear here until they upload."
+        else -> "No finished passes yet. Passes appear here once you complete a trip."
+    }
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.PageMargin, vertical = Dimens.SpaceXl),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(message, style = ShuttleType.Body, color = colors.textSecondary, textAlign = TextAlign.Center)
+        if (query.isNotBlank()) {
+            TextButton(onClick = onClearSearch, modifier = Modifier.padding(top = Dimens.SpaceXs)) {
+                Text("Clear search", style = ShuttleType.Label, color = colors.brandAccent)
+            }
         }
     }
 }
 
-private val previewItems = listOf(
-    ShuttlePassItemUi("1", "SPT-2025-01-0A1B2C3D4E5F", "2025-01-02  06:15 — 07:05", "Villa Estrella · Incoming", isLate = true, isSynced = false),
-    ShuttlePassItemUi("2", "SPT-2025-01-9F8E7D6C5B4A", "2025-01-01  17:10 — 18:02", "Villa Estrella · Outgoing", isLate = false, isSynced = true)
+private fun previewPass(n: Int, summary: String, isLate: Boolean = false, isSynced: Boolean = false) = ShuttlePassItemUi(
+    id = "$n", code = "SPT-2026-10-%04d".format(n), schedule = "", routeAndTrip = "",
+    isLate = isLate, isSynced = isSynced, summary = summary
 )
 
-@Preview
-@Composable
-private fun ShuttlePassListScreenPreview() {
-    ShuttleAppTheme {
-        ShuttlePassListScreen(ShuttlePassListState(items = previewItems, isLoading = false), onAction = {}, onNavigate = {})
-    }
-}
-
-@Preview
-@Composable
-private fun ShuttlePassListScreenEmptyPreview() {
-    ShuttleAppTheme {
-        ShuttlePassListScreen(ShuttlePassListState(isLoading = false), onAction = {}, onNavigate = {})
-    }
-}
-
-@Preview
-@Composable
-private fun ShuttlePassListScreenSyncFailedPreview() {
-    ShuttleAppTheme {
-        ShuttlePassListScreen(
-            ShuttlePassListState(items = previewItems, isLoading = false, sync = SyncStatus.Failed("Cannot connect to network.")),
-            onAction = {},
-            onNavigate = {}
+private val previewSections = listOf(
+    PassDaySection("2026-10-20", "Today", "Tue, Oct 20", listOf(previewPass(12, "Villa Estrella · In · 07:45"))),
+    PassDaySection(
+        "2026-10-19", "Yesterday", "Mon, Oct 19",
+        listOf(previewPass(11, "Mamatid · Out · 17:10", isLate = true), previewPass(10, "Villa Estrella · In · 07:40", isSynced = true))
+    ),
+    PassDaySection(
+        "2026-10-16", "Friday", "Oct 16",
+        listOf(
+            previewPass(9, "Mamatid · Out · 17:05"),
+            previewPass(8, "Villa Estrella · In · 07:42", isSynced = true),
+            previewPass(7, "Mamatid · Out · 17:08", isSynced = true)
         )
-    }
+    )
+)
+
+private val previewState = ShuttlePassListState(sections = previewSections, isLoading = false, pendingCount = 3, lateCount = 1)
+
+@Preview(widthDp = 412, heightDp = 916)
+@Preview(widthDp = 412, heightDp = 916, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun ShuttlePassListScreenPreview() = ShuttleAppTheme {
+    ShuttlePassListScreen(previewState, onAction = {}, onNavigate = {})
+}
+
+@Preview(widthDp = 412, heightDp = 640)
+@Composable
+private fun ShuttlePassListScreenEmptyPreview() = ShuttleAppTheme(darkTheme = false) {
+    ShuttlePassListScreen(ShuttlePassListState(isLoading = false), onAction = {}, onNavigate = {})
+}
+
+@Preview(widthDp = 412, heightDp = 640)
+@Preview(widthDp = 412, heightDp = 640, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun ShuttlePassListScreenNoResultsPreview() = ShuttleAppTheme {
+    ShuttlePassListScreen(previewState.copy(sections = emptyList(), query = "Calamba"), onAction = {}, onNavigate = {})
+}
+
+@Preview(widthDp = 412, heightDp = 640)
+@Composable
+private fun ShuttlePassListScreenLoadingPreview() = ShuttleAppTheme(darkTheme = false) {
+    ShuttlePassListScreen(ShuttlePassListState(), onAction = {}, onNavigate = {})
+}
+
+@Preview(widthDp = 412, heightDp = 916)
+@Composable
+private fun ShuttlePassListScreenSyncFailedPreview() = ShuttleAppTheme(darkTheme = false) {
+    ShuttlePassListScreen(
+        previewState.copy(sync = SyncStatus.Failed("Cannot connect to network."), isOnline = false),
+        onAction = {},
+        onNavigate = {}
+    )
 }

@@ -11,6 +11,7 @@ import com.example.shuttleapp.presentation.events.ShuttlePassListEvent
 import com.example.shuttleapp.domain.model.TokenStatus
 import com.example.shuttleapp.presentation.mapper.ShuttlePassItemUiMapper
 import com.example.shuttleapp.presentation.state.ReauthState
+import com.example.shuttleapp.presentation.state.ShuttlePassListState
 import com.example.shuttleapp.presentation.state.SyncStatus
 import com.example.shuttleapp.testutil.FakeNetworkMonitor
 import com.example.shuttleapp.testutil.FakeRoutesRepository
@@ -46,6 +47,9 @@ class ShuttlePassListViewModelTest {
         ),
         passengersQR = emptyList()
     )
+
+    /** Every row on screen, across the day sections. */
+    private val ShuttlePassListState.items get() = sections.flatMap { it.passes }
 
     @Before
     fun setUp() {
@@ -148,7 +152,46 @@ class ShuttlePassListViewModelTest {
             assertEquals(listOf("new", "old"), state.items.map { it.id })
             assertEquals("Villa Estrella · Incoming", state.items.first().routeAndTrip)
             assertEquals("2025-01-02  06:15 — 07:05", state.items.first().schedule)
+            assertEquals("Villa Estrella · In · 06:15", state.items.first().summary)
             assertTrue(state.items.first().code.endsWith("-NEW"))
+        }
+    }
+
+    @Test
+    fun `search narrows the list by pass code and route, and clearing it restores everything`() = runTest {
+        repository.passes.getValue(PassFilter.All).value = listOf(
+            pass("aaa111", 1_000),
+            pass("bbb222", 2_000).let { it.copy(shuttlePass = it.shuttlePass.copy(routeId = "r2")) }
+        )
+        viewModel = ShuttlePassListViewModel(
+            savedStateHandle = SavedStateHandle(mapOf("id" to "driver-1")),
+            shuttlePassRepository = repository,
+            itemUiMapper = ShuttlePassItemUiMapper(FakeRoutesRepository(mapOf("r1" to "Villa Estrella", "r2" to "Mamatid"))),
+            uploadControllerFactory = PassUploadController.Factory(repository, sessionRepository, networkMonitor)
+        )
+
+        viewModel.state.test {
+            assertEquals(listOf("bbb222", "aaa111"), awaitItem().items.map { it.id })
+
+            viewModel.onAction(ShuttlePassListAction.QueryChange("mamatid"))
+            val byRoute = expectMostRecentItem()
+            assertEquals("mamatid", byRoute.query)
+            assertEquals(listOf("bbb222"), byRoute.items.map { it.id })
+
+            viewModel.onAction(ShuttlePassListAction.QueryChange("AAA111"))
+            assertEquals(listOf("aaa111"), expectMostRecentItem().items.map { it.id })
+
+            viewModel.onAction(ShuttlePassListAction.QueryChange(""))
+            assertEquals(listOf("bbb222", "aaa111"), expectMostRecentItem().items.map { it.id })
+        }
+    }
+
+    @Test
+    fun `late count follows the repository for the Late filter badge`() = runTest {
+        viewModel.state.test {
+            assertEquals(0, expectMostRecentItem().lateCount)
+            repository.lateCount.value = 2
+            assertEquals(2, awaitItem().lateCount)
         }
     }
 
