@@ -20,8 +20,3 @@ data class ShuttlePassInputState(
     var dateErrorMessage: String? = null
 
 )
-
-data class QRInputState(
-    var qrCode: String = "",
-    var qrCodeErrorMessage: String? = null,
-)

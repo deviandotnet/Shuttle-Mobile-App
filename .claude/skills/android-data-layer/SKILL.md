@@ -17,7 +17,7 @@ description: >
 
 | Path | Contents |
 |---|---|
-| `config/API.kt` | `BASE_URL = "http://10.0.2.2:5105/api/"`, the emulator alias for a backend running locally on port 5105 |
+| `config/API.kt` | `BASE_URL = BuildConfig.BASE_URL`: debug `http://localhost:5105/api/` (forwarded to the PC's backend by the `adbReverse` Gradle task), release `-PshuttleApiUrl=https://…` |
 | `config/Database.kt` | `ShuttleDatabase`: entity list, DAO accessors, `version = 26`, `exportSchema = false` |
 | `data/network/` | `AuthApi` (login/register), `ShuttleApi` (providers, routes, shuttles, shuttle-pass upload) |
 | `data/network/request/`, `response/` | DTOs |

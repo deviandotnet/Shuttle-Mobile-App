@@ -35,18 +35,42 @@ class FakeShuttlePassRepository : ShuttlePassRepository {
     }
 
     override fun observePass(id: String): Flow<ShuttlePassWithPassenger?> = emptyFlow()
-    override fun observeShuttlePass(id: String): Flow<ShuttlePass?> = emptyFlow()
-    override fun observeDraft(driverId: String): Flow<ShuttlePass?> = emptyFlow()
+    /** The pass every observeShuttlePass(id) call sees; null means not found. */
+    val shuttlePass = MutableStateFlow<ShuttlePass?>(null)
+    override fun observeShuttlePass(id: String): Flow<ShuttlePass?> = shuttlePass
+    /** The driver's open draft; null means none. */
+    val draft = MutableStateFlow<ShuttlePass?>(null)
+    override fun observeDraft(driverId: String): Flow<ShuttlePass?> = draft
     val unsyncedCount = MutableStateFlow(0)
 
     override fun observeUnsyncedCount(driverId: String): Flow<Int> = unsyncedCount
     override fun observeLateCount(driverId: String): Flow<Int> = flowOf(0)
     override suspend fun getDraftId(driverId: String): String? = null
-    override suspend fun insert(pass: ShuttlePass): Resource<Unit> = Resource.Success(Unit)
-    override suspend fun update(passes: List<ShuttlePass>): Resource<Unit> = Resource.Success(Unit)
-    override suspend fun delete(id: String): Resource<Unit> = Resource.Success(Unit)
-    override suspend fun finalizeDraft(driverId: String, pass: ShuttlePass, passengers: List<PassengerQR>): Resource<Unit> =
-        Resource.Success(Unit)
+    val inserted = mutableListOf<ShuttlePass>()
+    val updated = mutableListOf<ShuttlePass>()
+    val deleted = mutableListOf<String>()
+    val finalized = mutableListOf<Pair<ShuttlePass, List<PassengerQR>>>()
+    var writeResult: Resource<Unit> = Resource.Success(Unit)
+    /** When set, update suspends until it is completed, so tests can act while a write is in flight. */
+    var updateGate: CompletableDeferred<Unit>? = null
+
+    override suspend fun insert(pass: ShuttlePass): Resource<Unit> {
+        inserted += pass
+        return writeResult
+    }
+    override suspend fun update(passes: List<ShuttlePass>): Resource<Unit> {
+        updated += passes
+        updateGate?.await()
+        return writeResult
+    }
+    override suspend fun delete(id: String): Resource<Unit> {
+        deleted += id
+        return writeResult
+    }
+    override suspend fun finalizeDraft(driverId: String, pass: ShuttlePass, passengers: List<PassengerQR>): Resource<Unit> {
+        finalized += pass to passengers
+        return writeResult
+    }
     override suspend fun syncPass(id: String): Resource<SyncResult> = syncResult
     override suspend fun purgeExpired(driverId: String): Resource<Int> = Resource.Success(0)
 }

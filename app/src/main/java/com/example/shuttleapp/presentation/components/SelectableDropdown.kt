@@ -11,6 +11,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -30,7 +32,15 @@ import com.example.shuttleapp.ui.theme.ShuttleTheme
 //SelectableDropDown
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpandedDropDown(label: String, categories: List<String>, initialValue: String, errorIndicator: Boolean, onValueChanged: (String) -> Unit) {
+fun ExpandedDropDown(
+    label: String,
+    categories: List<String>,
+    initialValue: String,
+    errorIndicator: Boolean,
+    onValueChanged: (String) -> Unit,
+    shape: Shape = OutlinedTextFieldDefaults.shape,
+    leadingIcon: (@Composable () -> Unit)? = null
+) {
     val colors = ShuttleTheme.colors
 
     var isExpanded by remember { mutableStateOf(false) }
@@ -70,6 +80,8 @@ fun ExpandedDropDown(label: String, categories: List<String>, initialValue: Stri
                 fontSize = 16.sp
             ),
             trailingIcon = {ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)},
+            leadingIcon = leadingIcon,
+            shape = shape,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Next),

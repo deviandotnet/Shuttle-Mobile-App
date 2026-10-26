@@ -8,13 +8,13 @@ class ValidateRouteInput {
         if(route.isBlank()) {
             return ShuttlePassValidationResult(
                 successful = false,
-                errorMessage = "RouteEntity can't be blank"
+                errorMessage = "Route can't be blank"
             )
         }
         if(!routes.any { it.equals(route, ignoreCase = true) }) {
             return ShuttlePassValidationResult(
                 successful = false,
-                errorMessage = "RouteEntity does not exist"
+                errorMessage = "Route does not exist"
             )
         }
 

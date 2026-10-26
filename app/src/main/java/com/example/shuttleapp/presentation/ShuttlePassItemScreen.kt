@@ -35,8 +35,9 @@ import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
 import com.example.shuttleapp.presentation.state.UploadUiState
 import com.example.shuttleapp.util.Resource
 import com.example.shuttleapp.util.formatMonthYear
-import com.example.shuttleapp.presentation.events.QRInputEvent
-import com.example.shuttleapp.Route
+import com.example.shuttleapp.presentation.components.pass.PassDetailsList
+import com.example.shuttleapp.presentation.mapper.CurrentPassUiMapper
+import com.example.shuttleapp.presentation.mapper.PassNames
 import com.example.shuttleapp.ui.theme.ShuttleTheme
 
 import kotlinx.coroutines.launch
@@ -133,37 +134,31 @@ fun ShuttlePassItemScreen(id: String, viewModel: ShuttleViewModel, navController
                     .padding(innerPadding)
                     .consumeWindowInsets(innerPadding)
             ) {
-                Column {
-                    val pass = shuttlePassenger.shuttlePass
-                    val nameState by viewModel.toNameState.collectAsState()
-                    val qrInputState by viewModel.qrInputState.collectAsState()
+                val pass = shuttlePassenger.shuttlePass
+                val nameState by viewModel.toNameState.collectAsState()
 
-                    LaunchedEffect(pass) {
-                        viewModel.getRouteNameById(pass.routeId)
-                        viewModel.getPlateNumberByShuttleId(pass.plateNumber)
-                        viewModel.getProviderNameById(pass.provider)
-                        viewModel.getDriverNameById(pass.driver)
-                    }
+                LaunchedEffect(pass) {
+                    viewModel.getRouteNameById(pass.routeId)
+                    viewModel.getPlateNumberByShuttleId(pass.plateNumber)
+                    viewModel.getProviderNameById(pass.provider)
+                    viewModel.getDriverNameById(pass.driver)
+                }
 
-                    // A finalized pass is read-only: the form hides its draft-only actions.
-                    ShuttlePassFormTest(
-                        shuttlePass = pass,
-                        draftPassengerList = shuttlePassenger.passengersQR,
-                        nameState = nameState,
-                        qrInputState = qrInputState,
-                        onAddPassenger = { navController.navigate(Route.QrScannerScreen.route + "/${pass.id}") },
-                        onRecordDeparture = { viewModel.recordDeparture(pass) },
-                        onComplete = {
-                            viewModel.completeShuttlePass(pass, shuttlePassenger.passengersQR)
-                            navController.navigateUp()
-                        },
-                        onDeletePassenger = viewModel::deletePassenger,
-                        onStartEditPassenger = viewModel::startEditingPassenger,
-                        onEditQrChanged = { viewModel.onPassengerInputEvent(QRInputEvent.ScannedQRChanged(it)) },
-                        onSaveEditedPassenger = viewModel::saveEditedPassenger,
-                        onCancelEditPassenger = viewModel::resetPassengerInputState
+                // Finalized passes are read-only, so the manifest gets no edit/delete callbacks.
+                // TODO: move this mapping into a dedicated ViewModel when this screen moves to MVI.
+                val card = remember(pass, nameState) {
+                    CurrentPassUiMapper.toCard(
+                        pass,
+                        PassNames(
+                            route = nameState.routeName.orEmpty(),
+                            plateNumber = nameState.plateNumber.orEmpty(),
+                            provider = nameState.providerName.orEmpty(),
+                            driver = nameState.driverName.orEmpty()
+                        )
                     )
                 }
+                val rows = remember(shuttlePassenger.passengersQR) { CurrentPassUiMapper.toRows(shuttlePassenger.passengersQR) }
+                PassDetailsList(card = card, passengers = rows, onEditPassenger = null, onDeletePassenger = null)
 
             }
         }

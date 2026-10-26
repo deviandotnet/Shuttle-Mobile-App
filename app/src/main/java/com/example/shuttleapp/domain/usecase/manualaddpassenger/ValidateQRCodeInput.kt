@@ -8,7 +8,7 @@ class ValidateQRCodeInput() {
     fun execute(qrCode: String, qrCodes: List<PassengerQR>) : ShuttlePassValidationResult {
 
 
-        if(!qrCode.uppercase().contains("Passenger_".uppercase())) { //put !
+        if(!isPassengerQr(qrCode)) {
             return ShuttlePassValidationResult(
                 successful = false,
                 errorMessage = "Invalid QR Code. Unknown."
@@ -27,5 +27,10 @@ class ValidateQRCodeInput() {
         )
     }
 
+    companion object {
+        private const val PASSENGER_QR_MARKER = "PASSENGER_"
 
+        /** The one rule for "this is a passenger QR", shared by the scanner and the edit-passenger dialog. */
+        fun isPassengerQr(qrCode: String): Boolean = qrCode.uppercase().contains(PASSENGER_QR_MARKER)
+    }
 }

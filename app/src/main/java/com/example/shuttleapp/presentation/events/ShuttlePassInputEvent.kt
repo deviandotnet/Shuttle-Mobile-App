@@ -11,5 +11,4 @@ sealed class ShuttlePassInputEvent {
     data class DateChanged(val date: String) : ShuttlePassInputEvent()
     data class ArrivalChanged(val arrival: String) : ShuttlePassInputEvent()
 
-    data object Submit : ShuttlePassInputEvent()
 }

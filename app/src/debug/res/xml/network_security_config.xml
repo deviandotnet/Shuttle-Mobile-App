@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Debug only: allow plain HTTP to the local ASP.NET Core API. Release builds keep the platform default (HTTPS only). -->
+<!-- Debug only: allow plain HTTP to the local ASP.NET Core API. Release builds keep the platform default (HTTPS only).
+     localhost is the default (tunnelled to the PC by the adbReverse Gradle task); 10.0.2.2 stays for -PshuttleDebugApiUrl. -->
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">10.0.2.2</domain>

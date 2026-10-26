@@ -57,7 +57,7 @@ The generated PNG mockups are raster images and do not contain inspectable font 
 
 - **Bottom bar:** three destinations, Home · Passes · Sync. Each is a real screen, and the bar stays visible on all three. The selected item gets a Mist blue pill (64×32) with a Midnight icon and label. Sync carries an amber count badge for passes waiting to upload.
 - **Primary action:** one Midnight Extended FAB, bottom-right, 16dp above the bar. It reads "New pass", or "Current trip" while a draft is open. There is no full-width sticky button.
-- **Header:** the Midnight band draws behind the status bar (edge-to-edge, white system icons). The initials avatar is the only way to open the drawer. There is no gear on Home.
+- **Header:** the Midnight band draws behind the status bar (edge-to-edge, white system icons). On Home the initials avatar opens the drawer, and there is no gear. On the Passes tab a hamburger at the start of the app bar opens the same drawer.
 - **Drawer:** an account menu, all in Midnight. From top to bottom:
   - Brand line and close button.
   - Profile: avatar, name, employee number, shuttle provider.
@@ -67,6 +67,22 @@ The generated PNG mockups are raster images and do not contain inspectable font 
   - Skyline footer.
   
   It never repeats bottom-bar destinations.
+
+## Pass list (mockup 08)
+
+Source: `source/pass-list.html`. This is the Passes tab: every finished pass, opened to view its details.
+
+- **Band:** a Midnight app bar with a hamburger (opens the drawer), the title "Passes" and an overflow menu (Upload all unsynced). Below it, inside the band, a full-width white search field (48 px, 12 px radius) reading "Search pass ID or route". The bar has 15 px side padding, so the hamburger lines up over the search icon and the title lines up over the placeholder. There is no search icon button and no add button.
+- **Filters:** a segmented control on the canvas (All · Late · Not synced) on a white track with a Mist selected segment. Late and Not synced carry count chips (Error soft / Warning soft).
+- **List:** grouped by day ("Today", "Yesterday", then the weekday and date). Each group is a white card (16 px radius, elevation 2) with rows divided by inset dividers. Rows reuse Home's `RecentPassRow`:
+  - a bare filled Article icon (24 px, Midnight);
+  - the pass ID in Label (14/20 semibold, proportional figures);
+  - a Caption meta line (route · In/Out · departure time);
+  - status pills stacked at the end, Pending (amber) or Synced (mint) with a **Late** pill (Error soft) under it when the pass ran late;
+  - a chevron.
+
+  Pills have an 8 px dot and Caption text, so status is never colour alone.
+- **Bottom bar:** `HomeBottomBar` (Material navigation bar) with Home · Passes (selected, Mist indicator) · Sync and the small amber pending badge. Icons are filled Home, Article and Sync, with 12 px NavLabel text. There is no FAB on this tab.
 
 ## Auth (mockups 01–03a)
 
@@ -144,3 +160,4 @@ Rules: brand bands stay dark navy in both themes, so their status bar icons are 
 - Navy text on warm white is the default high-contrast pairing.
 - Mint should signal scanning, success, or a positive primary action—not decoration.
 - Amber is reserved for pending/caution; red is reserved for errors and destructive actions.
+- Irreversible completions (ending a shuttle pass) use `SwipeToCompleteButton`, not a tap: Mint-soft 56 px track, 48 px Mint thumb, commits only past 90% of the track, springs back otherwise. When disabled it greys out and a caption under it says why. It is also a plain button for screen readers.

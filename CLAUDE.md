@@ -24,7 +24,7 @@ Single-module Gradle project (`:app`), Kotlin DSL, version catalog at `gradle/li
 
 Only the template example tests exist today; there is no real test suite yet.
 
-The backend is a separate C# ASP.NET Core API. `API.BASE_URL` is `http://10.0.2.2:5105/api/` — the emulator alias for the host machine — so the backend must be running locally on port 5105 for login/register/sync to work.
+The backend is a separate C# ASP.NET Core API. `API.BASE_URL` (debug) is `http://localhost:5105/api/`, so the backend must be running locally on port 5105 for login/register/sync to work. The `adbReverse` Gradle task runs before every debug build and forwards each connected device's `localhost:5105` to the PC (`adb reverse`), so the emulator and phones on wireless debugging use the same build regardless of the PC's LAN IP. If a device connects after the build, run `./gradlew adbReverse`. Override the URL with `-PshuttleDebugApiUrl=...` (e.g. `http://10.0.2.2:5105/api/` for the emulator without adb reverse).
 
 ## Architecture (big picture)
 
@@ -49,6 +49,6 @@ The backend is a separate C# ASP.NET Core API. `API.BASE_URL` is `http://10.0.2.
 
 The existing code does not yet fully follow `AGENTS.md`; don't copy these patterns into new code, and don't mass-refactor them unless asked:
 - Domain repository interfaces (e.g. `ShuttlePassRepository`) expose `data` entities and DTOs, and several screens/ViewModels import from `com.example.shuttleapp.data` directly.
-- Screens receive ViewModels and `NavController` as parameters instead of hoisted state + lambdas.
-- `ShuttleViewModel` (~900 lines) exposes several separate `StateFlow`s rather than a single UI state.
+- Several screens (Home, pass detail, edit pass, scanner) receive ViewModels and `NavController` as parameters instead of hoisted state + lambdas. The current-pass screen (`CurrentPassRoot` / `CurrentPassViewModel`) and the pass list follow the MVI pattern — copy those.
+- `ShuttleViewModel` (~650 lines) exposes several separate `StateFlow`s rather than a single UI state.
 - `AppModule` uses `HttpLoggingInterceptor.Level.BODY` unconditionally, and no Bearer-token interceptor exists yet.

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pass list mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --midnight:#07113F; --navy:#0B2A66; --brand-blue:#123A78; --mint:#55D6B4; --mint-dark:#16A37A; --mint-soft:#DFF8F1;
+    --warm:#FAF9F6; --white:#FFFFFF; --mist:#DCEAF2; --subtle:#F4F7FA; --text2:#65769A; --border:#B8C5D9; --divider:#E8EEF5;
+    --disabled:#9CA8BA; --warn:#F59E0B; --warn-soft:#FFF3D6; --warn-text:#B45309; --err:#DC2626; --err-soft:#FDE7E7;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:1024px; height:1536px; overflow:hidden; }
+  body { background:#F3F0EA; font-family:'Inter',sans-serif; color:var(--midnight); -webkit-font-smoothing:antialiased; }
+  .phone { position:absolute; left:212px; top:118px; width:600px; height:1300px; border-radius:66px; background:#15161A;
+           box-shadow:0 30px 60px rgba(7,17,63,.18), 0 8px 18px rgba(7,17,63,.12), inset 0 0 0 2px #2A2C33; }
+  .glass { position:absolute; left:14px; top:14px; width:572px; height:1272px; border-radius:52px; overflow:hidden; background:var(--warm); }
+  .screen { position:absolute; left:0; top:0; width:412px; height:916px; transform:scale(1.3883); transform-origin:0 0; overflow:hidden; background:var(--warm); }
+  .camera { position:absolute; left:50%; top:10px; width:13px; height:13px; margin-left:-6.5px; border-radius:50%; background:#0A0B0F; z-index:50; }
+  svg.i { width:24px; height:24px; fill:currentColor; flex:none; display:block; }
+  .tn { font-feature-settings:"tnum"; }
+
+  .status { position:absolute; left:0; right:0; top:0; height:36px; padding:0 22px; display:flex; align-items:center; justify-content:space-between;
+            color:#fff; font-size:14px; font-weight:600; z-index:40; }
+  .status .sys { display:flex; gap:6px; align-items:center; }
+  .status svg { width:16px; height:16px; fill:#fff; }
+  .gesture { position:absolute; bottom:8px; left:50%; width:120px; height:4px; margin-left:-60px; border-radius:2px; background:var(--midnight); opacity:.85; z-index:45; }
+
+  /* ---- band: app bar + search ---- */
+  .band { position:absolute; left:0; right:0; top:0; height:168px; background:var(--midnight); overflow:hidden; z-index:20; }
+  .band svg.lines { position:absolute; inset:0; width:100%; height:100%; }
+  .bar { position:absolute; left:0; right:0; top:36px; height:64px; display:flex; align-items:center; padding:0 15px; color:#fff; z-index:25; }
+  .bar .ib { width:48px; height:48px; display:flex; align-items:center; justify-content:center; }
+  .bar h1 { flex:1; font-size:20px; line-height:28px; font-weight:600; letter-spacing:-.05px; margin-left:4px; }
+  .search { position:absolute; left:16px; right:16px; top:104px; height:48px; border-radius:12px; background:var(--white); z-index:25;
+            display:flex; align-items:center; gap:16px; padding:0 12px; box-shadow:0 2px 6px rgba(0,0,0,.18); }
+  .search svg { width:22px; height:22px; fill:var(--text2); flex:none; }
+  .search span { font-size:16px; line-height:24px; color:var(--text2); }
+
+  /* ---- filters ---- */
+  .seg { position:absolute; left:16px; right:16px; top:184px; height:44px; display:flex; padding:4px; gap:4px; border-radius:12px;
+         background:var(--white); box-shadow:inset 0 0 0 1px var(--divider); }
+  .seg div { flex:1; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:15px; line-height:20px; font-weight:600; color:var(--text2); }
+  .seg div.on { background:var(--mist); color:var(--midnight); }
+  .seg .c { min-width:20px; height:20px; padding:0 6px; border-radius:10px; font-size:12px; line-height:20px; font-weight:700; text-align:center; font-feature-settings:"tnum"; }
+  .seg .c.late { background:var(--err-soft); color:var(--err); }
+  .seg .c.wait { background:var(--warn-soft); color:var(--warn-text); }
+
+  /* ---- list (matches RecentPassRow on Home) ---- */
+  .list { position:absolute; left:16px; right:16px; top:244px; bottom:0; }
+  .day { display:flex; align-items:baseline; justify-content:space-between; padding:0 4px; margin:24px 0 8px; font-size:14px; line-height:20px; font-weight:600; }
+  .day:first-child { margin-top:0; }
+  .day span { font-size:13px; line-height:18px; font-weight:500; color:var(--text2); }
+  .card { background:var(--white); border-radius:16px; box-shadow:0 1px 2px rgba(7,17,63,.10), 0 2px 6px rgba(7,17,63,.08); overflow:hidden; }
+  .row { position:relative; display:flex; align-items:center; gap:12px; min-height:72px; padding:12px 8px 12px 16px; }
+  .row + .row::before { content:""; position:absolute; left:16px; right:16px; top:0; height:1px; background:var(--divider); }
+  .row > svg.doc { width:24px; height:24px; fill:var(--midnight); flex:none; }
+  .t { flex:1; min-width:0; }
+  .t b { display:block; font-size:14px; line-height:20px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .t span { display:block; font-size:13px; line-height:18px; font-weight:500; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pills { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex:none; }
+  .pill { padding:4px 10px; border-radius:999px; display:flex; align-items:center; gap:6px; font-size:13px; line-height:18px; font-weight:500; }
+  .pill i { width:8px; height:8px; border-radius:50%; }
+  .pill.ok { background:var(--mint-soft); color:var(--mint-dark); } .pill.ok i { background:var(--mint-dark); }
+  .pill.wait { background:var(--warn-soft); color:var(--warn-text); } .pill.wait i { background:var(--warn); }
+  .pill.late { background:var(--err-soft); color:var(--err); } .pill.late i { background:var(--err); }
+  .row > svg.chev { width:24px; height:24px; fill:var(--text2); flex:none; }
+
+  /* ---- bottom bar (HomeBottomBar: Material NavigationBar) ---- */
+  .nav { position:absolute; left:0; right:0; bottom:0; height:104px; background:var(--white); box-shadow:0 -1px 0 var(--divider); display:flex; padding-top:12px; z-index:30; }
+  .nav div { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:12px; line-height:16px; font-weight:600; color:var(--text2); }
+  .nav .ic { position:relative; width:64px; height:32px; border-radius:16px; display:flex; align-items:center; justify-content:center; }
+  .nav .ic svg { width:24px; height:24px; fill:var(--text2); }
+  .nav .on { color:var(--midnight); }
+  .nav .on .ic { background:var(--mist); } .nav .on .ic svg { fill:var(--midnight); }
+  .nav .badge { position:absolute; left:38px; top:0; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:var(--warn); color:var(--midnight);
+                font-size:11px; line-height:16px; font-weight:600; text-align:center; font-feature-settings:"tnum"; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+    <symbol id="more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+    <symbol id="search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+    <symbol id="doc" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></symbol>
+    <symbol id="chev" viewBox="0 0 24 24"><path d="M10.02 6L8.61 7.41 13.19 12l-4.58 4.59L10.02 18l6-6z"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></symbol>
+    <symbol id="home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+    <symbol id="sync" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></symbol>
+  </defs>
+</svg>
+
+<div class="phone"><div class="glass"><div class="screen">
+  <div class="band">
+    <svg class="lines" viewBox="0 0 412 168" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="1.5">
+      <path d="M0 60 C120 20 230 120 412 70"/><circle cx="372" cy="20" r="70"/>
+    </svg>
+  </div>
+  <div class="status"><span class="tn">1:34</span><span class="sys">
+    <svg viewBox="0 0 24 24"><path d="M12 21L.5 7.5C3.5 5 7.5 3.5 12 3.5S20.5 5 23.5 7.5z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M2 22h20V2z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M16 4h-2V2h-4v2H8c-.55 0-1 .45-1 1v16c0 .55.45 1 1 1h8c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1z"/></svg></span></div>
+  <div class="bar">
+    <div class="ib"><svg class="i"><use href="#menu"/></svg></div>
+    <h1>Passes</h1>
+    <div class="ib"><svg class="i"><use href="#more"/></svg></div>
+  </div>
+  <div class="search"><svg><use href="#search"/></svg><span>Search pass ID or route</span></div>
+
+  <div class="seg">
+    <div class="on">All</div>
+    <div>Late <span class="c late">1</span></div>
+    <div>Not synced <span class="c wait">3</span></div>
+  </div>
+
+  <div class="list">
+    <div class="day">Today<span>Tue, Oct 20</span></div>
+    <div class="card">
+      <div class="row"><svg class="doc"><use href="#doc"/></svg>
+        <div class="t"><b>SPT-2026-10-0012</b><span>Villa Estrella · In · 07:45</span></div>
+        <div class="pills"><div class="pill wait"><i></i>Pending</div></div><svg class="chev"><use href="#chev"/></svg></div>
+    </div>
+
+    <div class="day">Yesterday<span>Mon, Oct 19</span></div>
+    <div class="card">
+      <div class="row"><svg class="doc"><use href="#doc"/></svg>
+        <div class="t"><b>SPT-2026-10-0011</b><span>Mamatid · Out · 17:10</span></div>
+        <div class="pills"><div class="pill wait"><i></i>Pending</div><div class="pill late"><i></i>Late</div></div><svg class="chev"><use href="#chev"/></svg></div>
+      <div class="row"><svg class="doc"><use href="#doc"/></svg>
+        <div class="t"><b>SPT-2026-10-0010</b><span>Villa Estrella · In · 07:40</span></div>
+        <div class="pills"><div class="pill ok"><i></i>Synced</div></div><svg class="chev"><use href="#chev"/></svg></div>
+    </div>
+
+    <div class="day">Friday<span>Oct 16</span></div>
+    <div class="card">
+      <div class="row"><svg class="doc"><use href="#doc"/></svg>
+        <div class="t"><b>SPT-2026-10-0009</b><span>Mamatid · Out · 17:05</span></div>
+        <div class="pills"><div class="pill wait"><i></i>Pending</div></div><svg class="chev"><use href="#chev"/></svg></div>
+      <div class="row"><svg class="doc"><use href="#doc"/></svg>
+        <div class="t"><b>SPT-2026-10-0008</b><span>Villa Estrella · In · 07:42</span></div>
+        <div class="pills"><div class="pill ok"><i></i>Synced</div></div><svg class="chev"><use href="#chev"/></svg></div>
+      <div class="row"><svg class="doc"><use href="#doc"/></svg>
+        <div class="t"><b>SPT-2026-10-0007</b><span>Mamatid · Out · 17:08</span></div>
+        <div class="pills"><div class="pill ok"><i></i>Synced</div></div><svg class="chev"><use href="#chev"/></svg></div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div><span class="ic"><svg><use href="#home"/></svg></span>Home</div>
+    <div class="on"><span class="ic"><svg><use href="#doc"/></svg></span>Passes</div>
+    <div><span class="ic"><svg><use href="#sync"/></svg><span class="badge">3</span></span>Sync</div>
+  </div>
+  <div class="gesture"></div>
+</div><div class="camera"></div></div></div>
+</body>
+</html>

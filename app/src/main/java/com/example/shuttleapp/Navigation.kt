@@ -13,10 +13,10 @@ import androidx.navigation.navArgument
 import com.example.shuttleapp.domain.model.PassFilter
 import com.example.shuttleapp.presentation.LoginScreen
 import com.example.shuttleapp.presentation.RegisterScreen
-import com.example.shuttleapp.presentation.AVCurrentPassScreenTest
+import com.example.shuttleapp.presentation.CurrentPassRoot
 import com.example.shuttleapp.presentation.EditShuttlePassInformationScreen
 import com.example.shuttleapp.presentation.HomeScreen
-import com.example.shuttleapp.presentation.QRScannerScreen
+import com.example.shuttleapp.presentation.QrScannerRoot
 import com.example.shuttleapp.presentation.SettingsRoot
 import com.example.shuttleapp.presentation.ShuttlePassItemScreen
 import com.example.shuttleapp.presentation.ShuttlePassListRoot
@@ -24,6 +24,7 @@ import com.example.shuttleapp.presentation.SyncRoot
 import com.example.shuttleapp.presentation.components.SystemBarsFrame
 import com.example.shuttleapp.presentation.components.home.HomeNavItem
 import com.example.shuttleapp.presentation.viewmodel.ShuttlePassListViewModel
+import com.example.shuttleapp.presentation.viewmodel.CurrentPassViewModel
 import com.example.shuttleapp.presentation.viewmodel.ShuttleViewModel
 import com.example.shuttleapp.presentation.viewmodel.AppearanceViewModel
 import com.example.shuttleapp.presentation.viewmodel.SyncViewModel
@@ -106,13 +107,14 @@ fun Navigation(
         composable(
             route = Route.AVCurrentPassScreen.route + "/{id}",
             arguments = listOf(idArgument())
-        ) { entry ->
-            val id = entry.arguments?.getString("id") ?: ""
+        ) {
+            // CurrentPassViewModel reads the driver id from SavedStateHandle["id"].
             SystemBarsFrame {
-                AVCurrentPassScreenTest(
-                    userId = id,
-                    viewModel = hiltViewModel<ShuttleViewModel>(),
-                    navController = navController
+                CurrentPassRoot(
+                    viewModel = hiltViewModel<CurrentPassViewModel>(),
+                    onBack = { navController.navigateUp() },
+                    onOpenScanner = { passId -> navController.navigate(Route.QrScannerScreen.route + "/$passId") },
+                    onEditPass = { passId -> navController.navigate(Route.EditShuttlePassInfoScreen.route + "/$passId") }
                 )
             }
         }
@@ -148,9 +150,9 @@ fun Navigation(
         composable(
             route = Route.QrScannerScreen.route + "/{id}",
             arguments = listOf(idArgument())
-        ) { entry ->
-            val id = entry.arguments?.getString("id") ?: ""
-            SystemBarsFrame { QRScannerScreen(id, navController, qrAnalyzerViewModel = hiltViewModel()) }
+        ) {
+            // The scanner reads the pass id ("id") from its SavedStateHandle.
+            SystemBarsFrame { QrScannerRoot(viewModel = hiltViewModel(), onBack = { navController.navigateUp() }) }
         }
     }
 }

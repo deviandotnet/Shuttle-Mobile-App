@@ -1,5 +1,9 @@
 package com.example.shuttleapp.di
 
+import com.example.shuttleapp.domain.repository.PassengerQRRepository
+import com.example.shuttleapp.domain.repository.RoutesRepository
+import com.example.shuttleapp.domain.repository.ShuttlePassRepository
+import com.example.shuttleapp.domain.repository.ShuttleRepository
 import com.example.shuttleapp.domain.repository.UserDataRepository
 import com.example.shuttleapp.domain.usecase.login.ValidateLoginInput
 import com.example.shuttleapp.domain.usecase.login.ValidatePasswordInput
@@ -18,6 +22,9 @@ import com.example.shuttleapp.domain.usecase.register.ValidateLastNameInput
 import com.example.shuttleapp.domain.usecase.register.ValidateMiddleNameInput
 import com.example.shuttleapp.domain.usecase.register.ValidateProviderInput
 import com.example.shuttleapp.domain.usecase.register.ValidateRePasswordInput
+import com.example.shuttleapp.domain.usecase.shuttlepass.BoardPassengerUseCase
+import com.example.shuttleapp.domain.usecase.shuttlepass.CompleteShuttlePassUseCase
+import com.example.shuttleapp.domain.usecase.shuttlepass.CreateDraftPassUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -112,6 +119,32 @@ class UseCaseModule {
     @Provides
     fun provideValidateTripTypeInput() : ValidateTripTypeInput {
         return ValidateTripTypeInput()
+    }
+
+    @Provides
+    fun provideCreateDraftPassUseCase(
+        shuttlePassRepository: ShuttlePassRepository,
+        routesRepository: RoutesRepository,
+        shuttleRepository: ShuttleRepository
+    ) : CreateDraftPassUseCase {
+        return CreateDraftPassUseCase(
+            shuttlePassRepository = shuttlePassRepository,
+            routesRepository = routesRepository,
+            shuttleRepository = shuttleRepository,
+            validateRouteInput = ValidateRouteInput(),
+            validateTripTypeInput = ValidateTripTypeInput(),
+            validatePlateNumberInput = ValidatePlateNumberInput()
+        )
+    }
+
+    @Provides
+    fun provideCompleteShuttlePassUseCase(shuttlePassRepository: ShuttlePassRepository) : CompleteShuttlePassUseCase {
+        return CompleteShuttlePassUseCase(shuttlePassRepository)
+    }
+
+    @Provides
+    fun provideBoardPassengerUseCase(passengerQRRepository: PassengerQRRepository) : BoardPassengerUseCase {
+        return BoardPassengerUseCase(passengerQRRepository)
     }
 
 }

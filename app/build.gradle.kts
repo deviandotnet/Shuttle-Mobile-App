@@ -9,6 +9,10 @@ plugins {
 }
 
 val releaseApiUrl: String? = providers.gradleProperty("shuttleApiUrl").orNull
+// Debug talks to the PC's backend through `adb reverse` (the adbReverse task below), so the same URL works on the
+// emulator and on phones over wireless debugging, whatever LAN IP DHCP gives the PC. Override with -PshuttleDebugApiUrl.
+val debugApiUrl: String = providers.gradleProperty("shuttleDebugApiUrl").orNull ?: "http://localhost:5105/api/"
+val backendPort = 5105
 
 // A release APK without a real https API URL could never sign in or upload, so refuse to build one.
 gradle.taskGraph.whenReady {
@@ -36,13 +40,17 @@ android {
 
     buildTypes {
         debug {
-            // 10.0.2.2 is the emulator's alias for the host machine (local ASP.NET Core API on :5105).
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:5105/api/\"")
+            // localhost:5105 on the device is forwarded to the PC's local ASP.NET Core API by adbReverse.
+            buildConfigField("String", "BASE_URL", "\"$debugApiUrl\"")
         }
         release {
             // Pass the production API with -PshuttleApiUrl=https://... (or set it in gradle.properties).
             // Missing/non-https values fail any release task (see the taskGraph guard below), never debug builds.
             buildConfigField("String", "BASE_URL", "\"${releaseApiUrl.orEmpty()}\"")
+            // The APK is sideloaded (no Play Store ABI splits), so ship only the phone ABIs to keep the bundled
+            // ML Kit libraries small: arm64 plus armeabi-v7a for 32-bit / Android Go phones. Debug keeps every
+            // ABI so the x86_64 emulator still installs.
+            ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -60,6 +68,52 @@ android {
         buildConfig = true
     }
 }
+
+// Forwards localhost:5105 on every connected device (emulators and wireless-debugging phones) to this PC.
+// Runs before each debug build, so pressing Run sets it up; run `./gradlew adbReverse` after reconnecting a device.
+// It only warns on failure: a missing adb or no device must never break the build.
+val adbReverse = tasks.register("adbReverse") {
+    group = "shuttle"
+    description = "Runs adb reverse tcp:$backendPort tcp:$backendPort on every connected device."
+    val adb = androidComponents.sdkComponents.adb
+    outputs.upToDateWhen { false }
+    doLast {
+        try {
+            val adbPath = adb.get().asFile.absolutePath
+            fun runAdb(vararg args: String): Pair<Int, String> {
+                val process = ProcessBuilder(adbPath, *args).redirectErrorStream(true).start()
+                val output = process.inputStream.bufferedReader().readText()
+                return process.waitFor() to output.trim()
+            }
+            val (devicesExit, devicesOutput) = runAdb("devices")
+            if (devicesExit != 0) {
+                logger.warn("adbReverse: `adb devices` failed: $devicesOutput")
+                return@doLast
+            }
+            val serials = devicesOutput.lines()
+                .drop(1)
+                .map { it.trim().split(Regex("\\s+")) }
+                .filter { it.size >= 2 && it[1] == "device" }
+                .map { it[0] }
+            if (serials.isEmpty()) {
+                logger.warn("adbReverse: no device connected, skipped. Run `./gradlew adbReverse` once one is.")
+                return@doLast
+            }
+            serials.forEach { serial ->
+                val (exit, output) = runAdb("-s", serial, "reverse", "tcp:$backendPort", "tcp:$backendPort")
+                if (exit == 0) {
+                    logger.lifecycle("adbReverse: $serial localhost:$backendPort -> PC:$backendPort")
+                } else {
+                    logger.warn("adbReverse: $serial failed: $output")
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("adbReverse: skipped, could not run adb: ${e.message}")
+        }
+    }
+}
+
+tasks.named { it == "preDebugBuild" }.configureEach { dependsOn(adbReverse) }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
@@ -119,17 +173,15 @@ dependencies {
     implementation("androidx.room:room-paging:2.7.1")
     ksp("androidx.room:room-compiler:2.7.1")
 
-    //import qr zxing library
-    implementation("com.journeyapps:zxing-android-embedded:4.1.0")
-    implementation("com.google.zxing:core:3.5.3")
-
-    //other dependency for barcode scanning
-    //implementation("com.google.android.gms:play-services-code-scanner:16.1.0") //optional for zxing
+    //QR decoding: ML Kit's bundled model ships inside the APK, so it works without Google Play services
+    //and offline from the first launch (the app is sideloaded, not installed from the Play Store)
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
 
     //CameraX
     implementation("androidx.camera:camera-camera2:1.5.1")
     implementation("androidx.camera:camera-lifecycle:1.5.1")
     implementation("androidx.camera:camera-view:1.5.1")
+    implementation("androidx.camera:camera-mlkit-vision:1.5.1")
     implementation(libs.androidx.concurrent.futures) // align with androidx.test, see libs.versions.toml
 
     //icons extended

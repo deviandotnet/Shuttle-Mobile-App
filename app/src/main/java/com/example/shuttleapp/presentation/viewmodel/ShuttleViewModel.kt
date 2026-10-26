@@ -18,27 +18,17 @@ import com.example.shuttleapp.domain.repository.PassengerQRRepository
 import com.example.shuttleapp.presentation.mapper.ShuttlePassItemUiMapper
 import com.example.shuttleapp.domain.repository.RoutesRepository
 import com.example.shuttleapp.domain.repository.ShuttlePassRepository
-import com.example.shuttleapp.domain.usecase.manualaddpassenger.ValidateQRCodeInput
-import com.example.shuttleapp.domain.usecase.manualinputshuttlepass.ValidateDriverInput
-import com.example.shuttleapp.domain.usecase.manualinputshuttlepass.ValidatePlateNumberInput
-import com.example.shuttleapp.domain.usecase.manualinputshuttlepass.ValidateRouteInput
-import com.example.shuttleapp.domain.usecase.manualinputshuttlepass.ValidateShuttleProviderInput
-import com.example.shuttleapp.domain.usecase.manualinputshuttlepass.ValidateTripTypeInput
-import com.example.shuttleapp.presentation.events.QRInputEvent
 import com.example.shuttleapp.presentation.events.ShuttlePassInputEvent
 import com.example.shuttleapp.presentation.events.ShuttlePassUiEvent
 import com.example.shuttleapp.presentation.state.CardState
 import com.example.shuttleapp.presentation.state.IdNameState
 import com.example.shuttleapp.presentation.state.PassengerListState
 import com.example.shuttleapp.presentation.state.ShuttlePassInputState
-import com.example.shuttleapp.presentation.state.QRInputState
 import com.example.shuttleapp.presentation.state.RouteState
 import com.example.shuttleapp.presentation.state.ShuttlePassWithPassengerState
 import com.example.shuttleapp.presentation.state.ShuttleState
 import com.example.shuttleapp.presentation.state.UserState
 import com.example.shuttleapp.util.Resource
-import com.example.shuttleapp.util.displayDate
-import com.example.shuttleapp.util.displayTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -53,8 +43,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Calendar
-import java.util.UUID
 import javax.inject.Inject
 
 @SuppressLint("LongLogTag")
@@ -67,14 +55,7 @@ class ShuttleViewModel @Inject constructor(
     private val shuttleProviderRepository: ShuttleProviderRepository,
     private val logoutUseCase: LogoutUseCase,
     private val passengerQRRepository: PassengerQRRepository,
-    private val itemUiMapper: ShuttlePassItemUiMapper,
-
-    private val validateQRCodeInput : ValidateQRCodeInput,
-    private val validateDriverInput : ValidateDriverInput,
-    private val validatePlateNumberInput : ValidatePlateNumberInput,
-    private val validateRouteInput : ValidateRouteInput,
-    private val validateShuttleProviderInput : ValidateShuttleProviderInput,
-    private val validateTripTypeInput : ValidateTripTypeInput
+    private val itemUiMapper: ShuttlePassItemUiMapper
 ) : ViewModel() {
 
     private val _userState = MutableStateFlow(UserState())
@@ -85,9 +66,6 @@ class ShuttleViewModel @Inject constructor(
 
     private val _routeState = MutableStateFlow(RouteState())
     val routeState : StateFlow<RouteState> = _routeState.asStateFlow()
-
-    val shuttleProviders: List<String> = listOf(
-        "BCTSS", "3R&N", "CHERICH")
 
     //todo check the
     private val _shuttlePassWithPassengers = MutableStateFlow(ShuttlePassWithPassengerState())
@@ -115,62 +93,15 @@ class ShuttleViewModel @Inject constructor(
     private val _shuttlePassInputState = MutableStateFlow(ShuttlePassInputState())
     val shuttlePassInputState: StateFlow<ShuttlePassInputState> = _shuttlePassInputState.asStateFlow()
 
-    private val _qrInputState = MutableStateFlow(QRInputState())
-    val qrInputState: StateFlow<QRInputState> get() = _qrInputState
-
     private val _forUpdateShuttlePass = MutableStateFlow(ShuttlePass())
     val forUpdateShuttlePass: StateFlow<ShuttlePass> = _forUpdateShuttlePass.asStateFlow()
 
     private val _draftedPassengerListState = MutableStateFlow(PassengerListState())
     val draftedPassengerListState: StateFlow<PassengerListState> = _draftedPassengerListState.asStateFlow()
 
-    private val _shuttlePass = MutableStateFlow(
-        ShuttlePass(
-            id = UUID.randomUUID().toString(),
-            routeId = "Buena Vista",
-            provider = "BCTSS",
-            driver = "Erick Manalo",
-            plateNumber = "ABCD 1211",
-            date = displayDate(),
-            dateCreated = System.currentTimeMillis(),
-            tripType = "Incoming",
-            departure = "",
-            arrival = "",
-            isSynced = false,
-            isLateShuttle = false,
-            isDraft = true
-        )
-    )
-    val shuttlePass: StateFlow<ShuttlePass> = _shuttlePass.asStateFlow()
-
     private val _editedShuttlePassState = MutableStateFlow(ShuttlePass())
     val editedShuttlePassState: StateFlow<ShuttlePass> = _editedShuttlePassState.asStateFlow()
 
-    fun isLateShuttle(tripType: String): Boolean {
-        val currentTime: Calendar = Calendar.getInstance()
-        val hour: Int = currentTime.get(Calendar.HOUR)
-        val minute: Int = currentTime.get(Calendar.MINUTE)
-
-        // Convert hour to 12-hour format
-        val hour12: Int = if (currentTime.get(Calendar.AM_PM) == Calendar.AM) {
-            hour
-        } else {
-            hour - 12
-        }
-
-        return when (tripType) {
-            "Incoming" -> {
-                // Check if current time is 6:55 AM or later
-                (hour12 == 6 && minute >= 55) || hour12 > 6
-            }
-            "Outgoing" -> {
-                // Check if current time is 6:55 PM or later
-                (hour12 == 6 && minute >= 55 && currentTime.get(Calendar.AM_PM) == Calendar.PM)
-                        || (hour12 > 6 && currentTime.get(Calendar.AM_PM) == Calendar.PM)
-            }
-            else -> false
-        }
-    }
 
     //when true - all of the data is loaded online and not offline capable.
     // when false - load local when no network, offline capable
@@ -349,7 +280,6 @@ class ShuttleViewModel @Inject constructor(
     }
 
 
-
     fun loadShuttlePassDraft(driverId: String) {
         _draftedShuttlePassState.update { it.copy(isLoading = true) }
 
@@ -476,35 +406,6 @@ class ShuttleViewModel @Inject constructor(
     }
 
 
-
-    fun finalizeShuttleDraft(driverId: String, shuttlePass: ShuttlePass, passengers: List<PassengerQR>) {
-        viewModelScope.launch {
-            val result = shuttlePassRepository.finalizeDraft(driverId, shuttlePass, passengers)
-            if (result is Resource.Error) {
-                _uiEvents.emit(ShuttlePassUiEvent.ShowToast(result.message ?: "Failed to complete the shuttle pass"))
-            }
-        }
-    }
-
-    // Throws on failure so the caller's existing error handling (toast) still runs.
-    suspend fun insertShuttlePass(shuttlePass: ShuttlePass) {
-        val result = shuttlePassRepository.insert(shuttlePass)
-        if (result is Resource.Error) throw IllegalStateException(result.message)
-    }
-
-    fun deletePassenger(passenger: PassengerQR) {
-        viewModelScope.launch(Dispatchers.IO) {
-            passengerQRRepository.deletePassenger(passenger)
-        }
-    }
-
-    fun deleteShuttlePassById(id: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            shuttlePassRepository.delete(id)
-        }
-    }
-
-
     fun getAllShuttlePassWithPassenger(driverId: String) : Flow<List<ShuttlePassWithPassenger>> {
         return shuttlePassRepository.observePasses(driverId, PassFilter.All)
     }
@@ -536,28 +437,11 @@ class ShuttleViewModel @Inject constructor(
         }
     }
 
-    //get the id of drafted shuttlepass id
-    fun getShuttlePassIdDraftByDriverId(driverId: String, onResult: (String?) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val draftId = shuttlePassRepository.getDraftId(driverId)
-            withContext(Dispatchers.Main) {
-                onResult(draftId)
-            }
-        }
-
-    }
 
     private suspend fun unflowGetRouteById(id: String) : String {
         return routesRepository.getNameByRouteId(id).first()
     }
 
-    suspend fun getRouteIdByName(name: String) : String {
-        return routesRepository.getRouteIdByName(name)
-    }
-
-    suspend fun getShuttleIdByPlateNumber(plateNumber: String) : String {
-        return shuttleRepository.getShuttleIdByPlateNumber(plateNumber)
-    }
 
     private val _toNameState = MutableStateFlow(IdNameState())
     val toNameState : StateFlow<IdNameState> = _toNameState.asStateFlow()
@@ -622,47 +506,12 @@ class ShuttleViewModel @Inject constructor(
     private val _routeName = MutableStateFlow("")
     val routeName: StateFlow<String> = _routeName
 
-    fun updatePassenger(passenger: PassengerQR) {
-        viewModelScope.launch(Dispatchers.IO) {
-            passengerQRRepository.updatePassenger(passenger)
-        }
-    }
-
-    // --- Active pass actions (logic that used to live in the AVCurrentPassScreenTest composables) ---
-
-    fun recordDeparture(pass: ShuttlePass) {
-        updateShuttlePass(listOf(pass.copy(departure = displayTime())))
-    }
-
-    fun completeShuttlePass(pass: ShuttlePass, passengers: List<PassengerQR>) {
-        val finalPass = pass.copy(arrival = displayTime(), isLateShuttle = isLateShuttle(pass.tripType))
-        finalizeShuttleDraft(driverId = finalPass.driver, shuttlePass = finalPass, passengers = passengers)
-        resetShuttlePassInputState()
-    }
-
-    fun startEditingPassenger(passenger: PassengerQR) {
-        onPassengerInputEvent(QRInputEvent.ScannedQRChanged(passenger.scannedQR))
-    }
-
-    /** Validates the edited QR code; returns true when it was saved. */
-    fun saveEditedPassenger(passenger: PassengerQR): Boolean {
-        if (!submitManualAddPassenger()) return false
-        updatePassenger(passenger.copy(scannedQR = _qrInputState.value.qrCode))
-        resetPassengerInputState()
-        return true
-    }
-
-    fun updateShuttlePass(shuttlePass: List<ShuttlePass>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            shuttlePassRepository.update(shuttlePass)
-        }
-    }
 
     fun onUpdateShuttlePass(originalPass: ShuttlePass) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val routeId = getRouteIdByName(_shuttlePassInputState.value.route)
-                val plateNumber = getShuttleIdByPlateNumber(_shuttlePassInputState.value.plateNumber)
+                val routeId = routesRepository.getRouteIdByName(_shuttlePassInputState.value.route)
+                val plateNumber = shuttleRepository.getShuttleIdByPlateNumber(_shuttlePassInputState.value.plateNumber)
 
                 val updatedShuttlePass = listOf(ShuttlePass(
                     id = originalPass.id,
@@ -694,7 +543,6 @@ class ShuttleViewModel @Inject constructor(
     }
 
 
-
     private val _cardState = MutableStateFlow(CardState())
     val cardState : StateFlow<CardState> = _cardState.asStateFlow()
 
@@ -713,7 +561,6 @@ class ShuttleViewModel @Inject constructor(
             }
         }
     }
-
 
 
     fun countUnsyncedShuttlePass(accountId: String) {
@@ -742,16 +589,6 @@ class ShuttleViewModel @Inject constructor(
         }
     }
 
-    fun onPassengerInputEvent(event : QRInputEvent) {
-        when(event) {
-            is QRInputEvent.ScannedQRChanged -> {
-                _qrInputState.value = _qrInputState.value.copy(qrCode = event.scannedQR)
-            }
-            is QRInputEvent.Submit -> {
-                submitManualAddPassenger()
-            }
-        }
-    }
 
     fun onShuttlePassInputEvent(event: ShuttlePassInputEvent) {
         when(event) {
@@ -780,28 +617,10 @@ class ShuttleViewModel @Inject constructor(
             is ShuttlePassInputEvent.ArrivalChanged -> {
                 _shuttlePassInputState.value = _shuttlePassInputState.value.copy(arrival = event.arrival)
             }
-            is ShuttlePassInputEvent.Submit -> {
-                submitShuttlePass()
-
-            }
 
         }
     }
 
-    fun resetShuttlePassInputState() {
-        _shuttlePassInputState.value = ShuttlePassInputState()
-    }
-
-    fun resetRouteErrorMessage() {
-        _shuttlePassInputState.value.routeErrorMessage = null
-    }
-
-    fun resetTripTypeErrorMessage() {
-        _shuttlePassInputState.value.tripTypeErrorMessage = null
-    }
-    fun resetPlateNumberErrorMessage() {
-        _shuttlePassInputState.value.plateNumberErrorMessage = null
-    }
 
     fun resetShuttlePassErrorMessages() {
         _shuttlePassInputState.update {
@@ -818,9 +637,6 @@ class ShuttleViewModel @Inject constructor(
         }
     }
 
-    fun resetPassengerInputState() {
-        _qrInputState.value = QRInputState()
-    }
 
     //auth
     suspend fun logOut() {
@@ -839,117 +655,7 @@ class ShuttleViewModel @Inject constructor(
             }
         }
     }
-    fun submitManualAddPassenger() : Boolean {
 
-        val qrCodeResult = validateQRCodeInput.execute(_qrInputState.value.qrCode, _draftedPassengerListState.value.list) //<<-- here i Will use here
-
-        val hasError = listOf(
-            qrCodeResult,
-
-            ).any {!it.successful}
-
-        if(hasError) {
-            _qrInputState.value = _qrInputState.value.copy(
-                qrCodeErrorMessage = qrCodeResult.errorMessage,
-            )
-            return false
-        }
-
-        _qrInputState.value = _qrInputState.value.copy(
-            qrCodeErrorMessage = null,
-        )
-        return true
-    }
-
-    fun validateRouteInput() : Boolean {
-
-        val routeResult = validateRouteInput.execute(_shuttlePassInputState.value.route, routeState.value.routes)
-        val hasError = listOf(
-            routeResult,
-        ).any {!it.successful}
-
-        if(hasError) {
-            _shuttlePassInputState.value = _shuttlePassInputState.value.copy(
-                routeErrorMessage = routeResult.errorMessage,
-            )
-            return false
-        }
-        _shuttlePassInputState.value = _shuttlePassInputState.value.copy(
-            routeErrorMessage = null,
-        )
-        return true
-    }
-
-    fun validateTripTypeInput() : Boolean {
-        val tripTypeResult = validateTripTypeInput.execute(_shuttlePassInputState.value.tripType)
-        val hasError = listOf(
-            tripTypeResult
-        ).any {!it.successful}
-
-        if(hasError) {
-            _shuttlePassInputState.value = _shuttlePassInputState.value.copy(
-                tripTypeErrorMessage = tripTypeResult.errorMessage
-            )
-            return false
-        }
-        _shuttlePassInputState.value = _shuttlePassInputState.value.copy(
-            tripTypeErrorMessage = null
-        )
-        return true
-    }
-
-    fun validatePlateNumberInput() : Boolean {
-        val plateNumberResult = validatePlateNumberInput.execute(_shuttlePassInputState.value.plateNumber,_shuttleState.value.plateNumbers)
-
-        val hasError = listOf(
-            plateNumberResult,
-        ).any {!it.successful}
-
-        if(hasError) {
-            _shuttlePassInputState.value = _shuttlePassInputState.value.copy(
-                plateNumberErrorMessage = plateNumberResult.errorMessage
-            )
-            return false
-        }
-        _shuttlePassInputState.value = _shuttlePassInputState.value.copy(
-            plateNumberErrorMessage = null
-        )
-        return true
-    }
-
-    fun submitShuttlePass() : Boolean {
-
-        //val departureResult = validateDepartureInput.execute(_shuttlePassInputState.value.departure)
-        val driverResult = validateDriverInput.execute(_shuttlePassInputState.value.driver)
-        val plateNumberResult = validatePlateNumberInput.execute(_shuttlePassInputState.value.plateNumber,_shuttleState.value.plateNumbers)
-        val routeResult = validateRouteInput.execute(_shuttlePassInputState.value.route, routeState.value.routes)
-        val shuttleProviderResult = validateShuttleProviderInput.execute(_shuttlePassInputState.value.shuttleProvider, shuttleProviders)
-        val tripTypeResult = validateTripTypeInput.execute(_shuttlePassInputState.value.tripType) //nasa validation class yung pang check nito
-
-        val hasError = listOf(
-            //departureResult,
-            //driverResult,
-            plateNumberResult,
-            routeResult,
-            //shuttleProviderResult,
-            tripTypeResult
-        ).any {!it.successful}
-
-        if(hasError) {
-            _shuttlePassInputState.value = _shuttlePassInputState.value.copy(
-                //departureErrorMessage = departureResult.errorMessage,
-                //driverErrorMessage = driverResult.errorMessage,
-                plateNumberErrorMessage = plateNumberResult.errorMessage,
-                routeErrorMessage = routeResult.errorMessage,
-                //shuttleProviderErrorMessage = shuttleProviderResult.errorMessage,
-                tripTypeErrorMessage = tripTypeResult.errorMessage
-            )
-            return false
-        }
-
-        return true
-
-    }
 
     sealed class ValidationEvent {
         data object Success : ValidationEvent()

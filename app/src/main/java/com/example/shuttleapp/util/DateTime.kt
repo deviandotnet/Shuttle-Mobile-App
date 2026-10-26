@@ -6,10 +6,10 @@ import java.util.Date
 import java.util.Locale
 
 
-fun displayTime(): String {
-    val timeMilli: Long = System.currentTimeMillis()
+/** The stored time format ("HH:mm") for departure, arrival and timeIn; [date] defaults to now. */
+fun displayTime(date: Date = Date()): String {
     val format = SimpleDateFormat("HH:mm", Locale.getDefault())
-    return format.format(Date(timeMilli))
+    return format.format(date)
 }
 
 fun formatTimeHHmm(timeStr: String): String {
@@ -55,4 +55,14 @@ fun displayMonthYear() : String = formatMonthYear(System.currentTimeMillis())
 fun formatMonthYear(dateMilli: Long) : String {
     val format = SimpleDateFormat("yyyy-MM", Locale.getDefault())
     return format.format(Date(dateMilli))
+}
+/** "2026-10-20" (the pass date as stored) to "Tue, Oct 20, 2026". Returns the input unchanged if it isn't that format. */
+fun formatPassDate(isoDate: String): String {
+    if (isoDate.isBlank()) return isoDate
+    return try {
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(isoDate) ?: return isoDate
+        SimpleDateFormat("EEE, MMM d, yyyy", Locale.getDefault()).format(date)
+    } catch (ex: java.text.ParseException) {
+        isoDate
+    }
 }

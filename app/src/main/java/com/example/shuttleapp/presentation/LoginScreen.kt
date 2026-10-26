@@ -74,13 +74,11 @@ fun LoginScreen(
 
         Spacer(Modifier.height(32.dp))
         Image(
-            painter = painterResource(R.drawable.shuttle_vector),
-            contentDescription = "Test",
-            modifier = Modifier
-                .size(height = 100.dp, width = 200.dp)
-                .padding(end = 20.dp),
+            painter = painterResource(R.drawable.ic_shuttle_van_logo),
+            contentDescription = null,
+            modifier = Modifier.size(width = 172.dp, height = 80.dp),
             colorFilter = ColorFilter.tint(colors.onBrandBand),
-            contentScale = ContentScale.FillWidth,
+            contentScale = ContentScale.Fit,
         )
         Text("SHUTTLE MOBILE APP", style = TextStyle(color = colors.onBrandBand, fontWeight = FontWeight.Bold, fontSize = 26.sp))
         Spacer(Modifier.weight(0.30f))
@@ -293,13 +291,11 @@ fun Test() {
 
         Spacer(Modifier.height(32.dp))
         Image(
-            painter = painterResource(R.drawable.shuttle_vector),
-            contentDescription = "Test",
-            modifier = Modifier
-                .size(height = 100.dp, width = 200.dp)
-                .padding(end = 20.dp),
+            painter = painterResource(R.drawable.ic_shuttle_van_logo),
+            contentDescription = null,
+            modifier = Modifier.size(width = 172.dp, height = 80.dp),
             colorFilter = ColorFilter.tint(colors.onBrandBand),
-            contentScale = ContentScale.FillWidth,
+            contentScale = ContentScale.Fit,
         )
         Text("SHUTTLE MOBILE APP", style = TextStyle(color = colors.onBrandBand, fontWeight = FontWeight.Bold, fontSize = 26.sp))
         Spacer(Modifier.weight(.20f))

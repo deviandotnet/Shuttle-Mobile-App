@@ -30,7 +30,7 @@ interface PassengerQRDao {
     fun getPassengerQRById(id : String) : Flow<PassengerQREntity>
 
     @Transaction
-    @Query("SELECT * FROM passengerQR WHERE shuttlePassId = :shuttlePassId")
+    @Query("SELECT * FROM passengerQR WHERE shuttlePassId = :shuttlePassId ORDER BY rowid")
     fun getPassengersQRByForeignKeyId(shuttlePassId: String): Flow<List<PassengerQREntity>>
 
     @Transaction
@@ -50,7 +50,8 @@ interface PassengerQRDao {
     fun countCurrentPassenger() : Flow<Int>
 
     @Transaction
-    @Query("SELECT * FROM passengerQR WHERE isDraft = 1 AND shuttlePassId = :shuttlePassId")
+    // rowid is the insert order (the id is a UUID), so this is boarding order even across midnight.
+    @Query("SELECT * FROM passengerQR WHERE isDraft = 1 AND shuttlePassId = :shuttlePassId ORDER BY rowid")
     fun getDraftedPassengers(shuttlePassId: String) : Flow<List<PassengerQREntity>>
 
     @Transaction
